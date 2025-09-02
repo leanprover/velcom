@@ -16,7 +16,4 @@ def run(*cmd: str | Path) -> None:
 parser = argparse.ArgumentParser()
 _args = parser.parse_args()
 
-run("mvn", "package")
-print()
-print("The backend.jar is at backend/backend/target/backend.jar")
-print("The runner.jar is at backend/runner/target/runner.jar")
+run("mvn", "clean")
