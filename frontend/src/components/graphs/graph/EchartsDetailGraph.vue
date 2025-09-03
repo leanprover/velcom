@@ -268,7 +268,9 @@ export default class EchartsDetailGraph extends Vue {
   @Watch('graphFailedOrUnbenchmarkedColor') // DataPoints need adjusting, they store the color
   private updateGraph() {
     this.selectAppropriateSeries()
-    const otherUnits = new Set(this.seriesInformation.map(s => s.unit).filter(u => u !== 's'))
+    const otherUnits = new Set(
+      this.seriesInformation.map(s => s.unit).filter(u => u !== 's')
+    )
 
     this.chartOptions = {
       grid: {
@@ -292,7 +294,8 @@ export default class EchartsDetailGraph extends Vue {
         },
         {
           type: 'value',
-          name: otherUnits.size === 1 ? otherUnits.keys().next().value : 'other',
+          name:
+            otherUnits.size === 1 ? otherUnits.keys().next().value : 'other',
           scale: !this.beginYAtZero
         }
       ],

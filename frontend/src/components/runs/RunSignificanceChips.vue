@@ -102,9 +102,10 @@ class RelevantChange {
 
       this.change = change
     } else {
-      this.change = difference.relDiff && !this.id.benchmark.startsWith('~')
-        ? this.formatPercentage(difference.relDiff)
-        : this.formatNumber(difference.absDiff)
+      this.change =
+        difference.relDiff && !this.id.benchmark.startsWith('~')
+          ? this.formatPercentage(difference.relDiff)
+          : this.formatNumber(difference.absDiff)
     }
     this.color = this.changeColor(
       difference.absDiff,
