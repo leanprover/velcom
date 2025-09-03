@@ -80,7 +80,6 @@ and your API can be reached under `https://example.com/velcom/api/`, the file
 should look like this:
 
 ```
-NODE_ENV="production"
 BASE_URL="/velcom/"
 VUE_APP_BASE_URL="https://example.com/velcom/api/"
 ```
