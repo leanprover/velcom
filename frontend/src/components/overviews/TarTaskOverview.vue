@@ -50,42 +50,42 @@
   </v-card>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { TarTaskSource, RunId, TaskId } from '@/store/types'
-import TextChip from '../misc/TextChip.vue'
-import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
-import { RawLocation } from 'vue-router'
-import { mdiScaleBalance } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { TarTaskSource, RunId, TaskId } from "@/store/types";
+import TextChip from "../misc/TextChip.vue";
+import InlineMinimalRepoNameDisplay from "../misc/InlineMinimalRepoDisplay.vue";
+import { RawLocation } from "vue-router";
+import { mdiScaleBalance } from "@mdi/js";
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoNameDisplay,
-    'text-chip': TextChip
-  }
+    "repo-display": InlineMinimalRepoNameDisplay,
+    "text-chip": TextChip,
+  },
 })
 export default class TarTaskOverview extends Vue {
   @Prop()
-  private readonly source!: TarTaskSource
+  private readonly source!: TarTaskSource;
 
   @Prop()
-  private readonly id!: RunId | TaskId
+  private readonly id!: RunId | TaskId;
 
   @Prop()
-  private readonly linkLocation!: RawLocation
+  private readonly linkLocation!: RawLocation;
 
   private get compareRunLocation() {
     return {
-      name: 'search',
+      name: "search",
       params: {
-        runId: this.id
-      }
-    }
+        runId: this.id,
+      },
+    };
   }
 
   // ===== ICONS =====
-  private compareIcon = mdiScaleBalance
+  private compareIcon = mdiScaleBalance;
 }
 </script>
 

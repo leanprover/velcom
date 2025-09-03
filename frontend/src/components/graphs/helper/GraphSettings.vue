@@ -56,7 +56,7 @@
             @click="
               $emit(
                 'update:dayEquidistantGraphSelected',
-                !dayEquidistantGraphSelected
+                !dayEquidistantGraphSelected,
               )
             "
           >
@@ -73,44 +73,44 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { availableGraphComponents } from '@/util/GraphVariantSelection'
-import { Prop } from 'vue-property-decorator'
-import { mdiCheckboxBlankOutline, mdiCheckboxMarked } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { availableGraphComponents } from "@/util/GraphVariantSelection";
+import { Prop } from "vue-property-decorator";
+import { mdiCheckboxBlankOutline, mdiCheckboxMarked } from "@mdi/js";
 
 @Component
 export default class GraphSettings extends Vue {
   @Prop()
-  private graphComponent!: typeof Vue
+  private graphComponent!: typeof Vue;
 
   @Prop({ default: true })
-  private beginYAtZero!: boolean
+  private beginYAtZero!: boolean;
 
   @Prop({ default: false })
-  private stacked!: boolean
+  private stacked!: boolean;
 
   @Prop({ default: false })
-  private normalized!: boolean
+  private normalized!: boolean;
 
   @Prop({ default: true })
-  private dayEquidistantGraphSelected!: boolean
+  private dayEquidistantGraphSelected!: boolean;
 
   private get selectedGraphVariant() {
-    return this.graphComponent
+    return this.graphComponent;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set selectedGraphVariant(variant: typeof Vue) {
-    this.$emit('update:graphComponent', variant)
+    this.$emit("update:graphComponent", variant);
   }
 
   private get availableGraphComponents() {
-    return availableGraphComponents
+    return availableGraphComponents;
   }
 
   // ICONS
-  private readonly iconOff = mdiCheckboxBlankOutline
-  private readonly iconOn = mdiCheckboxMarked
+  private readonly iconOff = mdiCheckboxBlankOutline;
+  private readonly iconOn = mdiCheckboxMarked;
 }
 </script>

@@ -11,8 +11,8 @@
           name: 'run-detail',
           params: {
             first: commitDescription.repoId,
-            second: commitDescription.hash
-          }
+            second: commitDescription.hash,
+          },
         }"
       >
         <v-icon class="button-icon" left v-if="type === 'PARENT'">
@@ -30,26 +30,26 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { CommitDescription } from '@/store/types'
-import { mdiArrowRight, mdiArrowLeft } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { CommitDescription } from "@/store/types";
+import { mdiArrowRight, mdiArrowLeft } from "@mdi/js";
 
 @Component
 export default class CommitNavigationButton extends Vue {
   @Prop()
-  private commitDescription!: CommitDescription
+  private commitDescription!: CommitDescription;
 
-  @Prop({ default: 'PARENT' })
-  private type!: 'PARENT' | 'CHILD'
+  @Prop({ default: "PARENT" })
+  private type!: "PARENT" | "CHILD";
 
   @Prop({ default: true })
-  private tracked!: boolean
+  private tracked!: boolean;
 
   // ICONS
-  private parentCommitIcon = mdiArrowLeft
-  private childCommitIcon = mdiArrowRight
+  private parentCommitIcon = mdiArrowLeft;
+  private childCommitIcon = mdiArrowRight;
 }
 </script>
 

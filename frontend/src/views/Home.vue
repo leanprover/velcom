@@ -72,43 +72,43 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
-import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
-import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
+import { RunDescriptionWithDifferences, RunDescription } from "@/store/types";
+import MultipleRunOverview from "@/components/overviews/MultipleRunOverview.vue";
 
 @Component({
   components: {
-    'multiple-run-overview': MultipleRunOverview
-  }
+    "multiple-run-overview": MultipleRunOverview,
+  },
 })
 export default class Home extends Vue {
-  private recentAmount: number = 10
-  private recentSignificantAmount: number = 10
+  private recentAmount: number = 10;
+  private recentSignificantAmount: number = 10;
 
   get recent(): RunDescription[] {
-    return vxm.newsModule.recentRuns
+    return vxm.newsModule.recentRuns;
   }
 
   get recentSignificant(): RunDescriptionWithDifferences[] {
-    return vxm.newsModule.recentSignificantRuns
+    return vxm.newsModule.recentSignificantRuns;
   }
 
-  @Watch('recentAmount')
+  @Watch("recentAmount")
   private fetchRecent() {
-    vxm.newsModule.fetchRecentRuns(this.recentAmount)
+    vxm.newsModule.fetchRecentRuns(this.recentAmount);
   }
 
-  @Watch('recentSignificantAmount')
+  @Watch("recentSignificantAmount")
   private fetchRecentSignificant() {
-    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount)
+    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount);
   }
 
   created(): void {
-    this.fetchRecent()
-    this.fetchRecentSignificant()
+    this.fetchRecent();
+    this.fetchRecentSignificant();
   }
 }
 </script>

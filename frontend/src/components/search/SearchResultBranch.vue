@@ -37,33 +37,33 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { SearchItemBranch } from '@/store/types'
-import { RawLocation } from 'vue-router'
-import TextChip from '@/components/misc/TextChip.vue'
-import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
-import { mdiSourceBranch } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { SearchItemBranch } from "@/store/types";
+import { RawLocation } from "vue-router";
+import TextChip from "@/components/misc/TextChip.vue";
+import InlineMinimalRepoDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
+import { mdiSourceBranch } from "@mdi/js";
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoDisplay,
-    TextChip
-  }
+    "repo-display": InlineMinimalRepoDisplay,
+    TextChip,
+  },
 })
 export default class SearchResultBranch extends Vue {
   @Prop()
-  private readonly item!: SearchItemBranch
+  private readonly item!: SearchItemBranch;
 
   private get commitLinkLocation(): RawLocation {
     return {
-      name: 'run-detail',
-      params: { first: this.item.repoId, second: this.item.hash }
-    }
+      name: "run-detail",
+      params: { first: this.item.repoId, second: this.item.hash },
+    };
   }
 
-  private readonly branchIcon = mdiSourceBranch
+  private readonly branchIcon = mdiSourceBranch;
 }
 </script>
 

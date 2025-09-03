@@ -1,1 +1,1 @@
-declare module 'vue-echarts'
+declare module "vue-echarts";

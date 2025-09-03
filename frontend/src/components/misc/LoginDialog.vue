@@ -40,47 +40,47 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
-import RepoSelectionComponent from './RepoSelectionComponent.vue'
+import Vue from "vue";
+import { Component, Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
+import RepoSelectionComponent from "./RepoSelectionComponent.vue";
 
 @Component({
   components: {
-    'repo-selection': RepoSelectionComponent
-  }
+    "repo-selection": RepoSelectionComponent,
+  },
 })
 export default class LoginDialog extends Vue {
-  private loading: boolean = false
-  private repoId: string = ''
-  private token: string = ''
+  private loading: boolean = false;
+  private repoId: string = "";
+  private token: string = "";
 
-  private formValid: boolean = false
-  private dialogOpen: boolean = false
+  private formValid: boolean = false;
+  private dialogOpen: boolean = false;
 
-  @Watch('dialogOpen')
+  @Watch("dialogOpen")
   private onOpened(opened: boolean) {
     if (!opened) {
-      this.token = ''
-      this.repoId = ''
+      this.token = "";
+      this.repoId = "";
     }
   }
 
   private nonEmptyToken(input: string): boolean | string {
-    return input.length > 0 ? true : 'This field must not be empty!'
+    return input.length > 0 ? true : "This field must not be empty!";
   }
 
   private login() {
     if (!this.formValid) {
-      return
+      return;
     }
 
-    this.loading = true
+    this.loading = true;
 
     vxm.userModule
       .logIn(this.token)
       .then(() => (this.dialogOpen = false))
-      .finally(() => (this.loading = false))
+      .finally(() => (this.loading = false));
   }
 }
 </script>

@@ -13,32 +13,32 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { copyToClipboard } from '@/util/Clipboards'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { copyToClipboard } from "@/util/Clipboards";
 
 @Component
 export default class TextChip extends Vue {
   @Prop()
-  private text!: string
+  private text!: string;
 
   @Prop({ default: true })
-  private copyOnClick!: boolean
+  private copyOnClick!: boolean;
 
   @Prop()
-  private to: any
+  private to: any;
 
   @Prop()
-  private on?: any
+  private on?: any;
 
   private copyToClipboard(hash: string) {
-    const selection = window.getSelection()
+    const selection = window.getSelection();
     if (selection && selection.toString()) {
       // Do not overwrite user text selection
-      return
+      return;
     }
-    copyToClipboard(hash, this.$globalSnackbar)
+    copyToClipboard(hash, this.$globalSnackbar);
   }
 }
 </script>

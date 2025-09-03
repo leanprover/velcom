@@ -58,7 +58,7 @@
                   {{ branch.name }}
                 </v-chip>
               </template>
-              {{ branch.tracked ? 'Tracked' : 'Not Tracked' }}
+              {{ branch.tracked ? "Tracked" : "Not Tracked" }}
             </v-tooltip>
           </v-col>
         </v-row>
@@ -125,92 +125,92 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { GithubBotCommand, Repo, RepoBranch } from '@/store/types'
-import { vxm } from '@/store'
-import RepoUpdateDialog from '@/components/repodetail/RepoUpdateDialog.vue'
-import { mdiCompassOutline } from '@mdi/js'
-import GithubBotCommandChips from '@/components/repodetail/GithubBotCommandChips.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { GithubBotCommand, Repo, RepoBranch } from "@/store/types";
+import { vxm } from "@/store";
+import RepoUpdateDialog from "@/components/repodetail/RepoUpdateDialog.vue";
+import { mdiCompassOutline } from "@mdi/js";
+import GithubBotCommandChips from "@/components/repodetail/GithubBotCommandChips.vue";
 
 @Component({
   components: {
     GithubBotCommandChips,
-    RepoUpdateDialog
-  }
+    RepoUpdateDialog,
+  },
 })
 export default class RepoBaseInformation extends Vue {
-  private githubCommands: GithubBotCommand[] = []
+  private githubCommands: GithubBotCommand[] = [];
 
   @Prop()
-  private repo!: Repo
+  private repo!: Repo;
 
   private get branches() {
     return this.repo.branches
       .slice()
       .sort(
         this.chainComparators(this.comparatorTrackStatus, (a, b) =>
-          a.name.localeCompare(b.name)
-        )
-      )
+          a.name.localeCompare(b.name),
+        ),
+      );
   }
 
   private get isAdmin() {
-    return vxm.userModule.isAdmin
+    return vxm.userModule.isAdmin;
   }
 
   private get hasActiveBot() {
-    return this.repo.lastGithubUpdate !== undefined
+    return this.repo.lastGithubUpdate !== undefined;
   }
 
   private async deleteRepository() {
     const confirmed = window.confirm(
-      `Do you really want to delete ${this.repo.name} (${this.repo.id})?`
-    )
+      `Do you really want to delete ${this.repo.name} (${this.repo.id})?`,
+    );
     if (!confirmed) {
-      return
+      return;
     }
-    await vxm.repoModule.deleteRepo(this.repo.id)
-    vxm.detailGraphModule.selectedRepoId = ''
-    await this.$router.replace({ name: 'repo-detail', params: { id: '' } })
+    await vxm.repoModule.deleteRepo(this.repo.id);
+    vxm.detailGraphModule.selectedRepoId = "";
+    await this.$router.replace({ name: "repo-detail", params: { id: "" } });
   }
 
   private async mounted() {
     if (this.hasActiveBot) {
       this.githubCommands = await vxm.repoModule.fetchGithubCommands(
-        this.repo.id
-      )
+        this.repo.id,
+      );
     }
   }
 
   private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
     if (branchA.tracked && branchB.tracked) {
-      return 0
+      return 0;
     }
     if (branchA.tracked) {
-      return -1
+      return -1;
     }
     if (branchB.tracked) {
-      return 1
+      return 1;
     }
-    return 0
+    return 0;
   }
 
   private chainComparators<T>(
     a: (a: T, b: T) => number,
-    b: (a: T, b: T) => number
+    b: (a: T, b: T) => number,
   ): (a: T, b: T) => number {
     return (x, y) => {
       if (a(x, y) !== 0) {
-        return a(x, y)
+        return a(x, y);
       }
-      return b(x, y)
-    }
+      return b(x, y);
+    };
   }
 
   // ===== ICONS =====
-  private searchAndCompareIcon = mdiCompassOutline
+  private searchAndCompareIcon = mdiCompassOutline;
 }
 </script>
 

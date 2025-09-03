@@ -1,19 +1,19 @@
 export type OverscrollStore = {
-  zoomXStartValue: number | null
-  zoomXEndValue: number | null
+  zoomXStartValue: number | null;
+  zoomXEndValue: number | null;
 
-  startTime: Date
-  endTime: Date
-}
+  startTime: Date;
+  endTime: Date;
+};
 
 export default class OverscrollToZoom {
-  private scrollToZoomInProgress = false
-  private readonly refreshFunction: () => Promise<unknown>
-  private readonly store: OverscrollStore
+  private scrollToZoomInProgress = false;
+  private readonly refreshFunction: () => Promise<unknown>;
+  private readonly store: OverscrollStore;
 
   constructor(refreshFunction: () => Promise<unknown>, store: OverscrollStore) {
-    this.refreshFunction = refreshFunction
-    this.store = store
+    this.refreshFunction = refreshFunction;
+    this.store = store;
   }
 
   private isZoomedOut(): boolean {
@@ -21,13 +21,13 @@ export default class OverscrollToZoom {
       this.store.zoomXStartValue == null &&
       this.store.zoomXEndValue == null
     ) {
-      return true
+      return true;
     }
 
     return (
       this.store.zoomXStartValue === this.store.startTime.getTime() &&
       this.store.zoomXEndValue === this.store.endTime.getTime()
-    )
+    );
   }
 
   /**
@@ -36,31 +36,31 @@ export default class OverscrollToZoom {
    */
   public scrolled(e: WheelEvent): void {
     if (!this.isZoomedOut()) {
-      return
+      return;
     }
 
     // scrolling upwards => zooming in
     if (e.deltaY <= 0) {
-      return
+      return;
     }
 
     // Prevent scrolling
-    e.preventDefault()
+    e.preventDefault();
 
     if (this.scrollToZoomInProgress) {
-      return
+      return;
     }
-    this.scrollToZoomInProgress = true
+    this.scrollToZoomInProgress = true;
 
     this.store.startTime = new Date(
-      this.store.startTime.getTime() - 7 * 1000 * 60 * 60 * 24
-    )
+      this.store.startTime.getTime() - 7 * 1000 * 60 * 60 * 24,
+    );
 
-    const clamp = (a: number) => Math.min(a, new Date().getTime())
+    const clamp = (a: number) => Math.min(a, new Date().getTime());
     this.store.endTime = new Date(
-      clamp(this.store.endTime.getTime() + 7 * 1000 * 60 * 60 * 24)
-    )
+      clamp(this.store.endTime.getTime() + 7 * 1000 * 60 * 60 * 24),
+    );
 
-    this.refreshFunction().finally(() => (this.scrollToZoomInProgress = false))
+    this.refreshFunction().finally(() => (this.scrollToZoomInProgress = false));
   }
 }

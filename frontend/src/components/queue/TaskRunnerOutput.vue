@@ -49,89 +49,89 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
-import { StreamedRunnerOutput, TaskId } from '@/store/types'
-import { vxm } from '@/store'
-import { safeConvertAnsi } from '@/util/Texts'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop, Watch } from "vue-property-decorator";
+import { StreamedRunnerOutput, TaskId } from "@/store/types";
+import { vxm } from "@/store";
+import { safeConvertAnsi } from "@/util/Texts";
 
 @Component
 export default class TaskRunnerOutput extends Vue {
   @Prop()
-  private taskId!: TaskId
+  private taskId!: TaskId;
 
-  private timer: number | null = null
-  private output: StreamedRunnerOutput | null = null
-  private loadingError: boolean = false
-  private taskInQueue: boolean = true
+  private timer: number | null = null;
+  private output: StreamedRunnerOutput | null = null;
+  private loadingError: boolean = false;
+  private taskInQueue: boolean = true;
 
   private get taskInProgress(): boolean {
-    return !!vxm.queueModule.workers.find(it => it.workingOn === this.taskId)
+    return !!vxm.queueModule.workers.find((it) => it.workingOn === this.taskId);
   }
 
-  @Watch('taskId')
+  @Watch("taskId")
   private async update() {
     if (!this.taskId) {
-      return
+      return;
     }
 
-    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId)
+    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId);
     if (newOutput !== null) {
-      this.output = newOutput
+      this.output = newOutput;
     }
-    this.loadingError = newOutput === null
+    this.loadingError = newOutput === null;
 
     if (this.loadingError) {
-      const fetchedTask = await vxm.queueModule.fetchTaskInfo(this.taskId)
-      this.taskInQueue = fetchedTask !== null
-      this.$emit('loading-failed')
-      return
+      const fetchedTask = await vxm.queueModule.fetchTaskInfo(this.taskId);
+      this.taskInQueue = fetchedTask !== null;
+      this.$emit("loading-failed");
+      return;
     }
 
-    const element = this.$el.getElementsByClassName('runner-output')[0]
+    const element = this.$el.getElementsByClassName("runner-output")[0];
     if (element.scrollHeight - element.scrollTop === element.clientHeight) {
       Vue.nextTick(() => {
-        element.scrollTop = element.scrollHeight
-      })
+        element.scrollTop = element.scrollHeight;
+      });
     }
   }
 
   private get lines(): {
-    lineNumber: number
-    text: string
+    lineNumber: number;
+    text: string;
   }[] {
-    const output = this.output
+    const output = this.output;
     if (!output) {
-      return []
+      return [];
     }
     return output.outputLines.map((line, index) => ({
       lineNumber: index + output.indexOfFirstLine + 1,
-      text: safeConvertAnsi(line)
-    }))
+      text: safeConvertAnsi(line),
+    }));
   }
 
   // noinspection JSUnusedLocalSymbols (Used by the watcher below)
   private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected
+    return vxm.userModule.darkThemeSelected;
   }
 
-  @Watch('darkThemeSelected')
+  @Watch("darkThemeSelected")
   private onDarkThemeSelectionChanged() {
     // The ANSI conversion needs to be redone
-    this.$forceUpdate()
+    this.$forceUpdate();
   }
 
   private mounted() {
-    this.update()
+    this.update();
     this.timer = setInterval(() => {
-      this.update()
-    }, 5000)
+      this.update();
+    }, 5000);
   }
 
   private destroyed() {
     if (this.timer !== null) {
-      clearInterval(this.timer)
+      clearInterval(this.timer);
     }
   }
 }

@@ -37,8 +37,8 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Vue from "vue";
+import Component from "vue-class-component";
 import {
   Run,
   RunResultScriptError,
@@ -47,81 +47,81 @@ import {
   Measurement,
   DimensionDifference,
   RunWithDifferences,
-  Dimension
-} from '@/store/types'
-import { Prop, Watch } from 'vue-property-decorator'
-import MeasurementsDisplay from '@/components/rundetail/MeasurementsDisplay.vue'
-import RunInfo from '@/components/rundetail/RunInfo.vue'
-import { safeConvertAnsi } from '@/util/Texts'
-import { vxm } from '@/store'
+  Dimension,
+} from "@/store/types";
+import { Prop, Watch } from "vue-property-decorator";
+import MeasurementsDisplay from "@/components/rundetail/MeasurementsDisplay.vue";
+import RunInfo from "@/components/rundetail/RunInfo.vue";
+import { safeConvertAnsi } from "@/util/Texts";
+import { vxm } from "@/store";
 
 @Component({
   components: {
-    'run-info': RunInfo,
-    'measurements-display': MeasurementsDisplay
-  }
+    "run-info": RunInfo,
+    "measurements-display": MeasurementsDisplay,
+  },
 })
 export default class RunDetail extends Vue {
   @Prop()
-  private runWithDifferences!: RunWithDifferences
+  private runWithDifferences!: RunWithDifferences;
 
   private get run(): Run {
-    return this.runWithDifferences.run
+    return this.runWithDifferences.run;
   }
 
   private get runColor() {
     if (this.run.result instanceof RunResultScriptError) {
-      return 'warning'
+      return "warning";
     } else if (this.run.result instanceof RunResultVelcomError) {
-      return 'error'
+      return "error";
     }
-    return 'primary'
+    return "primary";
   }
 
   private get error(): string | undefined {
     if (this.errorType === undefined) {
-      return undefined
+      return undefined;
     }
-    return safeConvertAnsi((this.run.result as RunResultVelcomError).error)
+    return safeConvertAnsi((this.run.result as RunResultVelcomError).error);
   }
 
   private get errorType(): string | undefined {
     if (this.run.result instanceof RunResultScriptError) {
-      return 'Benchmark-Script'
+      return "Benchmark-Script";
     }
     if (this.run.result instanceof RunResultVelcomError) {
-      return 'VelCom'
+      return "VelCom";
     }
-    return undefined
+    return undefined;
   }
 
   private get measurements(): Measurement[] | undefined {
     if (this.run.result instanceof RunResultSuccess) {
-      return this.run.result.measurements
+      return this.run.result.measurements;
     }
-    return undefined
+    return undefined;
   }
 
   private get differences(): DimensionDifference[] | undefined {
     if (this.run.result instanceof RunResultSuccess) {
-      return this.runWithDifferences.differences
+      return this.runWithDifferences.differences;
     }
-    return undefined
+    return undefined;
   }
 
   private navigateToDetailGraph(dimension: Dimension) {
-    this.$emit('navigate-to-detail-graph', dimension)
+    this.$emit("navigate-to-detail-graph", dimension);
   }
 
   // noinspection JSUnusedLocalSymbols (Used by the watcher below)
   private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected
+    return vxm.userModule.darkThemeSelected;
   }
 
-  @Watch('darkThemeSelected')
+  @Watch("darkThemeSelected")
   private onDarkThemeSelectionChanged() {
     // The ANSI conversion needs to be redone
-    this.$forceUpdate()
+    this.$forceUpdate();
   }
 }
 </script>

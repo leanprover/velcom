@@ -47,60 +47,60 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
 import {
   CommitDescription,
   CommitTaskSource,
-  RunDescription
-} from '@/store/types'
+  RunDescription,
+} from "@/store/types";
 import {
   mdiCheckboxMarkedCircleOutline,
   mdiCloseCircleOutline,
-  mdiAlertCircleCheckOutline
-} from '@mdi/js'
-import CommitBenchmarkActions from '../runs/CommitBenchmarkActions.vue'
-import CommitOverviewBase from './CommitOverviewBase.vue'
-import TarTaskOverview from './TarTaskOverview.vue'
-import { RawLocation } from 'vue-router'
+  mdiAlertCircleCheckOutline,
+} from "@mdi/js";
+import CommitBenchmarkActions from "../runs/CommitBenchmarkActions.vue";
+import CommitOverviewBase from "./CommitOverviewBase.vue";
+import TarTaskOverview from "./TarTaskOverview.vue";
+import { RawLocation } from "vue-router";
 
 @Component({
   components: {
-    'commit-benchmark-actions': CommitBenchmarkActions,
+    "commit-benchmark-actions": CommitBenchmarkActions,
     COMMIT: CommitOverviewBase,
-    UPLOADED_TAR: TarTaskOverview
-  }
+    UPLOADED_TAR: TarTaskOverview,
+  },
 })
 export default class RunOverview extends Vue {
   @Prop()
-  private run!: RunDescription
+  private run!: RunDescription;
 
   private get isSuccessful(): boolean {
-    return this.run.success === 'SUCCESS'
+    return this.run.success === "SUCCESS";
   }
 
   private get isCompleteFailure(): boolean {
-    return this.run.success === 'FAILURE'
+    return this.run.success === "FAILURE";
   }
 
   private get runLinkLocation(): RawLocation {
     return {
-      name: 'run-detail',
-      params: { first: this.run.runId }
-    }
+      name: "run-detail",
+      params: { first: this.run.runId },
+    };
   }
 
   private get commit(): CommitDescription | undefined {
     return this.run.source instanceof CommitTaskSource
       ? this.run.source.commitDescription
-      : undefined
+      : undefined;
   }
 
   // ============== ICONS ==============
-  private successIcon = mdiCheckboxMarkedCircleOutline
-  private partialErrorIcon = mdiAlertCircleCheckOutline
-  private errorIcon = mdiCloseCircleOutline
+  private successIcon = mdiCheckboxMarkedCircleOutline;
+  private partialErrorIcon = mdiAlertCircleCheckOutline;
+  private errorIcon = mdiCloseCircleOutline;
   // ==============       ==============
 }
 </script>

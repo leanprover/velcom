@@ -95,62 +95,62 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import WorkerOverview from '../components/queue/WorkerOverview.vue'
-import QueueOverview from '../components/queue/QueueOverview.vue'
-import { vxm } from '@/store'
-import { Route, RawLocation } from 'vue-router'
-import UploadTarDialog from '@/components/queue/UploadTarDialog.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import WorkerOverview from "../components/queue/WorkerOverview.vue";
+import QueueOverview from "../components/queue/QueueOverview.vue";
+import { vxm } from "@/store";
+import { Route, RawLocation } from "vue-router";
+import UploadTarDialog from "@/components/queue/UploadTarDialog.vue";
 
 @Component({
   components: {
     UploadTarDialog,
-    'worker-overview': WorkerOverview,
-    'queue-overview': QueueOverview
-  }
+    "worker-overview": WorkerOverview,
+    "queue-overview": QueueOverview,
+  },
 })
 export default class Queue extends Vue {
-  private uploadTarDialogOpen: boolean = false
+  private uploadTarDialogOpen: boolean = false;
 
   private get workers() {
-    return vxm.queueModule.workers
+    return vxm.queueModule.workers;
   }
 
   private get isAdmin() {
-    return vxm.userModule.isAdmin
+    return vxm.userModule.isAdmin;
   }
 
   private async cancelAllTasks() {
     if (!window.confirm(`Do you really want to cancel all tasks?`)) {
-      return
+      return;
     }
 
-    await vxm.queueModule.dispatchDeleteAllOpenTasks()
-    this.$globalSnackbar.setSuccess('cancel-queue', 'Cancelled Queue')
+    await vxm.queueModule.dispatchDeleteAllOpenTasks();
+    this.$globalSnackbar.setSuccess("cancel-queue", "Cancelled Queue");
   }
 
   private async refetchRepos() {
     if (!this.isAdmin) {
-      return
+      return;
     }
-    await vxm.repoModule.triggerListenerFetch()
+    await vxm.repoModule.triggerListenerFetch();
 
     this.$globalSnackbar.setSuccess(
-      'listener',
-      'Re-fetched repo and updated benchrepo',
-      2
-    )
+      "listener",
+      "Re-fetched repo and updated benchrepo",
+      2,
+    );
   }
 
   beforeRouteLeave(
     to: Route,
     from: Route,
-    next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void
+    next: (to?: RawLocation | false | ((vm: Vue) => any) | void) => void,
   ): void {
-    vxm.queueModule.setOpenTasks([])
-    vxm.queueModule.setWorkers([])
-    next()
+    vxm.queueModule.setOpenTasks([]);
+    vxm.queueModule.setWorkers([]);
+    next();
   }
 }
 </script>
