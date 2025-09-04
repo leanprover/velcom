@@ -1,58 +1,4 @@
-<template>
-  <v-data-table
-    :headers="headers"
-    :items="items"
-    :items-per-page="200"
-    :footer-props="{ itemsPerPageOptions: [5, 25, 100, 200, 500, -1] }"
-    multi-sort
-    dense
-    class="compare-table"
-  >
-    <template #[`item.difference`]="{ item, value }">
-      <span :style="{ color: item.changeColor }">
-        {{ item.formatNumber(value) }}
-      </span>
-      <span
-        :style="{
-          color: item.changeColor,
-          width: '6em',
-          opacity: 0.9,
-          'font-size': '0.8rem',
-        }"
-        class="d-inline-block"
-      >
-        <span v-if="Number.isFinite(item.differencePercent)">
-          {{ item.formatNumber(item.differencePercent * 100) }} %
-        </span>
-        <span v-else>-</span>
-      </span>
-    </template>
-
-    <template #[`item.stddevDiff`]="{ item, value }">
-      <span v-if="Number.isFinite(value)">
-        {{ item.formatNumber(value) }} σ
-      </span>
-      <span v-else>-</span>
-    </template>
-
-    <template
-      v-for="slotName in ['item.valueFirst', 'item.valueSecond']"
-      v-slot:[slotName]="{ item, value }"
-    >
-      <span :key="slotName">{{ item.formatNumber(value) }}</span>
-    </template>
-
-    <template #[`header.difference`]="{}">
-      <div class="d-flex justify-center">
-        <span class="change-arrow">→</span>
-      </div>
-    </template>
-  </v-data-table>
-</template>
-
-<script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+<script setup lang="ts">
 import {
   Dimension,
   DimensionDifference,
@@ -61,7 +7,7 @@ import {
   Run,
   RunResultSuccess,
 } from "@/store/types";
-import { Prop } from "vue-property-decorator";
+import { computed } from "vue";
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
@@ -137,40 +83,40 @@ class TableItem {
   }
 }
 
-@Component
-export default class RunComparisonTable extends Vue {
-  @Prop()
-  private first!: Run;
+const {
+  first,
+  second,
+  differences = [],
+} = defineProps<{
+  first: Run;
+  second: Run;
+  differences: DimensionDifference[];
+}>();
 
-  @Prop()
-  private second!: Run;
+const headers = computed(() => {
+  return [
+    { text: "Benchmark", value: "benchmark", align: "left" },
+    { text: "Metric", value: "metric", align: "left" },
+    { text: "Unit", value: "unit", align: "left" },
+    { text: "Change/Stddev", value: "stddevDiff", align: "left" },
+    { text: first.id, value: "valueFirst", align: "right" },
+    {
+      text: "->",
+      value: "difference",
+      filterable: false,
+      align: "end",
+    },
+    { text: second.id, value: "valueSecond", align: "left" },
+  ];
+});
 
-  @Prop({ default: () => [] })
-  private differences!: DimensionDifference[];
-
-  private get headers() {
-    return [
-      { text: "Benchmark", value: "benchmark", align: "left" },
-      { text: "Metric", value: "metric", align: "left" },
-      { text: "Unit", value: "unit", align: "left" },
-      { text: "Change/Stddev", value: "stddevDiff", align: "left" },
-      { text: this.first.id, value: "valueFirst", align: "right" },
-      {
-        text: "->",
-        value: "difference",
-        filterable: false,
-        align: "end",
-      },
-      { text: this.second.id, value: "valueSecond", align: "left" },
-    ];
-  }
-
-  /**
-   * Cache the differences indexed by dimension as that is the main lookup direction in the item generation.
-   */
-  get differencesPerDimension(): Map<string, DimensionDifference> {
+/**
+ * Cache the differences indexed by dimension as that is the main lookup direction in the item generation.
+ */
+const differencesPerDimension = computed<Map<string, DimensionDifference>>(
+  () => {
     const diffsPerDim: Map<string, DimensionDifference> = new Map();
-    for (const diff of this.differences) {
+    for (const diff of differences) {
       // We only have one measurement per dimension, so this index is safe and won't collide.
       // Safety assertion if this ever changes
       if (diffsPerDim.has(diff.dimension.toString())) {
@@ -182,79 +128,131 @@ export default class RunComparisonTable extends Vue {
       diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff));
     }
     return diffsPerDim;
+  },
+);
+
+const items = computed<TableItem[]>(() => {
+  const allDimensions = getDimensionsForRun(first).concat(
+    getDimensionsForRun(second),
+  );
+
+  const uniqueDimensions: Map<string, Dimension> = new Map();
+  allDimensions.forEach((dim) => {
+    uniqueDimensions.set(dim.toString(), dim);
+  });
+
+  return Array.from(uniqueDimensions.values()).map(
+    (dimension) =>
+      new TableItem(
+        dimension.benchmark,
+        dimension.metric,
+        dimension.unit,
+        dimension.interpretation,
+        getValue(first, dimension),
+        getDifference(dimension),
+        getDifferencePercent(dimension),
+        getStddevDiff(dimension),
+        getValue(second, dimension),
+      ),
+  );
+});
+
+function getDimensionsForRun(run: Run): Dimension[] {
+  if (run.result instanceof RunResultSuccess) {
+    return run.result.measurements.map((it) => it.dimension);
   }
+  return [];
+}
 
-  private get items(): TableItem[] {
-    const allDimensions = this.getDimensionsForRun(this.first).concat(
-      this.getDimensionsForRun(this.second),
-    );
-
-    const uniqueDimensions: Map<string, Dimension> = new Map();
-    allDimensions.forEach((dim) => {
-      uniqueDimensions.set(dim.toString(), dim);
-    });
-
-    return Array.from(uniqueDimensions.values()).map(
-      (dimension) =>
-        new TableItem(
-          dimension.benchmark,
-          dimension.metric,
-          dimension.unit,
-          dimension.interpretation,
-          this.getValue(this.first, dimension),
-          this.getDifference(dimension),
-          this.getDifferencePercent(dimension),
-          this.getStddevDiff(dimension),
-          this.getValue(this.second, dimension),
-        ),
-    );
+function getDifference(dimension: Dimension): number | undefined {
+  const difference = differencesPerDimension.value.get(dimension.toString());
+  if (difference) {
+    return difference.absDiff;
   }
+  return undefined;
+}
 
-  private getDimensionsForRun(run: Run): Dimension[] {
-    if (run.result instanceof RunResultSuccess) {
-      return run.result.measurements.map((it) => it.dimension);
+function getDifferencePercent(dimension: Dimension): number | undefined {
+  const difference = differencesPerDimension.value.get(dimension.toString());
+  if (difference) {
+    return difference.relDiff;
+  }
+  return undefined;
+}
+
+function getStddevDiff(dimension: Dimension): number | undefined {
+  const difference = differencesPerDimension.value.get(dimension.toString());
+  if (difference) {
+    return difference.stddevDiff;
+  }
+  return undefined;
+}
+
+function getValue(run: Run, dimension: Dimension): number | undefined {
+  if (run.result instanceof RunResultSuccess) {
+    const relevantMeasurement = run.result.forDimension(dimension);
+    if (!relevantMeasurement) {
+      return undefined;
     }
-    return [];
-  }
-
-  private getDifference(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.absDiff;
+    if (relevantMeasurement instanceof MeasurementSuccess) {
+      return relevantMeasurement.value;
     }
-    return undefined;
   }
-
-  private getDifferencePercent(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.relDiff;
-    }
-    return undefined;
-  }
-
-  private getStddevDiff(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.stddevDiff;
-    }
-    return undefined;
-  }
-
-  private getValue(run: Run, dimension: Dimension): number | undefined {
-    if (run.result instanceof RunResultSuccess) {
-      const relevantMeasurement = run.result.forDimension(dimension);
-      if (!relevantMeasurement) {
-        return undefined;
-      }
-      if (relevantMeasurement instanceof MeasurementSuccess) {
-        return relevantMeasurement.value;
-      }
-    }
-    return undefined;
-  }
+  return undefined;
 }
 </script>
+
+<template>
+  <v-data-table
+    :headers="headers"
+    :items="items"
+    :items-per-page="200"
+    :footer-props="{ itemsPerPageOptions: [5, 25, 100, 200, 500, -1] }"
+    multi-sort
+    dense
+    class="compare-table"
+  >
+    <template #[`item.difference`]="{ item, value }">
+      <span :style="{ color: item.changeColor }">
+        {{ item.formatNumber(value) }}
+      </span>
+      <span
+        :style="{
+          color: item.changeColor,
+          width: '6em',
+          opacity: 0.9,
+          'font-size': '0.8rem',
+        }"
+        class="d-inline-block"
+      >
+        <span v-if="Number.isFinite(item.differencePercent)">
+          {{ item.formatNumber(item.differencePercent * 100) }} %
+        </span>
+        <span v-else>-</span>
+      </span>
+    </template>
+
+    <template #[`item.stddevDiff`]="{ item, value }">
+      <span v-if="Number.isFinite(value)">
+        {{ item.formatNumber(value) }} σ
+      </span>
+      <span v-else>-</span>
+    </template>
+
+    <template
+      v-for="slotName in ['item.valueFirst', 'item.valueSecond']"
+      v-slot:[slotName]="{ item, value }"
+    >
+      <span :key="slotName">{{ item.formatNumber(value) }}</span>
+    </template>
+
+    <template #[`header.difference`]="{}">
+      <div class="d-flex justify-center">
+        <span class="change-arrow">→</span>
+      </div>
+    </template>
+  </v-data-table>
+</template>
 
 <style scoped>
 .change-arrow {
