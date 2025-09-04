@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+pushd frontend
+yarnpkg install --ignore-engines
+yarnpkg run fmtchk
+popd
