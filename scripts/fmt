@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+pushd frontend
+yarnpkg install --ignore-engines
+yarnpkg run fmt
+popd
+
 pushd backend
 mvn spotless:apply
 popd
