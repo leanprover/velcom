@@ -90,11 +90,6 @@
         <groupId>org.apache.maven.plugins</groupId>
       </plugin>
 
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-
       <!-- FLYWAY -->
       <plugin>
         <groupId>org.flywaydb</groupId>
@@ -318,7 +313,6 @@
       <artifactId>assertj-core</artifactId>
     </dependency>
 
-
     <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
     <dependency>
       <artifactId>org.eclipse.jgit</artifactId>
@@ -331,7 +325,6 @@
       <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
       <version>${jgit.version}</version>
     </dependency>
-
 
     <!-- database dependencies -->
 

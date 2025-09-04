@@ -44,11 +44,6 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-
       <!-- Current commit hash available to jars -->
       <!-- When changing this, also change backend/pom.xml and GitProperties.java -->
       <plugin>

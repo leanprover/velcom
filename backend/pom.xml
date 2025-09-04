@@ -9,7 +9,6 @@
     <module>runner</module>
     <module>backend</module>
     <module>shared</module>
-    <module>aggregator</module>
   </modules>
 
   <artifactId>velcom</artifactId>
@@ -31,7 +30,6 @@
     <slf4j.version>1.7.32</slf4j.version>
 
     <git-commit-id-plugin.version>4.0.0</git-commit-id-plugin.version>
-    <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
     <maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
@@ -108,49 +106,6 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <groupId>org.apache.maven.plugins</groupId>
           <version>${maven-surefire-plugin.version}</version>
-        </plugin>
-
-        <!-- CODE COVERAGE-->
-        <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${jacoco-maven-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>prepare-agent</id>
-              <goals>
-                <goal>prepare-agent</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>report</id>
-              <phase>prepare-package</phase>
-              <goals>
-                <goal>report</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>post-unit-test</id>
-              <phase>test</phase>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <configuration>
-                <!-- Sets the path to the file which contains the execution data. -->
-
-                <dataFile>target/jacoco.exec</dataFile>
-                <!-- Sets the output directory for the code coverage report. -->
-                <outputDirectory>target/jacoco-ut</outputDirectory>
-              </configuration>
-            </execution>
-          </executions>
-          <configuration>
-            <excludes>
-              <exclude>org/jooq/codegen/**/*.class</exclude>
-              <exclude>de/aaaaaaah/velcom/runner/RunnerCliSpec_Parser.class</exclude>
-              <exclude>de/aaaaaaah/velcom/runner/RunnerCliSpec_Parser$*.class</exclude>
-            </excludes>
-          </configuration>
         </plugin>
 
         <!-- Maven site -->
@@ -267,18 +222,6 @@
         <reportSets>
           <reportSet>
             <reports>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <!-- select non-aggregate reports -->
-              <report>report</report>
             </reports>
           </reportSet>
         </reportSets>
