@@ -3,7 +3,7 @@ name: Build, publish and deploy
 # Run on everything. We conditionally skip deployment, but this way the build
 # is only run once. Testing could be a different workflow, but then the github
 # runners would need to build it twice, wasting resources.
-on: [push]
+on: [ push ]
 
 env:
   IMAGE_NAME: velcom-server
@@ -16,12 +16,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '19'
 
       - name: "Build frontend (location independent)"
         run: "./scripts/build-frontend --env production"
+
+      - name: Check formatting
+        run: ./scripts/fmtchk-frontend
+
       - name: "Upload frontend artifacts (location independent)"
         uses: actions/upload-artifact@v4
         with:
@@ -34,16 +39,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
+
       - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
+      - name: Check formatting
+        run: ./scripts/fmtchk-backend
 
       - name: "Build backend"
         run: "./scripts/build-backend"
@@ -53,16 +63,19 @@ jobs:
         with:
           name: backend-artifacts-backend
           path: backend/backend/target/backend.jar
+
       - name: "Upload aspectjweaver artifact"
         uses: actions/upload-artifact@v4
         with:
           name: aspectjweaver-artifact
           path: backend/backend/target/dependency/aspectjweaver.jar
+
       - name: "Upload backend/runner artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: backend-artifacts-runner
           path: backend/runner/target/runner.jar
+
       - name: Release runner
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -76,7 +89,7 @@ jobs:
   # Push location independent image to GitHub Packages.
   push-docker-image:
     # Ensure build job passes before pushing image.
-    needs: [build-frontend, build-backend]
+    needs: [ build-frontend, build-backend ]
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -90,11 +103,13 @@ jobs:
         with:
           name: frontend-artifacts
           path: dist
+
       - name: "Download backend artifacts"
         uses: actions/download-artifact@v4
         with:
           pattern: backend-artifacts-*
           merge-multiple: true
+
       - name: "Download aspectjweaver artifact"
         uses: actions/download-artifact@v4
         with:
@@ -116,4 +131,3 @@ jobs:
           # Offer the image as latest
           docker tag $IMAGE_NAME $IMAGE_ID:latest
           docker push $IMAGE_ID:latest
-
