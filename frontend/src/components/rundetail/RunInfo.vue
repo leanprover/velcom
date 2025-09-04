@@ -33,8 +33,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   mdiAlarmCheck,
   mdiCameraTimer,
@@ -43,68 +42,71 @@ import {
   mdiRobot,
 } from "@mdi/js";
 import { formatDate, formatDurationHuman } from "@/util/Times";
-import { Prop } from "vue-property-decorator";
 import { Run, RunResultSuccess } from "@/store/types";
 
-@Component
-export default class RunInfo extends Vue {
-  @Prop()
-  private run!: Run;
-
-  private formatDate(date: Date) {
-    return formatDate(date);
-  }
-
-  private formatDuration(start: Date, end: Date) {
-    return formatDurationHuman(start, end);
-  }
-
-  private get toolbarColor() {
-    const successful = this.run.result instanceof RunResultSuccess;
-    return successful ? "toolbarColor" : "warning";
-  }
-
-  private get runInfoItems() {
-    return [
-      {
-        header: "Trigger",
-        icon: this.iconTrigger,
-        body: `${this.run.source.type.toLocaleLowerCase()} by ${
-          this.run.author
-        }`,
-      },
-      {
-        header: "Started",
-        icon: this.iconStarted,
-        body: this.formatDate(this.run.startTime),
-      },
-      {
-        header: "Finished",
-        icon: this.iconFinished,
-        body: this.formatDate(this.run.stopTime),
-      },
-      {
-        header: "Duration",
-        icon: this.iconDuration,
-        body: this.formatDuration(this.run.startTime, this.run.stopTime),
-      },
-      {
-        header: this.run.runnerName,
-        icon: this.iconRunner,
-        body: this.run.runnerInfo,
-        bodyClass: "worker-description",
-        alwaysAuto: true,
-      },
-    ];
-  }
-
-  // ICONS
-  private iconTrigger = mdiFlash;
-  private iconStarted = mdiClockFast;
-  private iconFinished = mdiAlarmCheck;
-  private iconDuration = mdiCameraTimer;
-  private iconRunner = mdiRobot;
-}
+export default defineComponent({
+  data() {
+    return {
+      iconTrigger: mdiFlash,
+      iconStarted: mdiClockFast,
+      iconFinished: mdiAlarmCheck,
+      iconDuration: mdiCameraTimer,
+      iconRunner: mdiRobot,
+    };
+  },
+  computed: {
+    toolbarColor() {
+      const successful = this.run.result instanceof RunResultSuccess;
+      return successful ? "toolbarColor" : "warning";
+    },
+    runInfoItems() {
+      return [
+        {
+          header: "Trigger",
+          icon: this.iconTrigger,
+          body: `${this.run.source.type.toLocaleLowerCase()} by ${
+            this.run.author
+          }`,
+        },
+        {
+          header: "Started",
+          icon: this.iconStarted,
+          body: this.formatDate(this.run.startTime),
+        },
+        {
+          header: "Finished",
+          icon: this.iconFinished,
+          body: this.formatDate(this.run.stopTime),
+        },
+        {
+          header: "Duration",
+          icon: this.iconDuration,
+          body: this.formatDuration(this.run.startTime, this.run.stopTime),
+        },
+        {
+          header: this.run.runnerName,
+          icon: this.iconRunner,
+          body: this.run.runnerInfo,
+          bodyClass: "worker-description",
+          alwaysAuto: true,
+        },
+      ];
+    },
+  },
+  methods: {
+    formatDate(date: Date) {
+      return formatDate(date);
+    },
+    formatDuration(start: Date, end: Date) {
+      return formatDurationHuman(start, end);
+    },
+  },
+  props: {
+    run: {
+      type: Object as PropType<Run>,
+    },
+  },
+});
 </script>
 
 <style scoped>

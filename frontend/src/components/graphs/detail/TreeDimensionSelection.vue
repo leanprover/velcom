@@ -41,10 +41,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { vxm } from "@/store";
-import { Prop, Watch } from "vue-property-decorator";
 import { Dimension } from "@/store/types";
 import { distinct, locallySorted } from "@/util/Arrays";
 
@@ -72,101 +70,111 @@ class DimensionItem {
   }
 }
 
-@Component
-export default class TreeDimensionSelection extends Vue {
-  private search: string = "";
+export default defineComponent({
+  data() {
+    const openItems: string[] = [];
+    const selectedBenchmarkItems: string[] = [];
+    const search: string = "";
 
-  @Prop()
-  private allDimensions!: Dimension[];
-
-  @Prop()
-  private selectedDimensions!: Dimension[];
-
-  private selectedBenchmarkItems: string[] = [];
-
-  private openItems: string[] = [];
-
-  @Watch("search")
-  private newSearch(search: string) {
-    if (!search) {
-      this.openItems = [];
-      return;
-    }
-
-    const containsIgnoreCase = (id: string, value: string) =>
-      id.toLocaleLowerCase().includes(value.toLocaleLowerCase());
-
-    this.openItems = this.benchmarkItems
-      .filter(
-        (it) =>
-          containsIgnoreCase(it.id, search) ||
-          it.children.some((child) => containsIgnoreCase(child.id, search)),
-      )
-      .map((it) => it.id);
-  }
-
-  private get benchmarkItems(): BenchmarkItem[] {
-    return this.allBenchmarks.map(
-      (benchmark) =>
-        new BenchmarkItem(
-          benchmark,
-          this.allDimensions
-            .filter((dimension) => dimension.benchmark === benchmark)
-            .map((dimension) => new DimensionItem(dimension))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-        ),
-    );
-  }
-
-  private get dimensionItemMap(): Map<string, DimensionItem> {
-    const map = new Map();
-    this.benchmarkItems
-      .flatMap((it) => it.children)
-      .forEach((it) => map.set(it.dimension.toString(), it));
-    return map;
-  }
-
-  private get selectedItems(): string[] {
-    const leaves = this.selectedDimensions
-      .map((id) => this.dimensionItemMap.get(id.toString()))
-      .filter((it) => it)
-      .map((it) => it!.id);
-
-    return [...this.selectedBenchmarkItems, ...leaves];
-  }
-
-  private metricColor(item: DimensionItem | BenchmarkItem): string {
-    if (!this.selectedDimensions) {
-      return "accent";
-    }
-    if (item instanceof DimensionItem) {
-      return vxm.colorModule.colorForDetailDimension(item.dimension);
-    } else if (item.children) {
-      return this.metricColor(item.children[0]);
-    } else {
-      return "accent";
-    }
-  }
-
-  private changed(dimensions: string[]) {
-    this.selectedBenchmarkItems = dimensions.filter((it) =>
-      this.benchmarkItems.find((a) => a.id === it),
-    );
-
-    this.$emit(
-      "update:selectedDimensions",
-      dimensions
-        .map((it) => this.dimensionItemMap.get(it.toString()))
+    return {
+      search,
+      selectedBenchmarkItems,
+      openItems,
+    };
+  },
+  computed: {
+    benchmarkItems(): BenchmarkItem[] {
+      return this.allBenchmarks.map(
+        (benchmark) =>
+          new BenchmarkItem(
+            benchmark,
+            this.allDimensions
+              .filter((dimension) => dimension.benchmark === benchmark)
+              .map((dimension) => new DimensionItem(dimension))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          ),
+      );
+    },
+    dimensionItemMap(): Map<string, DimensionItem> {
+      const map = new Map();
+      this.benchmarkItems
+        .flatMap((it) => it.children)
+        .forEach((it) => map.set(it.dimension.toString(), it));
+      return map;
+    },
+    selectedItems(): string[] {
+      const leaves = this.selectedDimensions
+        .map((id) => this.dimensionItemMap.get(id.toString()))
         .filter((it) => it)
-        .map((it) => it!.dimension),
-    );
-  }
+        .map((it) => it!.id);
 
-  private get allBenchmarks(): string[] {
-    const benchmarks = this.allDimensions.map((it) => it.benchmark);
-    return locallySorted(distinct(benchmarks));
-  }
-}
+      return [...this.selectedBenchmarkItems, ...leaves];
+    },
+    allBenchmarks(): string[] {
+      const benchmarks = this.allDimensions.map((it) => it.benchmark);
+      return locallySorted(distinct(benchmarks));
+    },
+  },
+  methods: {
+    metricColor(item: DimensionItem | BenchmarkItem): string {
+      if (!this.selectedDimensions) {
+        return "accent";
+      }
+      if (item instanceof DimensionItem) {
+        return vxm.colorModule.colorForDetailDimension(item.dimension);
+      } else if (item.children) {
+        return this.metricColor(item.children[0]);
+      } else {
+        return "accent";
+      }
+    },
+    changed(dimensions: string[]) {
+      this.selectedBenchmarkItems = dimensions.filter((it) =>
+        this.benchmarkItems.find((a) => a.id === it),
+      );
+
+      this.$emit(
+        "update:selectedDimensions",
+        dimensions
+          .map((it) => this.dimensionItemMap.get(it.toString()))
+          .filter((it) => it)
+          .map((it) => it!.dimension),
+      );
+    },
+    newSearch(search: string) {
+      if (!search) {
+        this.openItems = [];
+        return;
+      }
+
+      const containsIgnoreCase = (id: string, value: string) =>
+        id.toLocaleLowerCase().includes(value.toLocaleLowerCase());
+
+      this.openItems = this.benchmarkItems
+        .filter(
+          (it) =>
+            containsIgnoreCase(it.id, search) ||
+            it.children.some((child) => containsIgnoreCase(child.id, search)),
+        )
+        .map((it) => it.id);
+    },
+  },
+  props: {
+    allDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    selectedDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+  },
+  watch: {
+    search: [
+      {
+        handler: "newSearch",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped>

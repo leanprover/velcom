@@ -41,9 +41,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { RawLocation } from "vue-router";
 import TextChip from "@/components/misc/TextChip.vue";
 import InlineMinimalRepoDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
@@ -51,42 +49,43 @@ import { mdiFolderZipOutline, mdiRunFast } from "@mdi/js";
 import { SearchItemRun } from "@/store/types";
 import { formatDate, formatDurationHuman } from "@/util/Times";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-display": InlineMinimalRepoDisplay,
     TextChip,
   },
-})
-export default class SearchResultRun extends Vue {
-  @Prop()
-  private readonly item!: SearchItemRun;
-
-  private get linkLocation(): RawLocation {
+  data() {
     return {
-      name: "run-detail",
-      params: { first: this.item.id },
+      runIcon: mdiRunFast,
+      tarIcon: mdiFolderZipOutline,
     };
-  }
-
-  private get startTimeString() {
-    return formatDate(this.item.startTime);
-  }
-
-  private get durationString() {
-    return formatDurationHuman(this.item.startTime, this.item.stopTime);
-  }
-
-  private get description() {
-    return this.item.tarDescription || this.item.commitSummary;
-  }
-
-  private get icon() {
-    return this.item.tarDescription ? this.tarIcon : this.runIcon;
-  }
-
-  private readonly runIcon = mdiRunFast;
-  private readonly tarIcon = mdiFolderZipOutline;
-}
+  },
+  computed: {
+    linkLocation(): RawLocation {
+      return {
+        name: "run-detail",
+        params: { first: this.item.id },
+      };
+    },
+    startTimeString() {
+      return formatDate(this.item.startTime);
+    },
+    durationString() {
+      return formatDurationHuman(this.item.startTime, this.item.stopTime);
+    },
+    description() {
+      return this.item.tarDescription || this.item.commitSummary;
+    },
+    icon() {
+      return this.item.tarDescription ? this.tarIcon : this.runIcon;
+    },
+  },
+  props: {
+    item: {
+      type: Object as PropType<SearchItemRun>,
+    },
+  },
+});
 </script>
 
 <style scoped>

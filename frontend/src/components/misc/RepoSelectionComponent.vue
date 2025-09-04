@@ -25,44 +25,42 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Model, Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { Repo } from "@/store/types";
 import { mdiSourceBranch } from "@mdi/js";
 
-@Component
-export default class RepoSelectionComponent extends Vue {
-  @Model("value", { type: String })
-  private readonly repoId!: string;
-
-  @Prop({ default: () => [] })
-  private readonly rules!: [(input: string) => string | boolean];
-
-  @Prop({ default: () => [] })
-  private readonly repos!: [Repo];
-
-  @Prop({ default: false })
-  private readonly disabled!: boolean;
-
-  @Prop({ default: "Repository name" })
-  private readonly label!: string;
-
-  @Prop({ default: false })
-  private readonly clearable!: boolean;
-
-  private setRepoId(newValue: string) {
-    this.$emit("value", newValue);
-  }
-
-  private get sortedRepos() {
-    return this.repos.slice().sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  // ============== ICONS ==============
-  private readonly repoIcon = mdiSourceBranch;
-  // ==============       ==============
-}
+export default defineComponent({
+  data() {
+    return {
+      repoIcon: mdiSourceBranch,
+    };
+  },
+  computed: {
+    sortedRepos() {
+      return this.repos.slice().sort((a, b) => a.name.localeCompare(b.name));
+    },
+  },
+  methods: {
+    setRepoId(newValue: string) {
+      this.$emit("value", newValue);
+    },
+  },
+  props: {
+    rules: {
+      default: () => [],
+      type: Object as PropType<[(input: string) => string | boolean]>,
+    },
+    repos: { default: () => [], type: Object as PropType<[Repo]> },
+    disabled: { default: false, type: Boolean },
+    label: { default: "Repository name", type: String },
+    clearable: { default: false, type: Boolean },
+    repoId: { type: String },
+  },
+  model: {
+    prop: "repoId",
+    event: "value",
+  },
+});
 </script>
 
 <style scoped></style>

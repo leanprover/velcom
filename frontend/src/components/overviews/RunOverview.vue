@@ -47,9 +47,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   CommitDescription,
   CommitTaskSource,
@@ -65,42 +63,42 @@ import CommitOverviewBase from "./CommitOverviewBase.vue";
 import TarTaskOverview from "./TarTaskOverview.vue";
 import { RawLocation } from "vue-router";
 
-@Component({
+export default defineComponent({
   components: {
     "commit-benchmark-actions": CommitBenchmarkActions,
     COMMIT: CommitOverviewBase,
     UPLOADED_TAR: TarTaskOverview,
   },
-})
-export default class RunOverview extends Vue {
-  @Prop()
-  private run!: RunDescription;
-
-  private get isSuccessful(): boolean {
-    return this.run.success === "SUCCESS";
-  }
-
-  private get isCompleteFailure(): boolean {
-    return this.run.success === "FAILURE";
-  }
-
-  private get runLinkLocation(): RawLocation {
+  data() {
     return {
-      name: "run-detail",
-      params: { first: this.run.runId },
+      successIcon: mdiCheckboxMarkedCircleOutline,
+      partialErrorIcon: mdiAlertCircleCheckOutline,
+      errorIcon: mdiCloseCircleOutline,
     };
-  }
-
-  private get commit(): CommitDescription | undefined {
-    return this.run.source instanceof CommitTaskSource
-      ? this.run.source.commitDescription
-      : undefined;
-  }
-
-  // ============== ICONS ==============
-  private successIcon = mdiCheckboxMarkedCircleOutline;
-  private partialErrorIcon = mdiAlertCircleCheckOutline;
-  private errorIcon = mdiCloseCircleOutline;
-  // ==============       ==============
-}
+  },
+  computed: {
+    isSuccessful(): boolean {
+      return this.run.success === "SUCCESS";
+    },
+    isCompleteFailure(): boolean {
+      return this.run.success === "FAILURE";
+    },
+    runLinkLocation(): RawLocation {
+      return {
+        name: "run-detail",
+        params: { first: this.run.runId },
+      };
+    },
+    commit(): CommitDescription | undefined {
+      return this.run.source instanceof CommitTaskSource
+        ? this.run.source.commitDescription
+        : undefined;
+    },
+  },
+  props: {
+    run: {
+      type: Object as PropType<RunDescription>,
+    },
+  },
+});
 </script>

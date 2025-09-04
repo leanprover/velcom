@@ -37,8 +37,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   Run,
   RunResultScriptError,
@@ -49,81 +48,81 @@ import {
   RunWithDifferences,
   Dimension,
 } from "@/store/types";
-import { Prop, Watch } from "vue-property-decorator";
 import MeasurementsDisplay from "@/components/rundetail/MeasurementsDisplay.vue";
 import RunInfo from "@/components/rundetail/RunInfo.vue";
 import { safeConvertAnsi } from "@/util/Texts";
 import { vxm } from "@/store";
 
-@Component({
+export default defineComponent({
   components: {
     "run-info": RunInfo,
     "measurements-display": MeasurementsDisplay,
   },
-})
-export default class RunDetail extends Vue {
-  @Prop()
-  private runWithDifferences!: RunWithDifferences;
-
-  private get run(): Run {
-    return this.runWithDifferences.run;
-  }
-
-  private get runColor() {
-    if (this.run.result instanceof RunResultScriptError) {
-      return "warning";
-    } else if (this.run.result instanceof RunResultVelcomError) {
-      return "error";
-    }
-    return "primary";
-  }
-
-  private get error(): string | undefined {
-    if (this.errorType === undefined) {
+  computed: {
+    run(): Run {
+      return this.runWithDifferences.run;
+    },
+    runColor() {
+      if (this.run.result instanceof RunResultScriptError) {
+        return "warning";
+      } else if (this.run.result instanceof RunResultVelcomError) {
+        return "error";
+      }
+      return "primary";
+    },
+    error(): string | undefined {
+      if (this.errorType === undefined) {
+        return undefined;
+      }
+      return safeConvertAnsi((this.run.result as RunResultVelcomError).error);
+    },
+    errorType(): string | undefined {
+      if (this.run.result instanceof RunResultScriptError) {
+        return "Benchmark-Script";
+      }
+      if (this.run.result instanceof RunResultVelcomError) {
+        return "VelCom";
+      }
       return undefined;
-    }
-    return safeConvertAnsi((this.run.result as RunResultVelcomError).error);
-  }
-
-  private get errorType(): string | undefined {
-    if (this.run.result instanceof RunResultScriptError) {
-      return "Benchmark-Script";
-    }
-    if (this.run.result instanceof RunResultVelcomError) {
-      return "VelCom";
-    }
-    return undefined;
-  }
-
-  private get measurements(): Measurement[] | undefined {
-    if (this.run.result instanceof RunResultSuccess) {
-      return this.run.result.measurements;
-    }
-    return undefined;
-  }
-
-  private get differences(): DimensionDifference[] | undefined {
-    if (this.run.result instanceof RunResultSuccess) {
-      return this.runWithDifferences.differences;
-    }
-    return undefined;
-  }
-
-  private navigateToDetailGraph(dimension: Dimension) {
-    this.$emit("navigate-to-detail-graph", dimension);
-  }
-
-  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
-  private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected;
-  }
-
-  @Watch("darkThemeSelected")
-  private onDarkThemeSelectionChanged() {
-    // The ANSI conversion needs to be redone
-    this.$forceUpdate();
-  }
-}
+    },
+    measurements(): Measurement[] | undefined {
+      if (this.run.result instanceof RunResultSuccess) {
+        return this.run.result.measurements;
+      }
+      return undefined;
+    },
+    differences(): DimensionDifference[] | undefined {
+      if (this.run.result instanceof RunResultSuccess) {
+        return this.runWithDifferences.differences;
+      }
+      return undefined;
+    },
+    darkThemeSelected() {
+      return vxm.userModule.darkThemeSelected;
+    },
+  },
+  methods: {
+    navigateToDetailGraph(dimension: Dimension) {
+      this.$emit("navigate-to-detail-graph", dimension);
+    },
+    onDarkThemeSelectionChanged() {
+      // The ANSI conversion needs to be redone
+      this.$forceUpdate();
+    },
+  },
+  props: {
+    runWithDifferences: {
+      type: Object as PropType<RunWithDifferences>,
+    },
+  },
+  watch: {
+    darkThemeSelected: [
+      {
+        handler: "onDarkThemeSelectionChanged",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped>

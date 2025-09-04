@@ -73,44 +73,38 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { availableGraphComponents } from "@/util/GraphVariantSelection";
-import { Prop } from "vue-property-decorator";
 import { mdiCheckboxBlankOutline, mdiCheckboxMarked } from "@mdi/js";
 
-@Component
-export default class GraphSettings extends Vue {
-  @Prop()
-  private graphComponent!: typeof Vue;
-
-  @Prop({ default: true })
-  private beginYAtZero!: boolean;
-
-  @Prop({ default: false })
-  private stacked!: boolean;
-
-  @Prop({ default: false })
-  private normalized!: boolean;
-
-  @Prop({ default: true })
-  private dayEquidistantGraphSelected!: boolean;
-
-  private get selectedGraphVariant() {
-    return this.graphComponent;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set selectedGraphVariant(variant: typeof Vue) {
-    this.$emit("update:graphComponent", variant);
-  }
-
-  private get availableGraphComponents() {
-    return availableGraphComponents;
-  }
-
-  // ICONS
-  private readonly iconOff = mdiCheckboxBlankOutline;
-  private readonly iconOn = mdiCheckboxMarked;
-}
+export default defineComponent({
+  data() {
+    return {
+      iconOff: mdiCheckboxBlankOutline,
+      iconOn: mdiCheckboxMarked,
+    };
+  },
+  computed: {
+    selectedGraphVariant: {
+      get() {
+        return this.graphComponent;
+      },
+      set(variant: typeof Vue) {
+        this.$emit("update:graphComponent", variant);
+      },
+    },
+    availableGraphComponents() {
+      return availableGraphComponents;
+    },
+  },
+  props: {
+    graphComponent: {
+      type: Object as PropType<typeof Vue>,
+    },
+    beginYAtZero: { default: true, type: Boolean },
+    stacked: { default: false, type: Boolean },
+    normalized: { default: false, type: Boolean },
+    dayEquidistantGraphSelected: { default: true, type: Boolean },
+  },
+});
 </script>

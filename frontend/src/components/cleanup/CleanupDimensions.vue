@@ -105,77 +105,83 @@
 </template>
 
 <script lang="ts">
-import Component from "vue-class-component";
-import Vue from "vue";
+import Vue, { defineComponent } from "vue";
 import { CleanupDimension } from "@/store/types";
 import { vxm } from "@/store";
 
-@Component
-export default class CleanupDimensions extends Vue {
-  private readonly headers = [
-    { text: "Benchmark", value: "dimension.benchmark", align: "left" },
-    { text: "Metric", value: "dimension.metric", align: "left" },
-    { text: "Total run count", value: "runs", align: "left" },
-    { text: "Untracked run count", value: "untrackedRuns", align: "left" },
-    { text: "Unreachable run count", value: "unreachableRuns", align: "left" },
-  ];
+export default defineComponent({
+  data() {
+    const confirmText: string = "";
+    const selectedDimensions: CleanupDimension[] = [];
 
-  private selectedDimensions: CleanupDimension[] = [];
-  private showDeleteDialog = false;
-  private confirmText: string = "";
-
-  private get allDimensions(): CleanupDimension[] | null {
-    if (vxm.cleanupModule.dimensions === null) {
-      return null;
-    }
-    return vxm.cleanupModule.dimensions
-      .slice()
-      .sort((a, b) =>
-        a.dimension.toString().localeCompare(b.dimension.toString()),
+    return {
+      headers: [
+        { text: "Benchmark", value: "dimension.benchmark", align: "left" },
+        { text: "Metric", value: "dimension.metric", align: "left" },
+        { text: "Total run count", value: "runs", align: "left" },
+        { text: "Untracked run count", value: "untrackedRuns", align: "left" },
+        {
+          text: "Unreachable run count",
+          value: "unreachableRuns",
+          align: "left",
+        },
+      ],
+      selectedDimensions,
+      showDeleteDialog: false,
+      confirmText,
+    };
+  },
+  computed: {
+    allDimensions(): CleanupDimension[] | null {
+      if (vxm.cleanupModule.dimensions === null) {
+        return null;
+      }
+      return vxm.cleanupModule.dimensions
+        .slice()
+        .sort((a, b) =>
+          a.dimension.toString().localeCompare(b.dimension.toString()),
+        );
+    },
+    deletedMeasurementsCount() {
+      return this.selectedDimensions
+        .map((it) => it.runs)
+        .reduce((a, b) => a + b, 0);
+    },
+    expectedConfirmationText() {
+      return (
+        "delete " +
+        this.selectedDimensions.length +
+        " dimension" +
+        (this.selectedDimensions.length !== 1 ? "s" : "") +
+        " and " +
+        this.deletedMeasurementsCount +
+        " measurement" +
+        (this.deletedMeasurementsCount !== 1 ? "s" : "")
       );
-  }
-
-  private get deletedMeasurementsCount() {
-    return this.selectedDimensions
-      .map((it) => it.runs)
-      .reduce((a, b) => a + b, 0);
-  }
-
-  private get expectedConfirmationText() {
-    return (
-      "delete " +
-      this.selectedDimensions.length +
-      " dimension" +
-      (this.selectedDimensions.length !== 1 ? "s" : "") +
-      " and " +
-      this.deletedMeasurementsCount +
-      " measurement" +
-      (this.deletedMeasurementsCount !== 1 ? "s" : "")
-    );
-  }
-
-  private get confirmedDeletion() {
-    return this.confirmText === this.expectedConfirmationText;
-  }
-
-  private async deleteSelectedDimensions() {
-    this.showDeleteDialog = false;
-    await vxm.cleanupModule.deleteDimensions(
-      this.selectedDimensions.map((it) => it.dimension),
-    );
-    this.selectedDimensions = [];
-    this.$globalSnackbar.setSuccess(
-      "cleanup",
-      "Dimensions and measurements deleted",
-      2,
-    );
+    },
+    confirmedDeletion() {
+      return this.confirmText === this.expectedConfirmationText;
+    },
+  },
+  async mounted() {
     await vxm.cleanupModule.fetchDimensions();
-  }
-
-  private async mounted() {
-    await vxm.cleanupModule.fetchDimensions();
-  }
-}
+  },
+  methods: {
+    async deleteSelectedDimensions() {
+      this.showDeleteDialog = false;
+      await vxm.cleanupModule.deleteDimensions(
+        this.selectedDimensions.map((it) => it.dimension),
+      );
+      this.selectedDimensions = [];
+      this.$globalSnackbar.setSuccess(
+        "cleanup",
+        "Dimensions and measurements deleted",
+        2,
+      );
+      await vxm.cleanupModule.fetchDimensions();
+    },
+  },
+});
 </script>
 
 <style scoped></style>

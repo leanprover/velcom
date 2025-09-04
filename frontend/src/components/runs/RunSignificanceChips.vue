@@ -47,8 +47,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   Dimension,
   DimensionDifference,
@@ -64,8 +63,6 @@ import {
   mdiChevronUp,
   mdiCloseCircleOutline,
 } from "@mdi/js";
-import { Prop } from "vue-property-decorator";
-
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
   { maximumFractionDigits: 1, notation: "compact" },
@@ -163,42 +160,46 @@ class RelevantChange {
   }
 }
 
-@Component
-export default class RunSignificanceChips extends Vue {
-  @Prop()
-  private readonly differences!: DimensionDifference[];
-
-  @Prop()
-  private readonly runId!: RunId;
-
-  @Prop({ default: () => [] })
-  private readonly failedSignificantDimensions!: Dimension[];
-
-  @Prop({ default: false })
-  private readonly center!: boolean;
-
-  @Prop({ default: false })
-  private readonly noLinks!: boolean;
-
-  private get relevantChanges(): RelevantChange[] {
-    return this.differences.map((it) => new RelevantChange(it));
-  }
-
-  private linkLocation(relevantChange: RelevantChange) {
-    if (this.noLinks) {
-      return undefined;
-    }
+export default defineComponent({
+  data() {
     return {
-      name: "run-comparison",
-      params: {
-        first: relevantChange.oldRunId,
-        second: this.runId,
-      },
+      failedIcon: mdiCloseCircleOutline,
     };
-  }
-
-  private readonly failedIcon = mdiCloseCircleOutline;
-}
+  },
+  computed: {
+    relevantChanges(): RelevantChange[] {
+      return this.differences.map((it) => new RelevantChange(it));
+    },
+  },
+  methods: {
+    linkLocation(relevantChange: RelevantChange) {
+      if (this.noLinks) {
+        return undefined;
+      }
+      return {
+        name: "run-comparison",
+        params: {
+          first: relevantChange.oldRunId,
+          second: this.runId,
+        },
+      };
+    },
+  },
+  props: {
+    differences: {
+      type: Array as PropType<DimensionDifference[]>,
+    },
+    runId: {
+      type: Object as PropType<RunId>,
+    },
+    failedSignificantDimensions: {
+      default: () => [],
+      type: Array as PropType<Dimension[]>,
+    },
+    center: { default: false, type: Boolean },
+    noLinks: { default: false, type: Boolean },
+  },
+});
 </script>
 
 <style scoped>

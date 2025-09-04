@@ -23,17 +23,16 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import CleanupDimensions from "@/components/cleanup/CleanupDimensions.vue";
 import { vxm } from "@/store";
 
-@Component({
+export default defineComponent({
   components: { CleanupDimensions },
-})
-export default class Settings extends Vue {
-  private get isAdmin() {
-    return vxm.userModule.isAdmin;
-  }
-}
+  computed: {
+    isAdmin() {
+      return vxm.userModule.isAdmin;
+    },
+  },
+});
 </script>

@@ -68,9 +68,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop, Watch } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   Dimension,
   DimensionDifference,
@@ -187,178 +185,182 @@ class Item {
   }
 }
 
-@Component({
+export default defineComponent({
   components: {
     "measurement-value": MeasurementValueDisplay,
   },
-})
-export default class MeasurementsDisplay extends Vue {
-  @Prop()
-  private readonly measurements!: Measurement[];
+  data() {
+    const safeDetailErrorDialogMessage: string = "";
+    const showDetailErrorDialog: boolean = false;
 
-  @Prop()
-  private readonly differences?: DimensionDifference[];
-
-  private showDetailErrorDialog: boolean = false;
-  private safeDetailErrorDialogMessage: string = "";
-
-  private get headerFormats() {
-    return [
-      {
-        slotName: "item.change",
-        displayField: "changeFormatted",
-        tooltip: "No unambiguous parent commit found",
-        colored: true,
-      },
-      {
-        slotName: "item.changePercent",
-        displayField: "changePercentFormatted",
-        tooltip: (item: Item) => {
-          if (!item.change) {
-            return "No unambiguous parent commit found";
-          }
-          return "The old value was zero. I can't divide by it :/";
+    return {
+      showDetailErrorDialog,
+      safeDetailErrorDialogMessage,
+    };
+  },
+  computed: {
+    headerFormats() {
+      return [
+        {
+          slotName: "item.change",
+          displayField: "changeFormatted",
+          tooltip: "No unambiguous parent commit found",
+          colored: true,
         },
-        colored: true,
-      },
-      {
-        slotName: "item.standardDeviation",
-        displayField: "standardDeviationFormatted",
-        tooltip:
-          "Not applicable as the benchmark script did not report enough values",
-        colored: false,
-      },
-      {
-        slotName: "item.standardDeviationPercent",
-        displayField: "standardDeviationPercentFormatted",
-        tooltip:
-          "Not applicable as the benchmark script did not report enough values",
-        colored: false,
-      },
-    ];
-  }
-
-  private get headers() {
-    return [
-      { text: "Benchmark", value: "benchmark", align: "left" },
-      { text: "Metric", value: "metric", align: "left" },
-      { text: "Unit", value: "unit", align: "left" },
-      { text: "Value", value: "value", align: "right" },
-      {
-        text: "Stddev",
-        value: "standardDeviation",
-        align: "right",
-      },
-      {
-        text: "Stddev %",
-        value: "standardDeviationPercent",
-        align: "right",
-      },
-      { text: "Change", value: "change", align: "right" },
-      { text: "Change %", value: "changePercent", align: "right" },
-    ];
-  }
-
-  private get items(): Item[] {
-    return this.measurements.map((it) =>
-      it instanceof MeasurementSuccess
-        ? this.successToItem(it)
-        : this.errorToItem(it),
-    );
-  }
-
-  private successToItem(measurement: MeasurementSuccess): Item {
-    const difference = this.differenceForDimension(measurement.dimension);
-    return new Item(
-      measurement.dimension.benchmark,
-      measurement.dimension.metric,
-      measurement.dimension.unit,
-      measurement.dimension.interpretation,
-      measurement.value,
-      measurement.stddev,
-      measurement.stddevPercent,
-      difference ? difference.absDiff : undefined,
-      difference ? difference.relDiff : undefined,
-    );
-  }
-
-  private differenceForDimension(
-    dimension: Dimension,
-  ): DimensionDifference | undefined {
-    return this.differencesByDimension[dimension.toString()];
-  }
-
-  private get differencesByDimension(): {
-    [asString: string]: DimensionDifference;
-  } {
-    if (!this.differences) {
-      return {};
-    }
-    const differencesByDimension: {
+        {
+          slotName: "item.changePercent",
+          displayField: "changePercentFormatted",
+          tooltip: (item: Item) => {
+            if (!item.change) {
+              return "No unambiguous parent commit found";
+            }
+            return "The old value was zero. I can't divide by it :/";
+          },
+          colored: true,
+        },
+        {
+          slotName: "item.standardDeviation",
+          displayField: "standardDeviationFormatted",
+          tooltip:
+            "Not applicable as the benchmark script did not report enough values",
+          colored: false,
+        },
+        {
+          slotName: "item.standardDeviationPercent",
+          displayField: "standardDeviationPercentFormatted",
+          tooltip:
+            "Not applicable as the benchmark script did not report enough values",
+          colored: false,
+        },
+      ];
+    },
+    headers() {
+      return [
+        { text: "Benchmark", value: "benchmark", align: "left" },
+        { text: "Metric", value: "metric", align: "left" },
+        { text: "Unit", value: "unit", align: "left" },
+        { text: "Value", value: "value", align: "right" },
+        {
+          text: "Stddev",
+          value: "standardDeviation",
+          align: "right",
+        },
+        {
+          text: "Stddev %",
+          value: "standardDeviationPercent",
+          align: "right",
+        },
+        { text: "Change", value: "change", align: "right" },
+        { text: "Change %", value: "changePercent", align: "right" },
+      ];
+    },
+    items(): Item[] {
+      return this.measurements.map((it) =>
+        it instanceof MeasurementSuccess
+          ? this.successToItem(it)
+          : this.errorToItem(it),
+      );
+    },
+    differencesByDimension(): {
       [asString: string]: DimensionDifference;
-    } = {};
-    this.differences.forEach((it) => {
-      differencesByDimension[it.dimension.toString()] = it;
-    });
-    return differencesByDimension;
-  }
+    } {
+      if (!this.differences) {
+        return {};
+      }
+      const differencesByDimension: {
+        [asString: string]: DimensionDifference;
+      } = {};
+      this.differences.forEach((it) => {
+        differencesByDimension[it.dimension.toString()] = it;
+      });
+      return differencesByDimension;
+    },
+    darkThemeSelected() {
+      return vxm.userModule.darkThemeSelected;
+    },
+  },
+  methods: {
+    successToItem(measurement: MeasurementSuccess): Item {
+      const difference = this.differenceForDimension(measurement.dimension);
+      return new Item(
+        measurement.dimension.benchmark,
+        measurement.dimension.metric,
+        measurement.dimension.unit,
+        measurement.dimension.interpretation,
+        measurement.value,
+        measurement.stddev,
+        measurement.stddevPercent,
+        difference ? difference.absDiff : undefined,
+        difference ? difference.relDiff : undefined,
+      );
+    },
+    differenceForDimension(
+      dimension: Dimension,
+    ): DimensionDifference | undefined {
+      return this.differencesByDimension[dimension.toString()];
+    },
+    errorToItem(measurementError: MeasurementError): Item {
+      return new Item(
+        measurementError.dimension.benchmark,
+        measurementError.dimension.metric,
+        measurementError.dimension.unit,
+        measurementError.dimension.interpretation,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        measurementError.error,
+      );
+    },
+    formatErrorShorthand(error: string) {
+      const MAX_ERROR_LENGTH = 30;
+      if (error.length < MAX_ERROR_LENGTH) {
+        return error;
+      }
+      return error.substring(0, MAX_ERROR_LENGTH) + "…";
+    },
+    displayErrorDetail(item: Item) {
+      if (!item.error) {
+        return "";
+      }
+      this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error);
+      this.showDetailErrorDialog = true;
+    },
+    rowClicked(item: Item) {
+      const currentSelection = document.getSelection();
+      if (currentSelection && currentSelection.toString()) {
+        return;
+      }
+      const measurement = this.measurements.find(
+        (it) =>
+          it.dimension.benchmark === item.benchmark &&
+          it.dimension.metric === item.metric,
+      )!;
 
-  private errorToItem(measurementError: MeasurementError): Item {
-    return new Item(
-      measurementError.dimension.benchmark,
-      measurementError.dimension.metric,
-      measurementError.dimension.unit,
-      measurementError.dimension.interpretation,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      measurementError.error,
-    );
-  }
-
-  private formatErrorShorthand(error: string) {
-    const MAX_ERROR_LENGTH = 30;
-    if (error.length < MAX_ERROR_LENGTH) {
-      return error;
-    }
-    return error.substring(0, MAX_ERROR_LENGTH) + "…";
-  }
-
-  private displayErrorDetail(item: Item) {
-    if (!item.error) {
-      return "";
-    }
-    this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error);
-    this.showDetailErrorDialog = true;
-  }
-
-  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
-  private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected;
-  }
-
-  @Watch("darkThemeSelected")
-  private onDarkThemeSelectionChanged() {
-    // The ANSI conversion needs to be redone
-    this.$forceUpdate();
-  }
-
-  private rowClicked(item: Item) {
-    const currentSelection = document.getSelection();
-    if (currentSelection && currentSelection.toString()) {
-      return;
-    }
-    const measurement = this.measurements.find(
-      (it) =>
-        it.dimension.benchmark === item.benchmark &&
-        it.dimension.metric === item.metric,
-    )!;
-
-    this.$emit("dimension-clicked", measurement.dimension);
-  }
-}
+      this.$emit("dimension-clicked", measurement.dimension);
+    },
+    onDarkThemeSelectionChanged() {
+      // The ANSI conversion needs to be redone
+      this.$forceUpdate();
+    },
+  },
+  props: {
+    measurements: {
+      type: Array as PropType<Measurement[]>,
+    },
+    differences: {
+      type: Array as PropType<DimensionDifference[]>,
+    },
+  },
+  watch: {
+    darkThemeSelected: [
+      {
+        handler: "onDarkThemeSelectionChanged",
+      },
+    ],
+  },
+});
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->

@@ -101,8 +101,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import SearchResultList from "@/components/search/SearchResultList.vue";
 import { vxm } from "@/store";
 import {
@@ -112,127 +111,142 @@ import {
   SearchItemCommit,
   SearchItemRun,
 } from "@/store/types";
-import { Watch } from "vue-property-decorator";
 import { debounce } from "@/util/Debouncer";
 import { mdiSwapHorizontalBold } from "@mdi/js";
 import { RawLocation } from "vue-router";
 import RepoSelectionComponent from "@/components/misc/RepoSelectionComponent.vue";
 
-@Component({
+export default defineComponent({
   components: { RepoSelectionComponent, SearchResultList },
-})
-export default class Search extends Vue {
-  private searchQuery = "";
-  private items: SearchItem[] = [];
-  private debouncedLookup = debounce(this.executeSearch, 300);
-  private compareFirst: SearchItem | null = null;
-  private compareSecond: SearchItem | null = null;
-  private repoId: RepoId | null = null;
-  private constrainToRepo = false;
-
-  @Watch("searchQuery")
-  private onQueryChange() {
-    this.debouncedLookup();
-  }
-
-  private get runInUrl() {
-    return this.$route.params["runId"];
-  }
-
-  private get repoIdInUrl() {
-    return this.$route.query["repoId"];
-  }
-
-  @Watch("runInUrl")
-  @Watch("repoIdInUrl")
-  private async adjustToUrl() {
-    if (this.repoIdInUrl) {
-      this.repoId = this.repoIdInUrl as string;
-      this.constrainToRepo = true;
-    }
-
-    if (this.runInUrl) {
-      const result = await vxm.runSearchModule.searchRun({
-        query: this.runInUrl,
-        repoId: this.repoId || undefined,
-      });
-      if (!result) {
-        return;
-      }
-      this.compareFirst = result[0];
-    }
-  }
-
-  private get allRepos() {
-    return vxm.repoModule.allRepos;
-  }
-
-  private markCommitForCompare(item: SearchItem) {
-    if (!this.compareFirst) {
-      this.compareFirst = item;
-      return;
-    }
-    this.compareSecond = item;
-  }
-
-  private swapOrder() {
-    const tmp = this.compareFirst;
-    this.compareFirst = this.compareSecond;
-    this.compareSecond = tmp;
-  }
-
-  private summaryForItem(item: SearchItem) {
-    if (item instanceof SearchItemCommit) {
-      return item.summary;
-    }
-    if (item instanceof SearchItemBranch) {
-      return item.name;
-    }
-    return item.tarDescription || item.commitSummary || item.id;
-  }
-
-  private get compareLink(): RawLocation | null {
-    if (!this.compareFirst || !this.compareSecond) {
-      return null;
-    }
-    const params: { first: string; second: string } = { first: "", second: "" };
-    const query: { hash1?: string; hash2?: string } = {};
-
-    if (this.compareFirst instanceof SearchItemRun) {
-      params.first = this.compareFirst.id;
-    } else {
-      params.first = this.compareFirst.repoId;
-      query.hash1 = this.compareFirst.hash;
-    }
-    if (this.compareSecond instanceof SearchItemRun) {
-      params.second = this.compareSecond.id;
-    } else {
-      params.second = this.compareSecond.repoId;
-      query.hash2 = this.compareSecond.hash;
-    }
+  data() {
+    const repoId: RepoId | null = null;
+    const compareSecond: SearchItem | null = null;
+    const compareFirst: SearchItem | null = null;
+    const items: SearchItem[] = [];
 
     return {
-      name: "run-comparison",
-      params,
-      query,
+      searchQuery: "",
+      items,
+      debouncedLookup: debounce(this.executeSearch, 300),
+      compareFirst,
+      compareSecond,
+      repoId,
+      constrainToRepo: false,
+      swapIcon: mdiSwapHorizontalBold,
     };
-  }
+  },
+  computed: {
+    runInUrl() {
+      return this.$route.params["runId"];
+    },
+    repoIdInUrl() {
+      return this.$route.query["repoId"];
+    },
+    allRepos() {
+      return vxm.repoModule.allRepos;
+    },
+    compareLink(): RawLocation | null {
+      if (!this.compareFirst || !this.compareSecond) {
+        return null;
+      }
+      const params: { first: string; second: string } = {
+        first: "",
+        second: "",
+      };
+      const query: { hash1?: string; hash2?: string } = {};
 
-  private async executeSearch() {
-    if (this.searchQuery.length === 0) {
-      this.items = [];
-      return;
-    }
-    this.items = await vxm.runSearchModule.searchRun({
-      query: this.searchQuery,
-      repoId: this.constrainToRepo ? this.repoId || undefined : undefined,
-    });
-  }
+      if (this.compareFirst instanceof SearchItemRun) {
+        params.first = this.compareFirst.id;
+      } else {
+        params.first = this.compareFirst.repoId;
+        query.hash1 = this.compareFirst.hash;
+      }
+      if (this.compareSecond instanceof SearchItemRun) {
+        params.second = this.compareSecond.id;
+      } else {
+        params.second = this.compareSecond.repoId;
+        query.hash2 = this.compareSecond.hash;
+      }
 
-  private mounted() {
+      return {
+        name: "run-comparison",
+        params,
+        query,
+      };
+    },
+  },
+  mounted() {
     this.adjustToUrl();
-  }
+  },
+  methods: {
+    markCommitForCompare(item: SearchItem) {
+      if (!this.compareFirst) {
+        this.compareFirst = item;
+        return;
+      }
+      this.compareSecond = item;
+    },
+    swapOrder() {
+      const tmp = this.compareFirst;
+      this.compareFirst = this.compareSecond;
+      this.compareSecond = tmp;
+    },
+    summaryForItem(item: SearchItem) {
+      if (item instanceof SearchItemCommit) {
+        return item.summary;
+      }
+      if (item instanceof SearchItemBranch) {
+        return item.name;
+      }
+      return item.tarDescription || item.commitSummary || item.id;
+    },
+    async executeSearch() {
+      if (this.searchQuery.length === 0) {
+        this.items = [];
+        return;
+      }
+      this.items = await vxm.runSearchModule.searchRun({
+        query: this.searchQuery,
+        repoId: this.constrainToRepo ? this.repoId || undefined : undefined,
+      });
+    },
+    onQueryChange() {
+      this.debouncedLookup();
+    },
+    async adjustToUrl() {
+      if (this.repoIdInUrl) {
+        this.repoId = this.repoIdInUrl as string;
+        this.constrainToRepo = true;
+      }
 
-  private readonly swapIcon = mdiSwapHorizontalBold;
-}
+      if (this.runInUrl) {
+        const result = await vxm.runSearchModule.searchRun({
+          query: this.runInUrl,
+          repoId: this.repoId || undefined,
+        });
+        if (!result) {
+          return;
+        }
+        this.compareFirst = result[0];
+      }
+    },
+  },
+  watch: {
+    searchQuery: [
+      {
+        handler: "onQueryChange",
+      },
+    ],
+    runInUrl: [
+      {
+        handler: "adjustToUrl",
+      },
+    ],
+    repoIdInUrl: [
+      {
+        handler: "adjustToUrl",
+      },
+    ],
+  },
+});
 </script>

@@ -51,8 +51,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   Dimension,
   DimensionDifference,
@@ -61,8 +60,6 @@ import {
   Run,
   RunResultSuccess,
 } from "@/store/types";
-import { Prop } from "vue-property-decorator";
-
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
   { maximumFractionDigits: 3, notation: "compact" },
@@ -137,123 +134,119 @@ class TableItem {
   }
 }
 
-@Component
-export default class RunComparisonTable extends Vue {
-  @Prop()
-  private first!: Run;
-
-  @Prop()
-  private second!: Run;
-
-  @Prop({ default: () => [] })
-  private differences!: DimensionDifference[];
-
-  private get headers() {
-    return [
-      { text: "Benchmark", value: "benchmark", align: "left" },
-      { text: "Metric", value: "metric", align: "left" },
-      { text: "Unit", value: "unit", align: "left" },
-      { text: "Change/Stddev", value: "stddevDiff", align: "left" },
-      { text: this.first.id, value: "valueFirst", align: "right" },
-      {
-        text: "->",
-        value: "difference",
-        filterable: false,
-        align: "end",
-      },
-      { text: this.second.id, value: "valueSecond", align: "left" },
-    ];
-  }
-
-  /**
-   * Cache the differences indexed by dimension as that is the main lookup direction in the item generation.
-   */
-  get differencesPerDimension(): Map<string, DimensionDifference> {
-    const diffsPerDim: Map<string, DimensionDifference> = new Map();
-    for (const diff of this.differences) {
-      // We only have one measurement per dimension, so this index is safe and won't collide.
-      // Safety assertion if this ever changes
-      if (diffsPerDim.has(diff.dimension.toString())) {
-        throw new Error(
-          "Duplicated dimension detected: " + diff.dimension.toString(),
-        );
+export default defineComponent({
+  computed: {
+    headers() {
+      return [
+        { text: "Benchmark", value: "benchmark", align: "left" },
+        { text: "Metric", value: "metric", align: "left" },
+        { text: "Unit", value: "unit", align: "left" },
+        { text: "Change/Stddev", value: "stddevDiff", align: "left" },
+        { text: this.first.id, value: "valueFirst", align: "right" },
+        {
+          text: "->",
+          value: "difference",
+          filterable: false,
+          align: "end",
+        },
+        { text: this.second.id, value: "valueSecond", align: "left" },
+      ];
+    },
+    differencesPerDimension(): Map<string, DimensionDifference> {
+      const diffsPerDim: Map<string, DimensionDifference> = new Map();
+      for (const diff of this.differences) {
+        // We only have one measurement per dimension, so this index is safe and won't collide.
+        // Safety assertion if this ever changes
+        if (diffsPerDim.has(diff.dimension.toString())) {
+          throw new Error(
+            "Duplicated dimension detected: " + diff.dimension.toString(),
+          );
+        }
+        // We never partially modify the contents, ignore changes to them.
+        diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff));
       }
-      // We never partially modify the contents, ignore changes to them.
-      diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff));
-    }
-    return diffsPerDim;
-  }
+      return diffsPerDim;
+    },
+    items(): TableItem[] {
+      const allDimensions = this.getDimensionsForRun(this.first).concat(
+        this.getDimensionsForRun(this.second),
+      );
 
-  private get items(): TableItem[] {
-    const allDimensions = this.getDimensionsForRun(this.first).concat(
-      this.getDimensionsForRun(this.second),
-    );
+      const uniqueDimensions: Map<string, Dimension> = new Map();
+      allDimensions.forEach((dim) => {
+        uniqueDimensions.set(dim.toString(), dim);
+      });
 
-    const uniqueDimensions: Map<string, Dimension> = new Map();
-    allDimensions.forEach((dim) => {
-      uniqueDimensions.set(dim.toString(), dim);
-    });
-
-    return Array.from(uniqueDimensions.values()).map(
-      (dimension) =>
-        new TableItem(
-          dimension.benchmark,
-          dimension.metric,
-          dimension.unit,
-          dimension.interpretation,
-          this.getValue(this.first, dimension),
-          this.getDifference(dimension),
-          this.getDifferencePercent(dimension),
-          this.getStddevDiff(dimension),
-          this.getValue(this.second, dimension),
-        ),
-    );
-  }
-
-  private getDimensionsForRun(run: Run): Dimension[] {
-    if (run.result instanceof RunResultSuccess) {
-      return run.result.measurements.map((it) => it.dimension);
-    }
-    return [];
-  }
-
-  private getDifference(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.absDiff;
-    }
-    return undefined;
-  }
-
-  private getDifferencePercent(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.relDiff;
-    }
-    return undefined;
-  }
-
-  private getStddevDiff(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString());
-    if (difference) {
-      return difference.stddevDiff;
-    }
-    return undefined;
-  }
-
-  private getValue(run: Run, dimension: Dimension): number | undefined {
-    if (run.result instanceof RunResultSuccess) {
-      const relevantMeasurement = run.result.forDimension(dimension);
-      if (!relevantMeasurement) {
-        return undefined;
+      return Array.from(uniqueDimensions.values()).map(
+        (dimension) =>
+          new TableItem(
+            dimension.benchmark,
+            dimension.metric,
+            dimension.unit,
+            dimension.interpretation,
+            this.getValue(this.first, dimension),
+            this.getDifference(dimension),
+            this.getDifferencePercent(dimension),
+            this.getStddevDiff(dimension),
+            this.getValue(this.second, dimension),
+          ),
+      );
+    },
+  },
+  methods: {
+    getDimensionsForRun(run: Run): Dimension[] {
+      if (run.result instanceof RunResultSuccess) {
+        return run.result.measurements.map((it) => it.dimension);
       }
-      if (relevantMeasurement instanceof MeasurementSuccess) {
-        return relevantMeasurement.value;
+      return [];
+    },
+    getDifference(dimension: Dimension): number | undefined {
+      const difference = this.differencesPerDimension.get(dimension.toString());
+      if (difference) {
+        return difference.absDiff;
       }
-    }
-    return undefined;
-  }
-}
+      return undefined;
+    },
+    getDifferencePercent(dimension: Dimension): number | undefined {
+      const difference = this.differencesPerDimension.get(dimension.toString());
+      if (difference) {
+        return difference.relDiff;
+      }
+      return undefined;
+    },
+    getStddevDiff(dimension: Dimension): number | undefined {
+      const difference = this.differencesPerDimension.get(dimension.toString());
+      if (difference) {
+        return difference.stddevDiff;
+      }
+      return undefined;
+    },
+    getValue(run: Run, dimension: Dimension): number | undefined {
+      if (run.result instanceof RunResultSuccess) {
+        const relevantMeasurement = run.result.forDimension(dimension);
+        if (!relevantMeasurement) {
+          return undefined;
+        }
+        if (relevantMeasurement instanceof MeasurementSuccess) {
+          return relevantMeasurement.value;
+        }
+      }
+      return undefined;
+    },
+  },
+  props: {
+    first: {
+      type: Object as PropType<Run>,
+    },
+    second: {
+      type: Object as PropType<Run>,
+    },
+    differences: {
+      default: () => [],
+      type: Array as PropType<DimensionDifference[]>,
+    },
+  },
+});
 </script>
 
 <style scoped>

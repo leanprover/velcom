@@ -116,121 +116,32 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import axios from "axios";
 
-@Component
-export default class About extends Vue {
-  private htmlImpressum: string | null = null;
-  private fluttering: boolean = false;
+export default defineComponent({
+  data() {
+    const fluttering: boolean = false;
+    const htmlImpressum: string | null = null;
 
-  private relativeUrlToBase(path: string) {
-    return document.location.protocol + "//" + document.location.host + path;
-  }
-
-  private get gitHash() {
-    const fullHash: string = process.env.__COMMIT_HASH__;
-    // Only show the first few characters on very small screens - they are probably unique enough
-    if (this.$vuetify.breakpoint.xs) {
-      return fullHash.substr(0, 10);
-    }
-    return fullHash;
-  }
-
-  private get impressumLocation() {
-    return this.relativeUrlToBase("/Impressum.html");
-  }
-
-  private flutterByMyButterfly() {
-    const element = document.getElementById("shapeshifter-logo")!;
-
-    const canvas = document.getElementById("myCanvas")! as HTMLCanvasElement;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const context = canvas.getContext("2d")!;
-    context.fillStyle = "#989cff";
-
-    if (this.fluttering) {
-      element.classList.remove("flutterByMyButterfly");
-      this.fluttering = false;
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-    this.fluttering = true;
-    element.classList.add("flutterByMyButterfly");
-
-    const elementWidthOffset = element.getBoundingClientRect().width / 2;
-    let elementHeightOffset = element.getBoundingClientRect().height / 2;
-    elementHeightOffset += elementHeightOffset / 4 + 25;
-
-    // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
-
-    const { y: yMin } = this.evalLemniscate(Math.PI / 2, 0);
-
-    const { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI);
-
-    const height = Math.abs(yMax - yMin);
-
-    // let theta = 5.39317816
-    let theta = Math.PI / 2;
-    let time = 4.94277244164;
-    const callback = () => {
-      if (!element.classList.contains("flutterByMyButterfly")) {
-        return;
-      }
-      const xOffset = window.innerWidth / 2 - elementWidthOffset;
-      const yOffset = -elementHeightOffset / 2 + height / 2;
-
-      let { x, y } = this.evalLemniscate(theta, time);
-      x += xOffset;
-      y += yOffset;
-
-      for (let i = 0; i < Math.PI / 4; i += (Math.PI * 2) / 20) {
-        const { x, y } = this.evalLemniscate(theta - i / 2, time - i);
-        context.fillRect(
-          x + xOffset + elementWidthOffset,
-          y + yOffset + elementHeightOffset,
-          2,
-          2,
-        );
-      }
-
-      element.style.top = y + "px";
-      element.style.left = x + "px";
-      requestAnimationFrame(callback);
-
-      time += (Math.PI * 2) / 60 / 10;
-      theta += (Math.PI * 2) / 60 / 100;
+    return {
+      htmlImpressum,
+      fluttering,
     };
-
-    requestAnimationFrame(callback);
-  }
-
-  private evalLemniscate(
-    theta: number,
-    time: number,
-  ): { x: number; y: number } {
-    const sqrt2 = Math.sqrt(2);
-
-    const a = Math.min(window.innerWidth, window.innerHeight) / 4;
-
-    const sint = Math.sin(time);
-    const cost = Math.cos(time);
-    const denominator = sint * sint + 1;
-    let x = (a * sqrt2 * cost) / denominator;
-    let y = (a * sqrt2 * cost * sint) / denominator;
-
-    const baseAngle = Math.atan2(y, x);
-    const baseDistance = Math.sqrt(x * x + y * y);
-
-    x = Math.cos(baseAngle + theta) * baseDistance;
-
-    y = Math.sin(baseAngle + theta) * baseDistance;
-
-    return { x, y };
-  }
-
+  },
+  computed: {
+    gitHash() {
+      const fullHash: string = process.env.__COMMIT_HASH__;
+      // Only show the first few characters on very small screens - they are probably unique enough
+      if (this.$vuetify.breakpoint.xs) {
+        return fullHash.substr(0, 10);
+      }
+      return fullHash;
+    },
+    impressumLocation() {
+      return this.relativeUrlToBase("/Impressum.html");
+    },
+  },
   async mounted(): Promise<void> {
     axios
       .get(this.impressumLocation, { hideFromSnackbar: true })
@@ -252,8 +163,97 @@ export default class About extends Vue {
           })
           .catch(() => (this.htmlImpressum = response.data));
       });
-  }
-}
+  },
+  methods: {
+    relativeUrlToBase(path: string) {
+      return document.location.protocol + "//" + document.location.host + path;
+    },
+    flutterByMyButterfly() {
+      const element = document.getElementById("shapeshifter-logo")!;
+
+      const canvas = document.getElementById("myCanvas")! as HTMLCanvasElement;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const context = canvas.getContext("2d")!;
+      context.fillStyle = "#989cff";
+
+      if (this.fluttering) {
+        element.classList.remove("flutterByMyButterfly");
+        this.fluttering = false;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      this.fluttering = true;
+      element.classList.add("flutterByMyButterfly");
+
+      const elementWidthOffset = element.getBoundingClientRect().width / 2;
+      let elementHeightOffset = element.getBoundingClientRect().height / 2;
+      elementHeightOffset += elementHeightOffset / 4 + 25;
+
+      // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
+
+      const { y: yMin } = this.evalLemniscate(Math.PI / 2, 0);
+
+      const { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI);
+
+      const height = Math.abs(yMax - yMin);
+
+      // let theta = 5.39317816
+      let theta = Math.PI / 2;
+      let time = 4.94277244164;
+      const callback = () => {
+        if (!element.classList.contains("flutterByMyButterfly")) {
+          return;
+        }
+        const xOffset = window.innerWidth / 2 - elementWidthOffset;
+        const yOffset = -elementHeightOffset / 2 + height / 2;
+
+        let { x, y } = this.evalLemniscate(theta, time);
+        x += xOffset;
+        y += yOffset;
+
+        for (let i = 0; i < Math.PI / 4; i += (Math.PI * 2) / 20) {
+          const { x, y } = this.evalLemniscate(theta - i / 2, time - i);
+          context.fillRect(
+            x + xOffset + elementWidthOffset,
+            y + yOffset + elementHeightOffset,
+            2,
+            2,
+          );
+        }
+
+        element.style.top = y + "px";
+        element.style.left = x + "px";
+        requestAnimationFrame(callback);
+
+        time += (Math.PI * 2) / 60 / 10;
+        theta += (Math.PI * 2) / 60 / 100;
+      };
+
+      requestAnimationFrame(callback);
+    },
+    evalLemniscate(theta: number, time: number): { x: number; y: number } {
+      const sqrt2 = Math.sqrt(2);
+
+      const a = Math.min(window.innerWidth, window.innerHeight) / 4;
+
+      const sint = Math.sin(time);
+      const cost = Math.cos(time);
+      const denominator = sint * sint + 1;
+      let x = (a * sqrt2 * cost) / denominator;
+      let y = (a * sqrt2 * cost * sint) / denominator;
+
+      const baseAngle = Math.atan2(y, x);
+      const baseDistance = Math.sqrt(x * x + y * y);
+
+      x = Math.cos(baseAngle + theta) * baseDistance;
+
+      y = Math.sin(baseAngle + theta) * baseDistance;
+
+      return { x, y };
+    },
+  },
+});
 </script>
 
 <style scoped>

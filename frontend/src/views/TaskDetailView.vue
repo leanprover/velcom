@@ -74,8 +74,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import NotFound404 from "@/views/NotFound404.vue";
 import {
   Commit,
@@ -83,7 +82,6 @@ import {
   TarTaskSource,
   TaskSource,
 } from "@/store/types";
-import { Watch } from "vue-property-decorator";
 import { vxm } from "@/store";
 import CommitDetail from "@/components/rundetail/CommitDetail.vue";
 import TaskRunnerOutput from "@/components/queue/TaskRunnerOutput.vue";
@@ -92,7 +90,7 @@ import { TaskInfo } from "@/store/modules/queueStore";
 import { formatDurationShort } from "@/util/Times";
 import TarOverview from "@/components/overviews/TarOverview.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "tar-overview": TarOverview,
     "inline-minimal-repo-display": InlineMinimalRepoDisplay,
@@ -100,98 +98,38 @@ import TarOverview from "@/components/overviews/TarOverview.vue";
     "page-404": NotFound404,
     "commit-detail": CommitDetail,
   },
-})
-export default class TaskDetailView extends Vue {
-  private show404: boolean = false;
+  data() {
+    const queuedSinceText: string | null = null;
+    const timerIds: number[] = [];
+    const nudgeToRunDetail: boolean = false;
+    const commit: Commit | null = null;
+    const taskInfo: TaskInfo | null = null;
+    const show404: boolean = false;
 
-  private taskInfo: TaskInfo | null = null;
-  private commit: Commit | null = null;
-  private nudgeToRunDetail: boolean = false;
-
-  private timerIds: number[] = [];
-  private queuedSinceText: string | null = null;
-
-  private get taskId() {
-    return this.$route.params.taskId;
-  }
-
-  private get tarSource() {
-    if (!this.taskInfo || !this.taskInfo.task) {
+    return {
+      show404,
+      taskInfo,
+      commit,
+      nudgeToRunDetail,
+      timerIds,
+      queuedSinceText,
+    };
+  },
+  computed: {
+    taskId() {
+      return this.$route.params.taskId;
+    },
+    tarSource() {
+      if (!this.taskInfo || !this.taskInfo.task) {
+        return null;
+      }
+      if (this.taskInfo.task.source instanceof TarTaskSource) {
+        return this.taskInfo.task.source;
+      }
       return null;
-    }
-    if (this.taskInfo.task.source instanceof TarTaskSource) {
-      return this.taskInfo.task.source;
-    }
-    return null;
-  }
-
-  @Watch("taskId")
-  private async update() {
-    this.show404 = false;
-
-    const newInfo = await vxm.queueModule.fetchTaskInfo(this.taskId);
-
-    if (!newInfo) {
-      await this.handleTaskNotFound();
-      return;
-    }
-
-    this.taskInfo = newInfo;
-    await this.handleSource(this.taskInfo.task.source);
-  }
-
-  private async handleSource(source: TaskSource) {
-    if (source instanceof CommitTaskSource) {
-      this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
-        repoId: source.commitDescription.repoId,
-        commitHash: source.commitDescription.hash,
-      });
-    }
-  }
-
-  private async handleTaskNotFound() {
-    try {
-      const run = await vxm.commitDetailComparisonModule.fetchRun(this.taskId);
-      this.nudgeToRunDetail = true;
-      await this.handleSource(run.run.source);
-    } catch (e) {
-      this.show404 = true;
-    }
-  }
-
-  private loadingOutputFailed() {
-    if (this.taskInfo === null) {
-      this.handleTaskNotFound();
-    }
-  }
-
-  private updateDuration() {
-    if (!this.taskInfo) {
-      this.queuedSinceText = null;
-      return;
-    }
-
-    if (this.taskInfo.runningSince) {
-      this.queuedSinceText =
-        "running for " +
-        formatDurationShort(this.taskInfo.runningSince, new Date());
-    } else {
-      this.queuedSinceText =
-        "queued for  " +
-        formatDurationShort(this.taskInfo.task.since, new Date());
-    }
-  }
-
-  private navigateToRespectiveRun() {
-    this.$router.push({
-      name: "run-detail",
-      params: {
-        first: this.taskId,
-      },
-    });
-  }
-
-  private mounted() {
+    },
+  },
+  mounted() {
     const updateTaskTimer = setInterval(() => {
       this.update();
     }, 10_000);
@@ -199,10 +137,79 @@ export default class TaskDetailView extends Vue {
 
     this.timerIds = [updateTaskTimer, updateDurationTimer];
     this.update();
-  }
-
-  private destroyed() {
+  },
+  destroyed() {
     this.timerIds.forEach(clearInterval);
-  }
-}
+  },
+  methods: {
+    async handleSource(source: TaskSource) {
+      if (source instanceof CommitTaskSource) {
+        this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
+          repoId: source.commitDescription.repoId,
+          commitHash: source.commitDescription.hash,
+        });
+      }
+    },
+    async handleTaskNotFound() {
+      try {
+        const run = await vxm.commitDetailComparisonModule.fetchRun(
+          this.taskId,
+        );
+        this.nudgeToRunDetail = true;
+        await this.handleSource(run.run.source);
+      } catch (e) {
+        this.show404 = true;
+      }
+    },
+    loadingOutputFailed() {
+      if (this.taskInfo === null) {
+        this.handleTaskNotFound();
+      }
+    },
+    updateDuration() {
+      if (!this.taskInfo) {
+        this.queuedSinceText = null;
+        return;
+      }
+
+      if (this.taskInfo.runningSince) {
+        this.queuedSinceText =
+          "running for " +
+          formatDurationShort(this.taskInfo.runningSince, new Date());
+      } else {
+        this.queuedSinceText =
+          "queued for  " +
+          formatDurationShort(this.taskInfo.task.since, new Date());
+      }
+    },
+    navigateToRespectiveRun() {
+      this.$router.push({
+        name: "run-detail",
+        params: {
+          first: this.taskId,
+        },
+      });
+    },
+    async update() {
+      this.show404 = false;
+
+      const newInfo = await vxm.queueModule.fetchTaskInfo(this.taskId);
+
+      if (!newInfo) {
+        await this.handleTaskNotFound();
+        return;
+      }
+
+      this.taskInfo = newInfo;
+      await this.handleSource(this.taskInfo.task.source);
+    },
+  },
+  watch: {
+    taskId: [
+      {
+        handler: "update",
+      },
+    ],
+  },
+});
 </script>

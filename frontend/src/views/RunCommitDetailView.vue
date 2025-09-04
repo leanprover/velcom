@@ -79,9 +79,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Watch } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
 import {
   Commit,
@@ -99,7 +97,7 @@ import { NotFoundError } from "@/store/modules/commitDetailComparisonStore";
 import TarOverview from "@/components/overviews/TarOverview.vue";
 import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "run-significance-chips": RunSignificanceChips,
     "tar-overview": TarOverview,
@@ -108,122 +106,135 @@ import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
     "commit-detail": CommitDetail,
     "run-timeline": RunTimeline,
   },
-})
-export default class RunCommitDetailView extends Vue {
-  private runWithDifferences: RunWithDifferences | null = null;
-  private commit: Commit | null = null;
-  private tarSource: TarTaskSource | null = null;
-  private show404: boolean = false;
-  private finishedLoading: boolean = false;
+  data() {
+    const finishedLoading: boolean = false;
+    const show404: boolean = false;
+    const tarSource: TarTaskSource | null = null;
+    const commit: Commit | null = null;
+    const runWithDifferences: RunWithDifferences | null = null;
 
-  private get firstComponent(): string {
-    return this.$route.params["first"];
-  }
-
-  private get secondComponent(): string | undefined {
-    return this.$route.params["second"];
-  }
-
-  private get dimensionDifferences(): DimensionDifference[] | undefined {
-    if (!this.runWithDifferences) {
-      return undefined;
-    }
-    return this.runWithDifferences.significantDifferences;
-  }
-
-  private get significantFailedDimensions(): Dimension[] {
-    if (!this.runWithDifferences) {
-      return [];
-    }
-    return this.runWithDifferences.significantFailedDimensions;
-  }
-
-  private async navigateToDetailGraph(dimension: Dimension) {
-    if (!this.commit) {
-      return;
-    }
-    const commit = this.commit;
-
-    vxm.detailGraphModule.centerOnCommit({ commit, dimension });
-
-    // Find the datapoint so we can set it as reference
-    const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph();
-    const detailPoint = allDataPoints.find((it) => it.hash === commit.hash);
-
-    if (detailPoint) {
-      vxm.detailGraphModule.referenceDatapoint = {
-        datapoint: detailPoint,
-        seriesId: dimension.toString(),
-      };
-    }
-
-    // And finally navigate away
-    await this.$router.push({
-      name: "repo-detail",
-      params: { id: this.commit.repoId },
-    });
-  }
-
-  @Watch("firstComponent")
-  @Watch("secondComponent")
-  private async fetchCommitAndRun() {
-    try {
-      await this.fetchCommitAndRunImpl();
-    } catch (e) {
-      if (e instanceof NotFoundError) {
-        this.show404 = true;
-        return;
+    return {
+      runWithDifferences,
+      commit,
+      tarSource,
+      show404,
+      finishedLoading,
+    };
+  },
+  computed: {
+    firstComponent(): string {
+      return this.$route.params["first"];
+    },
+    secondComponent(): string | undefined {
+      return this.$route.params["second"];
+    },
+    dimensionDifferences(): DimensionDifference[] | undefined {
+      if (!this.runWithDifferences) {
+        return undefined;
       }
-      throw e;
-    }
-  }
-
-  private async fetchCommitAndRunImpl() {
-    this.show404 = false;
-    this.runWithDifferences = null;
-    this.commit = null;
-    this.tarSource = null;
-    this.finishedLoading = false;
-
-    if (this.firstComponent && !this.secondComponent) {
-      // we have a run id
-      this.runWithDifferences = await vxm.commitDetailComparisonModule.fetchRun(
-        this.firstComponent,
-      );
-      const run = this.runWithDifferences.run;
-
-      if (run.source instanceof CommitTaskSource) {
-        this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
-          repoId: run.source.commitDescription.repoId,
-          commitHash: run.source.commitDescription.hash,
-        });
-      } else {
-        this.tarSource = run.source;
+      return this.runWithDifferences.significantDifferences;
+    },
+    significantFailedDimensions(): Dimension[] {
+      if (!this.runWithDifferences) {
+        return [];
       }
-    } else if (this.firstComponent && this.secondComponent) {
-      // we have a repo id and commit hash
-      this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
-        repoId: this.firstComponent,
-        commitHash: this.secondComponent,
-      });
-      if (this.commit.runs.length > 0) {
-        this.runWithDifferences =
-          await vxm.commitDetailComparisonModule.fetchRun(
-            this.commit.runs[0].runId,
-          );
-      }
-    } else {
-      // We got weird things
-      this.show404 = true;
-    }
-
-    this.finishedLoading = true;
-  }
-
+      return this.runWithDifferences.significantFailedDimensions;
+    },
+  },
   mounted(): void {
     this.fetchCommitAndRun();
-  }
-}
+  },
+  methods: {
+    async navigateToDetailGraph(dimension: Dimension) {
+      if (!this.commit) {
+        return;
+      }
+      const commit = this.commit;
+
+      vxm.detailGraphModule.centerOnCommit({ commit, dimension });
+
+      // Find the datapoint so we can set it as reference
+      const allDataPoints = await vxm.detailGraphModule.fetchDetailGraph();
+      const detailPoint = allDataPoints.find((it) => it.hash === commit.hash);
+
+      if (detailPoint) {
+        vxm.detailGraphModule.referenceDatapoint = {
+          datapoint: detailPoint,
+          seriesId: dimension.toString(),
+        };
+      }
+
+      // And finally navigate away
+      await this.$router.push({
+        name: "repo-detail",
+        params: { id: this.commit.repoId },
+      });
+    },
+    async fetchCommitAndRunImpl() {
+      this.show404 = false;
+      this.runWithDifferences = null;
+      this.commit = null;
+      this.tarSource = null;
+      this.finishedLoading = false;
+
+      if (this.firstComponent && !this.secondComponent) {
+        // we have a run id
+        this.runWithDifferences =
+          await vxm.commitDetailComparisonModule.fetchRun(this.firstComponent);
+        const run = this.runWithDifferences.run;
+
+        if (run.source instanceof CommitTaskSource) {
+          this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
+            repoId: run.source.commitDescription.repoId,
+            commitHash: run.source.commitDescription.hash,
+          });
+        } else {
+          this.tarSource = run.source;
+        }
+      } else if (this.firstComponent && this.secondComponent) {
+        // we have a repo id and commit hash
+        this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
+          repoId: this.firstComponent,
+          commitHash: this.secondComponent,
+        });
+        if (this.commit.runs.length > 0) {
+          this.runWithDifferences =
+            await vxm.commitDetailComparisonModule.fetchRun(
+              this.commit.runs[0].runId,
+            );
+        }
+      } else {
+        // We got weird things
+        this.show404 = true;
+      }
+
+      this.finishedLoading = true;
+    },
+    async fetchCommitAndRun() {
+      try {
+        await this.fetchCommitAndRunImpl();
+      } catch (e) {
+        if (e instanceof NotFoundError) {
+          this.show404 = true;
+          return;
+        }
+        throw e;
+      }
+    },
+  },
+  watch: {
+    firstComponent: [
+      {
+        handler: "fetchCommitAndRun",
+      },
+    ],
+    secondComponent: [
+      {
+        handler: "fetchCommitAndRun",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped></style>

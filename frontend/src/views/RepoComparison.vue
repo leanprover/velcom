@@ -21,37 +21,40 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import StatusComparison from "@/views/StatusComparison.vue";
 import TimelineComparison from "@/views/TimelineComparison.vue";
 import { vxm } from "@/store";
 
-@Component({
+export default defineComponent({
   components: { TimelineComparison, StatusComparison },
-})
-export default class Comparison extends Vue {
-  private tabMapping: Array<"timeline" | "status"> = ["timeline", "status"];
+  data() {
+    const tabMapping: Array<"timeline" | "status"> = ["timeline", "status"];
 
-  private set selectedTab(tabIndex: number) {
-    vxm.statusComparisonModule.selectedTab = this.tabMapping[tabIndex];
-  }
-
-  private get selectedTab(): number {
-    return this.tabMapping.indexOf(vxm.statusComparisonModule.selectedTab);
-  }
-
-  private get height() {
-    // Full height
-    //   - Navigation bar
-    //   -  8px container padding
-    //   - 25px Tabs
-    //   -  8px tab margin
-    //   -  4px lift it up a bit
-    return "calc(100vh - 64px - 8px - 25px - 8px - 4px)";
-  }
-
-  private async mounted() {
+    return {
+      tabMapping,
+    };
+  },
+  computed: {
+    selectedTab: {
+      get(): number {
+        return this.tabMapping.indexOf(vxm.statusComparisonModule.selectedTab);
+      },
+      set(tabIndex: number) {
+        vxm.statusComparisonModule.selectedTab = this.tabMapping[tabIndex];
+      },
+    },
+    height() {
+      // Full height
+      //   - Navigation bar
+      //   -  8px container padding
+      //   - 25px Tabs
+      //   -  8px tab margin
+      //   -  4px lift it up a bit
+      return "calc(100vh - 64px - 8px - 25px - 8px - 4px)";
+    },
+  },
+  async mounted() {
     // They will be fetched on page load anyways, but we *need* to make sure they are already loaded!
     // Otherwise we might not find our selected dimension
     if (vxm.repoModule.allRepos.length === 0) {
@@ -70,8 +73,8 @@ export default class Comparison extends Vue {
       await vxm.statusComparisonModule.adjustToPermanentLink(this.$route);
       this.selectedTab = this.tabMapping.indexOf("status");
     }
-  }
-}
+  },
+});
 </script>
 
 <style>

@@ -57,40 +57,46 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
-
+import Vue, { defineComponent } from "vue";
 export type TokenState = "delete" | "modify" | "unchanged";
 
-@Component
-export default class GithubTokenConfiguration extends Vue {
-  private tokenStateImpl: TokenState = "unchanged";
+export default defineComponent({
+  data() {
+    const tokenStateImpl: TokenState = "unchanged";
 
-  @Prop()
-  private readonly hasToken!: string;
+    return {
+      tokenStateImpl,
+    };
+  },
+  computed: {
+    tokenState: {
+      get() {
+        return this.tokenStateImpl;
+      },
+      set(state: TokenState) {
+        this.tokenStateImpl = state;
 
-  @Prop()
-  private readonly newToken!: string;
-
-  private get tokenState() {
-    return this.tokenStateImpl;
-  }
-
-  private set tokenState(state: TokenState) {
-    this.tokenStateImpl = state;
-
-    this.$emit("update:tokenState", state);
-  }
-
-  private setNewToken(token: string) {
-    this.$emit("update:newToken", token);
-  }
-
-  private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : "This field must not be empty";
-  }
-}
+        this.$emit("update:tokenState", state);
+      },
+    },
+  },
+  methods: {
+    setNewToken(token: string) {
+      this.$emit("update:newToken", token);
+    },
+    notEmpty(input: string): boolean | string {
+      return input.trim().length > 0 ? true : "This field must not be empty";
+    },
+  },
+  props: {
+    hasToken: {
+      type: String,
+    },
+    newToken: {
+      type: String,
+    },
+  },
+});
 </script>
 
 <style scoped>

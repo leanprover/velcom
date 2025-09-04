@@ -28,9 +28,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   mdiAlertCircleOutline,
   mdiCheck,
@@ -65,36 +63,36 @@ const stateDate: { [key in GithubBotCommandState]: StateData } = {
   },
 };
 
-@Component
-export default class GithubBotCommandChips extends Vue {
-  @Prop()
-  private readonly prs!: GithubBotCommand[];
+export default defineComponent({
+  methods: {
+    description(state: GithubBotCommandState) {
+      return stateDate[state].description;
+    },
+    icon(state: GithubBotCommandState) {
+      return stateDate[state].icon;
+    },
+    color(state: GithubBotCommandState) {
+      return stateDate[state].color;
+    },
+    commentLink(command: GithubBotCommand) {
+      const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/;
+      const match = regex.exec(this.repo.remoteURL);
 
-  @Prop()
-  private readonly repo!: Repo;
+      if (match === null) {
+        return undefined;
+      }
 
-  private description(state: GithubBotCommandState) {
-    return stateDate[state].description;
-  }
-
-  private icon(state: GithubBotCommandState) {
-    return stateDate[state].icon;
-  }
-
-  private color(state: GithubBotCommandState) {
-    return stateDate[state].color;
-  }
-
-  private commentLink(command: GithubBotCommand) {
-    const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/;
-    const match = regex.exec(this.repo.remoteURL);
-
-    if (match === null) {
-      return undefined;
-    }
-
-    const repoName = match[2];
-    return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`;
-  }
-}
+      const repoName = match[2];
+      return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`;
+    },
+  },
+  props: {
+    prs: {
+      type: Array as PropType<GithubBotCommand[]>,
+    },
+    repo: {
+      type: Object as PropType<Repo>,
+    },
+  },
+});
 </script>

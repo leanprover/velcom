@@ -15,9 +15,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   Dimension,
   DimensionDifference,
@@ -27,41 +25,39 @@ import {
 import RunOverview from "./RunOverview.vue";
 import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "run-significance-chips": RunSignificanceChips,
     "run-overview": RunOverview,
   },
-})
-export default class MultipleRunOverview extends Vue {
-  @Prop()
-  private runs!: RunDescription[] | RunDescriptionWithDifferences[];
-
-  @Prop({ default: 3 })
-  private numberOfChanges!: number;
-
-  private run(
-    run: RunDescription | RunDescriptionWithDifferences,
-  ): RunDescription {
-    return run instanceof RunDescriptionWithDifferences ? run.run : run;
-  }
-
-  private significantDifferences(
-    run: RunDescription | RunDescriptionWithDifferences,
-  ): DimensionDifference[] | undefined {
-    return run instanceof RunDescriptionWithDifferences
-      ? run.significantDifferences
-      : [];
-  }
-
-  private failedSignificantDimensions(
-    run: RunDescription | RunDescriptionWithDifferences,
-  ): Dimension[] {
-    return run instanceof RunDescriptionWithDifferences
-      ? run.significantFailedDimensions
-      : [];
-  }
-}
+  methods: {
+    run(run: RunDescription | RunDescriptionWithDifferences): RunDescription {
+      return run instanceof RunDescriptionWithDifferences ? run.run : run;
+    },
+    significantDifferences(
+      run: RunDescription | RunDescriptionWithDifferences,
+    ): DimensionDifference[] | undefined {
+      return run instanceof RunDescriptionWithDifferences
+        ? run.significantDifferences
+        : [];
+    },
+    failedSignificantDimensions(
+      run: RunDescription | RunDescriptionWithDifferences,
+    ): Dimension[] {
+      return run instanceof RunDescriptionWithDifferences
+        ? run.significantFailedDimensions
+        : [];
+    },
+  },
+  props: {
+    runs: {
+      type: Object as PropType<
+        RunDescription[] | RunDescriptionWithDifferences[]
+      >,
+    },
+    numberOfChanges: { default: 3, type: Number },
+  },
+});
 </script>
 
 <style scoped>

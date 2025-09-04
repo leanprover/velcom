@@ -50,43 +50,45 @@
   </v-card>
 </template>
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { TarTaskSource, RunId, TaskId } from "@/store/types";
 import TextChip from "../misc/TextChip.vue";
 import InlineMinimalRepoNameDisplay from "../misc/InlineMinimalRepoDisplay.vue";
 import { RawLocation } from "vue-router";
 import { mdiScaleBalance } from "@mdi/js";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-display": InlineMinimalRepoNameDisplay,
     "text-chip": TextChip,
   },
-})
-export default class TarTaskOverview extends Vue {
-  @Prop()
-  private readonly source!: TarTaskSource;
-
-  @Prop()
-  private readonly id!: RunId | TaskId;
-
-  @Prop()
-  private readonly linkLocation!: RawLocation;
-
-  private get compareRunLocation() {
+  data() {
     return {
-      name: "search",
-      params: {
-        runId: this.id,
-      },
+      compareIcon: mdiScaleBalance,
     };
-  }
-
-  // ===== ICONS =====
-  private compareIcon = mdiScaleBalance;
-}
+  },
+  computed: {
+    compareRunLocation() {
+      return {
+        name: "search",
+        params: {
+          runId: this.id,
+        },
+      };
+    },
+  },
+  props: {
+    source: {
+      type: Object as PropType<TarTaskSource>,
+    },
+    id: {
+      type: Object as PropType<RunId | TaskId>,
+    },
+    linkLocation: {
+      type: Object as PropType<RawLocation>,
+    },
+  },
+});
 </script>
 
 <style scoped>

@@ -13,29 +13,26 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
-
-@Component
-export default class MeasurementValueDisplay extends Vue {
-  @Prop()
-  private value?: string;
-
-  @Prop()
-  private color?: string;
-
-  @Prop({ default: "This value was not provided" })
-  private tooltipMessage!: string;
-
-  private get displayedValue(): string {
-    return this.value !== undefined ? this.value : "N/A";
-  }
-
-  private get displayTooltip(): boolean {
-    return this.value === undefined;
-  }
-}
+import Vue, { defineComponent } from "vue";
+export default defineComponent({
+  computed: {
+    displayedValue(): string {
+      return this.value !== undefined ? this.value : "N/A";
+    },
+    displayTooltip(): boolean {
+      return this.value === undefined;
+    },
+  },
+  props: {
+    value: {
+      type: String,
+    },
+    color: {
+      type: String,
+    },
+    tooltipMessage: { default: "This value was not provided", type: String },
+  },
+});
 </script>
 
 <style scoped></style>

@@ -71,46 +71,40 @@
   </v-card>
 </template>
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { formatDate, formatDateUTC } from "@/util/Times";
 import { CommitDescription } from "@/store/types";
 import InlineMinimalRepoNameDisplay from "../misc/InlineMinimalRepoDisplay.vue";
 import TextChip from "../misc/TextChip.vue";
 import { RawLocation } from "vue-router";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-display": InlineMinimalRepoNameDisplay,
     "text-chip": TextChip,
   },
-})
-export default class CommitOverviewBase extends Vue {
-  @Prop()
-  private commit!: CommitDescription;
-
-  @Prop({ default: false })
-  private outlined!: boolean;
-
-  @Prop({ default: null })
-  private linkLocation!: RawLocation;
-
-  private get formattedDate() {
-    return formatDate(this.commit.authorDate || new Date(0));
-  }
-
-  private get formattedDateUTC() {
-    return formatDateUTC(this.commit.authorDate || new Date(0));
-  }
-
-  private get commitLinkLocation(): RawLocation {
-    return {
-      name: "run-detail",
-      params: { first: this.commit.repoId, second: this.commit.hash },
-    };
-  }
-}
+  computed: {
+    formattedDate() {
+      return formatDate(this.commit.authorDate || new Date(0));
+    },
+    formattedDateUTC() {
+      return formatDateUTC(this.commit.authorDate || new Date(0));
+    },
+    commitLinkLocation(): RawLocation {
+      return {
+        name: "run-detail",
+        params: { first: this.commit.repoId, second: this.commit.hash },
+      };
+    },
+  },
+  props: {
+    commit: {
+      type: Object as PropType<CommitDescription>,
+    },
+    outlined: { default: false, type: Boolean },
+    linkLocation: { default: null, type: Object as PropType<RawLocation> },
+  },
+});
 </script>
 
 <style scoped>

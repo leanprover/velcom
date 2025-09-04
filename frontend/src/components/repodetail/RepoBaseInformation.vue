@@ -125,93 +125,92 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { GithubBotCommand, Repo, RepoBranch } from "@/store/types";
 import { vxm } from "@/store";
 import RepoUpdateDialog from "@/components/repodetail/RepoUpdateDialog.vue";
 import { mdiCompassOutline } from "@mdi/js";
 import GithubBotCommandChips from "@/components/repodetail/GithubBotCommandChips.vue";
 
-@Component({
+export default defineComponent({
   components: {
     GithubBotCommandChips,
     RepoUpdateDialog,
   },
-})
-export default class RepoBaseInformation extends Vue {
-  private githubCommands: GithubBotCommand[] = [];
+  data() {
+    const githubCommands: GithubBotCommand[] = [];
 
-  @Prop()
-  private repo!: Repo;
-
-  private get branches() {
-    return this.repo.branches
-      .slice()
-      .sort(
-        this.chainComparators(this.comparatorTrackStatus, (a, b) =>
-          a.name.localeCompare(b.name),
-        ),
-      );
-  }
-
-  private get isAdmin() {
-    return vxm.userModule.isAdmin;
-  }
-
-  private get hasActiveBot() {
-    return this.repo.lastGithubUpdate !== undefined;
-  }
-
-  private async deleteRepository() {
-    const confirmed = window.confirm(
-      `Do you really want to delete ${this.repo.name} (${this.repo.id})?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-    await vxm.repoModule.deleteRepo(this.repo.id);
-    vxm.detailGraphModule.selectedRepoId = "";
-    await this.$router.replace({ name: "repo-detail", params: { id: "" } });
-  }
-
-  private async mounted() {
+    return {
+      githubCommands,
+      searchAndCompareIcon: mdiCompassOutline,
+    };
+  },
+  computed: {
+    branches() {
+      return this.repo.branches
+        .slice()
+        .sort(
+          this.chainComparators(this.comparatorTrackStatus, (a, b) =>
+            a.name.localeCompare(b.name),
+          ),
+        );
+    },
+    isAdmin() {
+      return vxm.userModule.isAdmin;
+    },
+    hasActiveBot() {
+      return this.repo.lastGithubUpdate !== undefined;
+    },
+  },
+  async mounted() {
     if (this.hasActiveBot) {
       this.githubCommands = await vxm.repoModule.fetchGithubCommands(
         this.repo.id,
       );
     }
-  }
-
-  private comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
-    if (branchA.tracked && branchB.tracked) {
-      return 0;
-    }
-    if (branchA.tracked) {
-      return -1;
-    }
-    if (branchB.tracked) {
-      return 1;
-    }
-    return 0;
-  }
-
-  private chainComparators<T>(
-    a: (a: T, b: T) => number,
-    b: (a: T, b: T) => number,
-  ): (a: T, b: T) => number {
-    return (x, y) => {
-      if (a(x, y) !== 0) {
-        return a(x, y);
+  },
+  methods: {
+    async deleteRepository() {
+      const confirmed = window.confirm(
+        `Do you really want to delete ${this.repo.name} (${this.repo.id})?`,
+      );
+      if (!confirmed) {
+        return;
       }
-      return b(x, y);
-    };
-  }
-
-  // ===== ICONS =====
-  private searchAndCompareIcon = mdiCompassOutline;
-}
+      await vxm.repoModule.deleteRepo(this.repo.id);
+      vxm.detailGraphModule.selectedRepoId = "";
+      await this.$router.replace({ name: "repo-detail", params: { id: "" } });
+    },
+    comparatorTrackStatus(branchA: RepoBranch, branchB: RepoBranch) {
+      if (branchA.tracked && branchB.tracked) {
+        return 0;
+      }
+      if (branchA.tracked) {
+        return -1;
+      }
+      if (branchB.tracked) {
+        return 1;
+      }
+      return 0;
+    },
+    chainComparators(
+      a: (a: T, b: T) => number,
+      b: (a: T, b: T) => number,
+    ): (a: T, b: T) => number {
+      return (x, y) => {
+        if (a(x, y) !== 0) {
+          return a(x, y);
+        }
+        return b(x, y);
+      };
+    },
+  },
+  props: {
+    repo: {
+      type: Object as PropType<Repo>,
+    },
+  },
+});
 </script>
 
 <style scoped></style>

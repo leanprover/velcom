@@ -32,40 +32,38 @@
   </run-info>
 </template>
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
 import RunInfo from "@/components/rundetail/RunInfo.vue";
 import TarOverview from "@/components/overviews/TarOverview.vue";
 import { CommitTaskSource, Run, TarTaskSource } from "@/store/types";
-import { Prop } from "vue-property-decorator";
-
-@Component({
+export default defineComponent({
   components: {
     "commit-overview-base": CommitOverviewBase,
     "tar-overview": TarOverview,
     "run-info": RunInfo,
   },
-})
-export default class ComparisonRunInfo extends Vue {
-  @Prop()
-  private readonly run!: Run;
-
-  @Prop()
-  private readonly title!: string;
-
-  private get commit() {
-    if (this.run.source instanceof CommitTaskSource) {
-      return this.run.source.commitDescription;
-    }
-    return null;
-  }
-
-  private get tar() {
-    if (this.run.source instanceof TarTaskSource) {
-      return this.run.source;
-    }
-    return null;
-  }
-}
+  computed: {
+    commit() {
+      if (this.run.source instanceof CommitTaskSource) {
+        return this.run.source.commitDescription;
+      }
+      return null;
+    },
+    tar() {
+      if (this.run.source instanceof TarTaskSource) {
+        return this.run.source;
+      }
+      return null;
+    },
+  },
+  props: {
+    run: {
+      type: Object as PropType<Run>,
+    },
+    title: {
+      type: String,
+    },
+  },
+});
 </script>

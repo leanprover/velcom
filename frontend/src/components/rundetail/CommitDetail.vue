@@ -118,9 +118,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { Commit, RunId, TrackedCommitDescription } from "@/store/types";
 import { formatDateUTC, formatDate } from "@/util/Times";
 import InlineMinimalRepoNameDisplay from "../misc/InlineMinimalRepoDisplay.vue";
@@ -141,56 +139,59 @@ class NavigationTarget {
   }
 }
 
-@Component({
+export default defineComponent({
   components: {
     "commit-benchmark-actions": CommitBenchmarkActions,
     "inline-repo-display": InlineMinimalRepoNameDisplay,
     "commit-navigation-button": CommitNavigationButton,
   },
-})
-export default class CommitDetail extends Vue {
-  @Prop()
-  private commit!: Commit;
-
-  @Prop({ default: null })
-  private readonly selectedRun!: RunId | null;
-
-  private formatDate(date: Date) {
-    return formatDate(date);
-  }
-
-  private formatDateUTC(date: Date) {
-    return formatDateUTC(date);
-  }
-
-  private get navigationTargets(): NavigationTarget[] {
-    const targets: NavigationTarget[] = [];
-    const mutualItems = Math.min(
-      this.commit.parents.length,
-      this.commit.children.length,
-    );
-    let i = 0;
-    for (; i < mutualItems; i++) {
-      targets.push(
-        new NavigationTarget(this.commit.parents[i], this.commit.children[i]),
+  data() {
+    return {
+      untrackedIcon: mdiCompassOffOutline,
+    };
+  },
+  computed: {
+    navigationTargets(): NavigationTarget[] {
+      const targets: NavigationTarget[] = [];
+      const mutualItems = Math.min(
+        this.commit.parents.length,
+        this.commit.children.length,
       );
-    }
-
-    if (i === this.commit.parents.length) {
-      for (; i < this.commit.children.length; i++) {
-        targets.push(new NavigationTarget(null, this.commit.children[i]));
+      let i = 0;
+      for (; i < mutualItems; i++) {
+        targets.push(
+          new NavigationTarget(this.commit.parents[i], this.commit.children[i]),
+        );
       }
-    } else {
-      for (; i < this.commit.parents.length; i++) {
-        targets.push(new NavigationTarget(this.commit.parents[i], null));
+
+      if (i === this.commit.parents.length) {
+        for (; i < this.commit.children.length; i++) {
+          targets.push(new NavigationTarget(null, this.commit.children[i]));
+        }
+      } else {
+        for (; i < this.commit.parents.length; i++) {
+          targets.push(new NavigationTarget(this.commit.parents[i], null));
+        }
       }
-    }
 
-    return targets;
-  }
-
-  private readonly untrackedIcon = mdiCompassOffOutline;
-}
+      return targets;
+    },
+  },
+  methods: {
+    formatDate(date: Date) {
+      return formatDate(date);
+    },
+    formatDateUTC(date: Date) {
+      return formatDateUTC(date);
+    },
+  },
+  props: {
+    commit: {
+      type: Object as PropType<Commit>,
+    },
+    selectedRun: { default: null, type: Object as PropType<RunId | null> },
+  },
+});
 </script>
 
 <style scoped>

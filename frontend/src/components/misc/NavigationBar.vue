@@ -93,15 +93,13 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import { VuetifyIcon } from "vuetify/types/services/icons";
 import VueRouterEx from "vue-router/types/router";
 import router from "../../router";
 import LoginDialog from "./LoginDialog.vue";
 import { mdiAccountCircleOutline, mdiLogout } from "@mdi/js";
 import { vxm } from "@/store";
-import { Watch } from "vue-property-decorator";
 
 class NavigationItem {
   readonly routeName: string;
@@ -115,70 +113,77 @@ class NavigationItem {
   }
 }
 
-@Component({
+export default defineComponent({
   components: {
     login: LoginDialog,
   },
-})
-export default class NavigationBar extends Vue {
-  private iconFontSize = 22;
-  private title = "VelCom";
+  data() {
+    const lastNavigatedRoute: string | null = null;
 
-  private lastNavigatedRoute: string | null = null;
-  private drawerShown = false;
-
-  get validRoutes(): NavigationItem[] {
-    return router.routes
-      .filter(this.filterRoute)
-      .map(
-        (route) =>
-          new NavigationItem(route.name!, route.meta!.icon, route.meta!.label),
-      );
-  }
-
-  private filterRoute(route: VueRouterEx.RouteConfig): boolean {
-    if (
-      vxm.repoModule.allRepos.length <= 1 &&
-      route.name === "repo-comparison"
-    ) {
-      return false;
-    }
-    if (route.meta!.adminOnly && !this.isAdmin) {
-      return false;
-    }
-    return route.meta!.navigable;
-  }
-
-  private get currentRouteName(): string {
-    return this.$route.name!;
-  }
-
-  @Watch("currentRouteName")
-  private onRouteChange(newValue: string) {
-    this.lastNavigatedRoute = newValue;
-  }
-
-  get isAdmin(): boolean {
-    return vxm.userModule.isAdmin;
-  }
-
-  private logout(): void {
-    vxm.userModule.logOut();
-  }
-
-  private refresh(routeName: string): void {
-    if (this.lastNavigatedRoute === routeName) {
-      this.lastNavigatedRoute = null;
-      return;
-    }
-    this.$emit("refresh-view");
-  }
-
-  // ============== ICONS ==============
-  private loginIcon = mdiAccountCircleOutline;
-  private logoutIcon = mdiLogout;
-  // ==============       ==============
-}
+    return {
+      iconFontSize: 22,
+      title: "VelCom",
+      lastNavigatedRoute,
+      drawerShown: false,
+      loginIcon: mdiAccountCircleOutline,
+      logoutIcon: mdiLogout,
+    };
+  },
+  computed: {
+    validRoutes(): NavigationItem[] {
+      return router.routes
+        .filter(this.filterRoute)
+        .map(
+          (route) =>
+            new NavigationItem(
+              route.name!,
+              route.meta!.icon,
+              route.meta!.label,
+            ),
+        );
+    },
+    currentRouteName(): string {
+      return this.$route.name!;
+    },
+    isAdmin(): boolean {
+      return vxm.userModule.isAdmin;
+    },
+  },
+  methods: {
+    filterRoute(route: VueRouterEx.RouteConfig): boolean {
+      if (
+        vxm.repoModule.allRepos.length <= 1 &&
+        route.name === "repo-comparison"
+      ) {
+        return false;
+      }
+      if (route.meta!.adminOnly && !this.isAdmin) {
+        return false;
+      }
+      return route.meta!.navigable;
+    },
+    logout(): void {
+      vxm.userModule.logOut();
+    },
+    refresh(routeName: string): void {
+      if (this.lastNavigatedRoute === routeName) {
+        this.lastNavigatedRoute = null;
+        return;
+      }
+      this.$emit("refresh-view");
+    },
+    onRouteChange(newValue: string) {
+      this.lastNavigatedRoute = newValue;
+    },
+  },
+  watch: {
+    currentRouteName: [
+      {
+        handler: "onRouteChange",
+      },
+    ],
+  },
+});
 </script>
 
 <style>

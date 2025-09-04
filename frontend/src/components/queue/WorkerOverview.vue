@@ -26,23 +26,23 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { Worker } from "@/store/types";
-import { Prop } from "vue-property-decorator";
-
-@Component
-export default class WorkerOverview extends Vue {
-  @Prop()
-  private workers!: Worker[];
-
-  private formatWorkerInformation(worker: Worker) {
-    if (!worker.info) {
-      return "No data known :/";
-    }
-    return worker.info;
-  }
-}
+export default defineComponent({
+  methods: {
+    formatWorkerInformation(worker: Worker) {
+      if (!worker.info) {
+        return "No data known :/";
+      }
+      return worker.info;
+    },
+  },
+  props: {
+    workers: {
+      type: Array as PropType<Worker[]>,
+    },
+  },
+});
 </script>
 
 <style scoped>

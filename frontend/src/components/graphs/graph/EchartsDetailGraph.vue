@@ -33,15 +33,13 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   AttributedDatapoint,
   GraphDataPoint,
   SeriesId,
   SeriesInformation,
 } from "@/store/types";
-import { Prop, Watch } from "vue-property-decorator";
 import EChartsComp from "vue-echarts";
 
 import {
@@ -197,208 +195,143 @@ class EchartsDataPoint {
   }
 }
 
-@Component({
+export default defineComponent({
   components: {
     "v-chart": EChartsComp,
   },
-})
-export default class EchartsDetailGraph extends Vue {
-  // <!--<editor-fold desc="PROPS">-->
-  @Prop({ default: false })
-  private readonly beginYAtZero!: boolean;
+  data() {
+    const pointDialogSeries: SeriesInformation | null = null;
+    const pointDialogDatapoint: GraphDataPoint | null = null;
+    const pointDialogOpen: boolean = false;
+    const seriesGenerator: SeriesGenerationFunction = this.buildLineSeries;
+    const chartOptions: ECOption = {};
 
-  @Prop({ default: false })
-  private readonly stacked!: boolean;
+    return {
+      chartOptions,
+      seriesGenerator,
+      pointDialogOpen,
+      pointDialogDatapoint,
+      pointDialogSeries,
+    };
+  },
+  computed: {
+    echartsDataPoints(): Map<SeriesId, EchartsDataPoint[]> {
+      const map: Map<SeriesId, EchartsDataPoint[]> = new Map([]);
 
-  @Prop({ default: false })
-  private readonly normalized!: boolean;
+      this.seriesInformation.forEach((series) => {
+        map.set(series.id, this.buildPointsForSeries(series));
+      });
 
-  @Prop()
-  private readonly zoomXStartValue!: number | null;
+      return map;
+    },
+    showReferenceMarkers() {
+      if (!this.referenceDatapoint) {
+        return false;
+      }
+      const seriesId = this.referenceDatapoint.seriesId;
 
-  @Prop()
-  private readonly zoomXEndValue!: number | null;
+      return this.seriesInformation.find((it) => it.id === seriesId);
+    },
+    showCommitToCompareMarker() {
+      if (!this.commitToCompare) {
+        return false;
+      }
+      const seriesId = this.commitToCompare.seriesId;
 
-  @Prop()
-  private readonly zoomYStartValue!: number | null;
-
-  @Prop()
-  private readonly zoomYEndValue!: number | null;
-
-  @Prop()
-  private readonly dataRangeMin!: Date;
-
-  @Prop()
-  private readonly dataRangeMax!: Date;
-
-  @Prop()
-  private readonly datapoints!: GraphDataPoint[];
-
-  @Prop()
-  private readonly seriesInformation!: SeriesInformation[];
-
-  @Prop()
-  private readonly visiblePointCount!: number;
-
-  @Prop({ default: null })
-  private readonly commitToCompare!: AttributedDatapoint | null;
-
-  @Prop({ default: null })
-  private readonly referenceDatapoint!: AttributedDatapoint | null;
-
-  @Prop({ default: 0 })
-  private readonly refreshKey!: number;
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="FIELDS">-->
-  private chartOptions: ECOption = {};
-  private seriesGenerator: SeriesGenerationFunction = this.buildLineSeries;
-
-  // >>>> Datapoint Dialog >>>>
-  private pointDialogOpen: boolean = false;
-  private pointDialogDatapoint: GraphDataPoint | null = null;
-  private pointDialogSeries: SeriesInformation | null = null;
-  // <<<< Datapoint Dialog <<<<
-  //  <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="ECHARTS GRAPH OPTIONS">-->
-  @Watch("datapoints")
-  @Watch("beginYAtZero")
-  @Watch("stacked")
-  @Watch("normalized")
-  @Watch("dataRangeMin")
-  @Watch("dataRangeMax")
-  @Watch("refreshKey")
-  @Watch("graphFailedOrUnbenchmarkedColor") // DataPoints need adjusting, they store the color
-  private updateGraph() {
-    this.selectAppropriateSeries();
-    const otherUnits = new Set(
-      this.seriesInformation.map((s) => s.unit).filter((u) => u !== "s"),
-    );
-
-    this.chartOptions = {
-      grid: {
-        left: 20,
-        right: 20,
-        containLabel: true,
-      },
-      xAxis: {
-        type: "time",
-        min: this.dataRangeMin.getTime(),
-        max: this.dataRangeMax.getTime(),
-        axisLabel: {
-          formatter: "{yyyy}-{MM}-{dd}",
-        },
-      },
-      yAxis: [
-        {
-          type: "value",
-          name: "s",
-          scale: !this.beginYAtZero,
-        },
-        {
-          type: "value",
-          name:
-            otherUnits.size === 1 ? otherUnits.keys().next().value : "other",
-          scale: !this.beginYAtZero,
-        },
-      ],
-      toolbox: {
-        left: "center",
-        show: true,
-        showTitle: false, // hide the default text so they don't overlap each other
-        feature: {
-          restore: { show: true, title: "Reset" },
-          saveAsImage: { show: true, title: "Save as Image" },
-          dataZoom: {
-            title: {
-              zoom: "Zoom (brush)",
-              back: "Reset zoom",
-            },
+      return this.seriesInformation.find((it) => it.id === seriesId);
+    },
+    numberFormat(): Intl.NumberFormat {
+      return new Intl.NumberFormat(
+        new Intl.NumberFormat().resolvedOptions().locale,
+        { maximumFractionDigits: 3 },
+      );
+    },
+    graphBackgroundColor() {
+      return this.$vuetify.theme.currentTheme.graphBackground as string;
+    },
+    graphFailedOrUnbenchmarkedColor() {
+      return this.$vuetify.theme.currentTheme
+        .graphFailedOrUnbenchmarked as string;
+    },
+    themeColor(): (key: string) => string {
+      return (key) => this.$vuetify.theme.currentTheme[key] as string;
+    },
+    chartTheme() {
+      const axisSettings = () => ({
+        axisLine: {
+          lineStyle: {
+            color: "currentColor",
           },
         },
-        tooltip: {
-          show: true,
+        axisTick: {
+          lineStyle: {
+            color: "currentColor",
+          },
         },
-      },
-      dataZoom: [
-        // DO NOT REORDER THE FIRST TWO OR echartsZoomed WILL BREAK!
-        {
-          id: "x",
-          xAxisIndex: [0],
-          type: "inside",
-          // Start at the correct place when changing the series type
-          startValue: this.zoomXStartValue || undefined,
-          endValue: this.zoomXEndValue || undefined,
+        axisLabel: {
+          color: "currentColor",
         },
-        {
-          id: "y",
-          type: "inside",
-          yAxisIndex: [0, 1],
-          startValue: this.zoomYStartValue || undefined,
-          endValue: this.zoomYEndValue || undefined,
-          zoomOnMouseWheel: false,
+        splitLine: {
+          lineStyle: {
+            color: this.themeColor("rowHighlight"),
+          },
         },
-        {
-          id: "xAxis",
-          type: "slider",
-          // Start at the correct place when changing the series type
-          startValue: this.zoomXStartValue || undefined,
-          endValue: this.zoomXEndValue || undefined,
+        splitArea: {
+          areaStyle: {
+            color: this.themeColor("rowHighlight"),
+          },
         },
-      ],
-      tooltip: {
-        trigger: "axis",
-        axisPointer: {},
-        // TODO: Extract in own helper?
-        formatter: this.tooltipFormatter,
-        confine: false,
-        position: this.tooltipPositioner,
-      },
-      series: this.seriesInformation.map(this.seriesGenerator),
-    };
+      });
+      return {
+        backgroundColor: this.graphBackgroundColor,
+        valueAxis: axisSettings(),
+        timeAxis: axisSettings(),
+        dataZoom: {
+          textStyle: {
+            color: "currentColor",
+          },
+        },
+        toolbox: {
+          iconStyle: {
+            borderColor: "currentColor",
+          },
+        },
+      };
+    },
+  },
+  mounted(): void {
+    this.updateGraph();
+  },
+  methods: {
+    tooltipFormatter(params: any) {
+      const values = Array.isArray(params) ? params.slice() : [params];
 
-    this.updateReferenceDatapoint();
-    this.updateMarkPoints();
-  }
-
-  @Watch("visibleDataPoints")
-  private onVisibleDatapointsChange() {
-    if (this.selectAppropriateSeries() === "re-render") {
-      this.updateGraph();
-    }
-  }
-
-  // The correct type is not exposed sadly
-  private tooltipFormatter(params: any) {
-    const values = Array.isArray(params) ? params.slice() : [params];
-
-    if (values.length === 1 && values[0].componentType !== "series") {
-      return values[0].title;
-    }
-
-    // Sort them so the order corresponds to the order of the lines
-    values.sort((a, b) => {
-      const first = a.data as EchartsDataPoint;
-      const second = b.data as EchartsDataPoint;
-      return second.dataValue - first.dataValue;
-    });
-    const seriesRows = values.map((val) => {
-      const seriesInformation = this.seriesInformation[val.seriesIndex || 0];
-      const color = seriesInformation.color;
-      const datapoint = val.data as EchartsDataPoint;
-      const safeDisplayName = escapeHtml(seriesInformation.displayName);
-      let value: string;
-      if (datapoint.benchmarkStatus === "success") {
-        value = this.numberFormat.format(datapoint.dataValue);
-      } else if (datapoint.benchmarkStatus === "unbenchmarked") {
-        value = "Commit was not benchmarked";
-      } else if (datapoint.benchmarkStatus === "no-such-metric") {
-        value = "Metric not measured for commit";
-      } else {
-        value = "Failed";
+      if (values.length === 1 && values[0].componentType !== "series") {
+        return values[0].title;
       }
-      return `
+
+      // Sort them so the order corresponds to the order of the lines
+      values.sort((a, b) => {
+        const first = a.data as EchartsDataPoint;
+        const second = b.data as EchartsDataPoint;
+        return second.dataValue - first.dataValue;
+      });
+      const seriesRows = values.map((val) => {
+        const seriesInformation = this.seriesInformation[val.seriesIndex || 0];
+        const color = seriesInformation.color;
+        const datapoint = val.data as EchartsDataPoint;
+        const safeDisplayName = escapeHtml(seriesInformation.displayName);
+        let value: string;
+        if (datapoint.benchmarkStatus === "success") {
+          value = this.numberFormat.format(datapoint.dataValue);
+        } else if (datapoint.benchmarkStatus === "unbenchmarked") {
+          value = "Commit was not benchmarked";
+        } else if (datapoint.benchmarkStatus === "no-such-metric") {
+          value = "Metric not measured for commit";
+        } else {
+          value = "Failed";
+        }
+        return `
                 <tr>
                   <td>
                     <span class="color-preview" style="background-color: ${color}"></span>
@@ -407,16 +340,16 @@ export default class EchartsDetailGraph extends Vue {
                   <td>${value}</td>
                 </tr>
                 `;
-    });
-    const samplePoint = values[0].data as EchartsDataPoint;
-    const point = this.datapoints.find((it) => it.uid === samplePoint.name);
+      });
+      const samplePoint = values[0].data as EchartsDataPoint;
+      const point = this.datapoints.find((it) => it.uid === samplePoint.name);
 
-    if (!point) {
-      return "No point found :/";
-    }
+      if (!point) {
+        return "No point found :/";
+      }
 
-    const committerDate = formatDate(point.committerTime);
-    return `
+      const committerDate = formatDate(point.committerTime);
+      return `
            <table class="echarts-tooltip-table">
              <tr>
                <td>Hash</td>
@@ -435,603 +368,679 @@ export default class EchartsDetailGraph extends Vue {
              ${seriesRows.join("\n")}
            </table>
             `;
-  }
+    },
+    tooltipPositioner(point: [number, number], _: unknown, el: unknown) {
+      if (!(el instanceof HTMLDivElement)) {
+        // We use HTML tooltips so this code path is not reached.
+        throw new Error(
+          "Only HTML tooltips are supported in our custom tooltip position!",
+        );
+      }
 
-  private tooltipPositioner(point: [number, number], _: unknown, el: unknown) {
-    if (!(el instanceof HTMLDivElement)) {
-      // We use HTML tooltips so this code path is not reached.
-      throw new Error(
-        "Only HTML tooltips are supported in our custom tooltip position!",
+      // The mouse X and Y position in "point" is relative to the chart. We approximate the chart position using
+      // the chart-container, so convert the relative mouse X and Y to screen coordinates.
+      // This is needed as our later processing steps try to position the tooltip *on the screen* (and not just
+      // inside the chart), and therefore need to be able to refer to the actual screen corners
+      const containerRect = document
+        .getElementById("chart-container")!
+        .getBoundingClientRect();
+
+      // Placement is based on the size of the tooltip
+      const tooltipRect = el.getBoundingClientRect();
+      const tooltipWidth = tooltipRect.width;
+      const tooltipHeight = tooltipRect.height;
+
+      type Point = { x: number; y: number };
+      const dist = (a: Point, b: Point) =>
+        Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
+
+      // We use an adapted version of
+      // https://www.fabiofranchino.com/blog/efficient-tooltip-positioning-in-d3js-chart/
+      // To do this we need the four corners that frame the area our tooltip can be placed in.
+      // We choose to use the following
+      //
+      //                    Screen
+      //          +-------------------------+
+      //          |                         |
+      //          |         Graph           |
+      // Top left X      -------------      X  Top Right
+      //          |      -------------      |
+      //          |      -------------      |
+      //          |                         |
+      // Bot left X-------------------------X Bot right
+
+      const mouseScreenPosition = {
+        x: point[0] + containerRect.x,
+        y: point[1] + containerRect.y,
+      };
+      const topLeft = { x: 0, y: containerRect.y };
+      const topRight = { x: window.innerWidth, y: containerRect.y };
+      const bottomLeft = { x: 0, y: window.innerHeight };
+      const bottomRight = { x: window.innerWidth, y: window.innerHeight };
+
+      const distanceTopLeft = dist(mouseScreenPosition, topLeft);
+      const distanceTopRight = dist(mouseScreenPosition, topRight);
+      const distanceBottomLeft = dist(mouseScreenPosition, bottomLeft);
+      const distanceBottomRight = dist(mouseScreenPosition, bottomRight);
+
+      // The algorithm works by selecting the corner that is *the furthest* away from the current mouse position
+      //
+      //           Allowed tooltip positions
+      //          +--------------------------+  Would Pick this corner, as it is the furthest away
+      //          |        -----------------/|
+      //          |       /                  |
+      //          |  ---x------------------\ |
+      //          | /                       \|
+      //          +--------------------------+
+      //
+      // And then it tries to position the tooltip along the line connecting the point to the corner.
+      const maxDist = Math.max(
+        distanceTopLeft,
+        distanceTopRight,
+        distanceBottomLeft,
+        distanceBottomRight,
       );
-    }
 
-    // The mouse X and Y position in "point" is relative to the chart. We approximate the chart position using
-    // the chart-container, so convert the relative mouse X and Y to screen coordinates.
-    // This is needed as our later processing steps try to position the tooltip *on the screen* (and not just
-    // inside the chart), and therefore need to be able to refer to the actual screen corners
-    const containerRect = document
-      .getElementById("chart-container")!
-      .getBoundingClientRect();
+      let finalX;
+      let finalY;
+      const padding = 15;
 
-    // Placement is based on the size of the tooltip
-    const tooltipRect = el.getBoundingClientRect();
-    const tooltipWidth = tooltipRect.width;
-    const tooltipHeight = tooltipRect.height;
+      //
+      // +-----------=----------+
+      // |         / = XXX-\    |  M is mouse, X is a possible tooltip location, line is a graph
+      // |  /--\  /  = XXX M\   |  Only horizontal position is relevant here
+      // | -    --   = XXX   \- |
+      // +-----------=----------+
+      //             ^
+      // If we are on the right, we try to place the tooltip on the left, so the user can freely see the data on the
+      // right.
+      if (maxDist === distanceTopLeft || maxDist === distanceBottomLeft) {
+        finalX = point[0] - padding - tooltipWidth;
+      } else {
+        finalX = point[0] + padding;
+      }
 
-    type Point = { x: number; y: number };
-    const dist = (a: Point, b: Point) =>
-      Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
+      // If we are in the top half, we just try to place the tooltip below us. This will likely be fine, as there
+      // are some controls under the graph and we can more easily overflow at the bottom:
+      //   The data is sorted by value in the tooltip, so if the users hover somewhere at the top of the graph, we
+      //   do want to show the top of the tooltip - cutting off the bottom is likely okay, as the users mouse is far
+      //   away from any relevant data.
+      if (!(maxDist === distanceTopLeft || maxDist === distanceTopRight)) {
+        finalY = point[1] + padding;
+      } else {
+        // If we are in the bottom half, we try to do the same. Place the tooltip below us. This prevents the
+        // tooltip from jumping around, if we move through the graph.
+        finalY = point[1] + padding;
 
-    // We use an adapted version of
-    // https://www.fabiofranchino.com/blog/efficient-tooltip-positioning-in-d3js-chart/
-    // To do this we need the four corners that frame the area our tooltip can be placed in.
-    // We choose to use the following
-    //
-    //                    Screen
-    //          +-------------------------+
-    //          |                         |
-    //          |         Graph           |
-    // Top left X      -------------      X  Top Right
-    //          |      -------------      |
-    //          |      -------------      |
-    //          |                         |
-    // Bot left X-------------------------X Bot right
+        // However, if we place the tooltip below and hover at the bottom, it might go offscreen - even when there
+        // is plenty space above!
+        // If we detect that the tooltip is at least partially hidden, we instead try to place the tooltip
+        // *ABOVE* the mouse cursor.
 
-    const mouseScreenPosition = {
-      x: point[0] + containerRect.x,
-      y: point[1] + containerRect.y,
-    };
-    const topLeft = { x: 0, y: containerRect.y };
-    const topRight = { x: window.innerWidth, y: containerRect.y };
-    const bottomLeft = { x: 0, y: window.innerHeight };
-    const bottomRight = { x: window.innerWidth, y: window.innerHeight };
+        // Does the tooltip at least partially go off-screen (i.e. is larger than the bottom y)?
+        if (finalY + containerRect.y + tooltipHeight > bottomLeft.y) {
+          // It did go off-screen, so we try to lift it above instead.
 
-    const distanceTopLeft = dist(mouseScreenPosition, topLeft);
-    const distanceTopRight = dist(mouseScreenPosition, topRight);
-    const distanceBottomLeft = dist(mouseScreenPosition, bottomLeft);
-    const distanceBottomRight = dist(mouseScreenPosition, bottomRight);
-
-    // The algorithm works by selecting the corner that is *the furthest* away from the current mouse position
-    //
-    //           Allowed tooltip positions
-    //          +--------------------------+  Would Pick this corner, as it is the furthest away
-    //          |        -----------------/|
-    //          |       /                  |
-    //          |  ---x------------------\ |
-    //          | /                       \|
-    //          +--------------------------+
-    //
-    // And then it tries to position the tooltip along the line connecting the point to the corner.
-    const maxDist = Math.max(
-      distanceTopLeft,
-      distanceTopRight,
-      distanceBottomLeft,
-      distanceBottomRight,
-    );
-
-    let finalX;
-    let finalY;
-    const padding = 15;
-
-    //
-    // +-----------=----------+
-    // |         / = XXX-\    |  M is mouse, X is a possible tooltip location, line is a graph
-    // |  /--\  /  = XXX M\   |  Only horizontal position is relevant here
-    // | -    --   = XXX   \- |
-    // +-----------=----------+
-    //             ^
-    // If we are on the right, we try to place the tooltip on the left, so the user can freely see the data on the
-    // right.
-    if (maxDist === distanceTopLeft || maxDist === distanceBottomLeft) {
-      finalX = point[0] - padding - tooltipWidth;
-    } else {
-      finalX = point[0] + padding;
-    }
-
-    // If we are in the top half, we just try to place the tooltip below us. This will likely be fine, as there
-    // are some controls under the graph and we can more easily overflow at the bottom:
-    //   The data is sorted by value in the tooltip, so if the users hover somewhere at the top of the graph, we
-    //   do want to show the top of the tooltip - cutting off the bottom is likely okay, as the users mouse is far
-    //   away from any relevant data.
-    if (!(maxDist === distanceTopLeft || maxDist === distanceTopRight)) {
-      finalY = point[1] + padding;
-    } else {
-      // If we are in the bottom half, we try to do the same. Place the tooltip below us. This prevents the
-      // tooltip from jumping around, if we move through the graph.
-      finalY = point[1] + padding;
-
-      // However, if we place the tooltip below and hover at the bottom, it might go offscreen - even when there
-      // is plenty space above!
-      // If we detect that the tooltip is at least partially hidden, we instead try to place the tooltip
-      // *ABOVE* the mouse cursor.
-
-      // Does the tooltip at least partially go off-screen (i.e. is larger than the bottom y)?
-      if (finalY + containerRect.y + tooltipHeight > bottomLeft.y) {
-        // It did go off-screen, so we try to lift it above instead.
-
-        // Does the tooltip fit above our mouse cursor?
-        // finalY + containerRect.y translates our planned top left corner to screen coordinates. We then
-        // subtract the tooltipHeight (as we want to place the *bottom* corner) at mouse position.
-        // If this is smaller than the top y, we clipped outside our top border and there isn't enough space.
-        // The padding is deliberately ignored in the calculation, as there are some controls above the chart
-        // (toolbox) and the tooltip has some information at the top we are willing to sacrifice. Ignoring the
-        // padding here just makes it a bit more likely that the tooltip fits above, while not harming readability
-        // too much.
-        if (finalY + containerRect.y - tooltipHeight >= topLeft.y) {
-          // It fit above! We now adjust the finalY to place the bottom of the tooltip <padding> above our mouse's
-          // y position.
-          finalY = point[1] - padding - tooltipHeight;
-        } else {
-          // It didn't fit above. The tooltip is apparently too tall and we can't place it *anywhere* without
-          // clipping it. This is sad, but we will at least try to salvage it a bit.
-          // One of our priorities was clearing the horizontal line of your mouse cursor, so you can easily click
-          // on points and their neighbours. This property is nice, but not essential.
-          // Therefore, we give it up and instead place the tooltip below the mouse cursor - but lifted up
-          // enough to be fully visible. It might now extend below and above the mouse y position, but as it is
-          // also offset in the x-direction, clicking datapoints is still possible.
-          finalY -= finalY + containerRect.y + tooltipHeight - bottomLeft.y;
+          // Does the tooltip fit above our mouse cursor?
+          // finalY + containerRect.y translates our planned top left corner to screen coordinates. We then
+          // subtract the tooltipHeight (as we want to place the *bottom* corner) at mouse position.
+          // If this is smaller than the top y, we clipped outside our top border and there isn't enough space.
+          // The padding is deliberately ignored in the calculation, as there are some controls above the chart
+          // (toolbox) and the tooltip has some information at the top we are willing to sacrifice. Ignoring the
+          // padding here just makes it a bit more likely that the tooltip fits above, while not harming readability
+          // too much.
+          if (finalY + containerRect.y - tooltipHeight >= topLeft.y) {
+            // It fit above! We now adjust the finalY to place the bottom of the tooltip <padding> above our mouse's
+            // y position.
+            finalY = point[1] - padding - tooltipHeight;
+          } else {
+            // It didn't fit above. The tooltip is apparently too tall and we can't place it *anywhere* without
+            // clipping it. This is sad, but we will at least try to salvage it a bit.
+            // One of our priorities was clearing the horizontal line of your mouse cursor, so you can easily click
+            // on points and their neighbours. This property is nice, but not essential.
+            // Therefore, we give it up and instead place the tooltip below the mouse cursor - but lifted up
+            // enough to be fully visible. It might now extend below and above the mouse y position, but as it is
+            // also offset in the x-direction, clicking datapoints is still possible.
+            finalY -= finalY + containerRect.y + tooltipHeight - bottomLeft.y;
+          }
         }
       }
-    }
 
-    return [finalX, finalY];
-  }
-  // <!--</editor-fold>-->
+      return [finalX, finalY];
+    },
+    getHighestPointValue(point: GraphDataPoint): number {
+      return Math.max(
+        0,
+        ...Array.from(point.values.values()).filter(
+          (v): v is number => typeof v === "number",
+        ),
+      );
+    },
+    findFirstSuccessful(seriesId: SeriesId) {
+      const point = this.datapoints.find((it) => it.successful(seriesId));
 
-  // <!--<editor-fold desc="SERIES GENERATION">-->
-  private getHighestPointValue(point: GraphDataPoint): number {
-    return Math.max(
-      0,
-      ...Array.from(point.values.values()).filter(
-        (v): v is number => typeof v === "number",
-      ),
-    );
-  }
+      if (point) {
+        return [
+          point.values.get(seriesId) as number,
+          this.getHighestPointValue(point),
+        ];
+      }
+      return [0, 0];
+    },
+    buildPointsForSeries(seriesInformation: SeriesInformation) {
+      const seriesId = seriesInformation.id;
+      const lastSuccessfulValues = this.findFirstSuccessful(seriesId);
+      return this.datapoints
+        .filter((it) => it.values.has(seriesId))
+        .map((point) => {
+          let benchmarkStatus: BenchmarkStatus = "success";
+          let color = seriesInformation.color;
+          let borderColor = color;
 
-  private findFirstSuccessful(seriesId: SeriesId) {
-    const point = this.datapoints.find((it) => it.successful(seriesId));
+          let pointValue = point.values.get(seriesId);
+          if (typeof pointValue !== "number") {
+            pointValue = lastSuccessfulValues[0];
+          }
+          lastSuccessfulValues[0] = pointValue;
+          if (this.normalized) {
+            let normValue = this.getHighestPointValue(point);
+            if (normValue === 0) normValue = lastSuccessfulValues[1];
+            lastSuccessfulValues[1] = normValue;
+            pointValue = pointValue / normValue;
+          }
 
-    if (point) {
-      return [
-        point.values.get(seriesId) as number,
-        this.getHighestPointValue(point),
-      ];
-    }
-    return [0, 0];
-  }
+          if (point.failed(seriesId)) {
+            // grey circle
+            benchmarkStatus = "failed";
+            color = this.graphFailedOrUnbenchmarkedColor;
+            borderColor = color;
+          } else if (point.unbenchmarked(seriesId)) {
+            benchmarkStatus = point.commitUnbenchmarked(seriesId)
+              ? "unbenchmarked"
+              : "no-such-metric";
+            // empty circle with outline
+            color = this.graphBackgroundColor;
+            borderColor = this.graphFailedOrUnbenchmarkedColor;
+          }
 
-  private buildPointsForSeries(seriesInformation: SeriesInformation) {
-    const seriesId = seriesInformation.id;
-    const lastSuccessfulValues = this.findFirstSuccessful(seriesId);
-    return this.datapoints
-      .filter((it) => it.values.has(seriesId))
-      .map((point) => {
-        let benchmarkStatus: BenchmarkStatus = "success";
-        let color = seriesInformation.color;
-        let borderColor = color;
+          return new EchartsDataPoint(
+            point.positionTime,
+            pointValue,
+            benchmarkStatus,
+            point.uid,
+            color,
+            borderColor,
+          );
+        });
+    },
+    buildLineSeries(series: SeriesInformation): LineSeriesOption {
+      // noinspection JSMismatchedCollectionQueryUpdate
+      const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
+        series.id,
+      )!;
 
-        let pointValue = point.values.get(seriesId);
-        if (typeof pointValue !== "number") {
-          pointValue = lastSuccessfulValues[0];
-        }
-        lastSuccessfulValues[0] = pointValue;
-        if (this.normalized) {
-          let normValue = this.getHighestPointValue(point);
-          if (normValue === 0) normValue = lastSuccessfulValues[1];
-          lastSuccessfulValues[1] = normValue;
-          pointValue = pointValue / normValue;
-        }
-
-        if (point.failed(seriesId)) {
-          // grey circle
-          benchmarkStatus = "failed";
-          color = this.graphFailedOrUnbenchmarkedColor;
-          borderColor = color;
-        } else if (point.unbenchmarked(seriesId)) {
-          benchmarkStatus = point.commitUnbenchmarked(seriesId)
-            ? "unbenchmarked"
-            : "no-such-metric";
-          // empty circle with outline
-          color = this.graphBackgroundColor;
-          borderColor = this.graphFailedOrUnbenchmarkedColor;
-        }
-
-        return new EchartsDataPoint(
-          point.positionTime,
-          pointValue,
-          benchmarkStatus,
-          point.uid,
-          color,
-          borderColor,
-        );
+      return {
+        type: "line",
+        showSymbol: false,
+        symbol: ((value: EchartsDataPoint) => value.symbol) as any,
+        symbolSize: 6,
+        lineStyle: {
+          color: series.color,
+        },
+        data: echartPoints as any,
+        yAxisIndex: series.unit === "s" ? 0 : 1,
+        stack: this.stacked ? "x" : undefined,
+      };
+    },
+    buildGraphSeries(series: SeriesInformation): GraphSeriesOption {
+      // noinspection JSMismatchedCollectionQueryUpdate
+      const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
+        series.id,
+      )!;
+      const links = this.datapoints.flatMap((point) => {
+        return point.parentUids.map((parentUid) => ({
+          source: point.uid,
+          target: parentUid,
+        }));
       });
-  }
 
-  private get echartsDataPoints(): Map<SeriesId, EchartsDataPoint[]> {
-    const map: Map<SeriesId, EchartsDataPoint[]> = new Map([]);
-
-    this.seriesInformation.forEach((series) => {
-      map.set(series.id, this.buildPointsForSeries(series));
-    });
-
-    return map;
-  }
-
-  private buildLineSeries(series: SeriesInformation): LineSeriesOption {
-    // noinspection JSMismatchedCollectionQueryUpdate
-    const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
-      series.id,
-    )!;
-
-    return {
-      type: "line",
-      showSymbol: false,
-      symbol: ((value: EchartsDataPoint) => value.symbol) as any,
-      symbolSize: 6,
-      lineStyle: {
-        color: series.color,
-      },
-      data: echartPoints as any,
-      yAxisIndex: series.unit === "s" ? 0 : 1,
-      stack: this.stacked ? "x" : undefined,
-    };
-  }
-
-  private buildGraphSeries(series: SeriesInformation): GraphSeriesOption {
-    // noinspection JSMismatchedCollectionQueryUpdate
-    const echartPoints: EchartsDataPoint[] = this.echartsDataPoints.get(
-      series.id,
-    )!;
-    const links = this.datapoints.flatMap((point) => {
-      return point.parentUids.map((parentUid) => ({
-        source: point.uid,
-        target: parentUid,
-      }));
-    });
-
-    return {
-      type: "graph",
-      coordinateSystem: "cartesian2d",
-      label: {
-        show: false,
-      },
-      emphasis: {
+      return {
+        type: "graph",
+        coordinateSystem: "cartesian2d",
         label: {
           show: false,
         },
-      },
-      edgeSymbol: ["none", "arrow"],
-      edgeSymbolSize: 6,
-      symbol: ((value: EchartsDataPoint) => value.symbol) as any,
-      symbolSize: 6,
-      lineStyle: {
-        color: series.color,
-      },
-      links,
-      data: echartPoints as any,
-    };
-  }
-
-  /**
-   * Selects the correct series generator based on the number of points displayed:
-   * If there are too many, the graph is not performant enough and a line graph will be drawn.
-   * If the number is manageable, the graph type will be selected.
-   */
-  private selectAppropriateSeries(): "re-render" | "unchanged" {
-    const visibleDataPoints = this.visiblePointCount;
-    const newGenerator: SeriesGenerationFunction =
-      visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries;
-
-    if (newGenerator !== this.seriesGenerator) {
-      this.seriesGenerator = newGenerator;
-      return "re-render";
-    }
-    return "unchanged";
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="LIFECYCLE HOOKS">-->
-  mounted(): void {
-    this.updateGraph();
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="REFERENCE LINE, COMPARE">-->
-  private get showReferenceMarkers() {
-    if (!this.referenceDatapoint) {
-      return false;
-    }
-    const seriesId = this.referenceDatapoint.seriesId;
-
-    return this.seriesInformation.find((it) => it.id === seriesId);
-  }
-
-  private get showCommitToCompareMarker() {
-    if (!this.commitToCompare) {
-      return false;
-    }
-    const seriesId = this.commitToCompare.seriesId;
-
-    return this.seriesInformation.find((it) => it.id === seriesId);
-  }
-
-  @Watch("referenceDatapoint")
-  @Watch("commitToCompare")
-  private updateReferenceDatapoint() {
-    const series = this.chartOptions.series! as ValidEchartsSeries[];
-
-    // noinspection JSMismatchedCollectionQueryUpdate
-    const markLineData: any[] = [];
-    if (this.showReferenceMarkers) {
-      const reference = this.referenceDatapoint!;
-      const referenceValue = reference.datapoint.values.get(reference.seriesId);
-      if (typeof referenceValue === "number") {
-        markLineData.push({ yAxis: referenceValue, name: "Reference" });
-      }
-    }
-    if (this.showCommitToCompareMarker) {
-      // Day equidistant points might move the point and its author date
-      const displayedPoint = this.echartsDataPoints
-        .get(this.commitToCompare!.seriesId)!
-        .find((it) => it.name === this.commitToCompare!.datapoint.uid);
-
-      if (displayedPoint) {
-        markLineData.push({
-          xAxis: displayedPoint.positionTime,
-          name: "Comparing…",
-        });
-      }
-    }
-    const hasReferenceLine = markLineData.length > 0;
-
-    const markLineJson = {
-      symbol: "none",
-      lineStyle: {
-        type: "dotted",
-        color: this.themeColor("error"),
-        width: 2,
-      },
-      label: {
-        show: true,
-        color: this.themeColor("error"),
-        formatter: (it: any) => {
-          return it.name as string;
-        },
-      },
-      silent: true,
-      data: markLineData as any,
-    };
-
-    // Set on one, delete on all (as the order might change)
-    if (hasReferenceLine && series.length > 0) {
-      Vue.set(series[0], "markLine", markLineJson);
-    } else {
-      series.forEach((it) => Vue.set(it, "markLine", markLineJson));
-    }
-
-    // Adjust padding so the label is not cut off on the right
-    const grid = this.chartOptions.grid as GridComponentOption;
-    grid.right = hasReferenceLine ? 70 : 20;
-  }
-
-  @Watch("referenceDatapoint")
-  private updateMarkPoints() {
-    const series = this.chartOptions.series! as ValidEchartsSeries[];
-    // noinspection JSMismatchedCollectionQueryUpdate
-    const markPointData: any[] = [];
-
-    if (this.showReferenceMarkers) {
-      const point = this.referenceDatapoint!.datapoint;
-      const displayedPoint = this.echartsDataPoints
-        .get(this.referenceDatapoint!.seriesId)!
-        .find((it) => it.name === point.uid);
-
-      if (displayedPoint) {
-        markPointData.push({
-          coord: [
-            displayedPoint.positionTime,
-            point.values.get(this.referenceDatapoint!.seriesId),
-          ],
+        emphasis: {
           label: {
-            show: true,
-            position: "inside",
-            formatter: () => "R",
+            show: false,
           },
+        },
+        edgeSymbol: ["none", "arrow"],
+        edgeSymbolSize: 6,
+        symbol: ((value: EchartsDataPoint) => value.symbol) as any,
+        symbolSize: 6,
+        lineStyle: {
+          color: series.color,
+        },
+        links,
+        data: echartPoints as any,
+      };
+    },
+    selectAppropriateSeries(): "re-render" | "unchanged" {
+      const visibleDataPoints = this.visiblePointCount;
+      const newGenerator: SeriesGenerationFunction =
+        visibleDataPoints > 200 ? this.buildLineSeries : this.buildGraphSeries;
+
+      if (newGenerator !== this.seriesGenerator) {
+        this.seriesGenerator = newGenerator;
+        return "re-render";
+      }
+      return "unchanged";
+    },
+    echartsZoomed(e: any) {
+      if (!e.batch || e.batch.length === 0) {
+        this.setZoomOnCorrectAxis(e.dataZoomId);
+      } else {
+        e.batch.forEach((batch: any) => {
+          this.setZoomOnCorrectAxis(batch.dataZoomId);
         });
       }
-    }
 
-    const markPointJson = {
-      silent: true,
-      data: markPointData as any,
-    };
-
-    // Set on one, delete on all (as the order might change)
-    if (this.commitToCompare && series.length > 0) {
-      Vue.set(series[0], "markPoint", markPointJson);
-    } else {
-      series.forEach((it) => Vue.set(it, "markPoint", markPointJson));
-    }
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="ECHARTS EVENT HANDLER">-->
-  private echartsZoomed(e: any) {
-    if (!e.batch || e.batch.length === 0) {
-      this.setZoomOnCorrectAxis(e.dataZoomId);
-    } else {
-      e.batch.forEach((batch: any) => {
-        this.setZoomOnCorrectAxis(batch.dataZoomId);
-      });
-    }
-
-    if (this.selectAppropriateSeries() === "re-render") {
-      this.updateGraph();
-    }
-  }
-
-  private setZoomOnCorrectAxis(seriesId: string) {
-    const actualOptions: ECOption = (this.$refs["chart"] as any).getOption();
-
-    const orNull = (zoom: DataZoomComponentOption, start: "start" | "end") => {
-      const value =
-        start === "start"
-          ? (zoom.startValue as number | undefined | null)
-          : (zoom.endValue as number | undefined | null);
-      if (value === null || value === undefined) {
-        return null;
+      if (this.selectAppropriateSeries() === "re-render") {
+        this.updateGraph();
       }
+    },
+    setZoomOnCorrectAxis(seriesId: string) {
+      const actualOptions: ECOption = (this.$refs["chart"] as any).getOption();
 
-      return value;
-    };
+      const orNull = (
+        zoom: DataZoomComponentOption,
+        start: "start" | "end",
+      ) => {
+        const value =
+          start === "start"
+            ? (zoom.startValue as number | undefined | null)
+            : (zoom.endValue as number | undefined | null);
+        if (value === null || value === undefined) {
+          return null;
+        }
 
-    const dataZooms = actualOptions.dataZoom as DataZoomComponentOption[];
+        return value;
+      };
 
-    if (seriesId === "x" || seriesId.includes("xAxis")) {
-      this.$emit("update:zoomXStartValue", orNull(dataZooms[0], "start"));
-      this.$emit("update:zoomXEndValue", orNull(dataZooms[0], "end"));
-    } else {
-      this.$emit("update:zoomYStartValue", orNull(dataZooms[1], "start"));
-      this.$emit("update:zoomYEndValue", orNull(dataZooms[1], "end"));
-    }
-  }
+      const dataZooms = actualOptions.dataZoom as DataZoomComponentOption[];
 
-  private echartsOpenContextMenu(e: any) {
-    if (!e.data) {
-      return;
-    }
-
-    const echartsPoint = e.data as EchartsDataPoint;
-
-    const datapoint = this.datapoints.find(
-      (it) => it.uid === echartsPoint.name,
-    );
-    const seriesInformation = this.seriesInformation[e.seriesIndex];
-
-    if (!datapoint || !seriesInformation) {
-      return;
-    }
-
-    // Hide browser right click context menu
-    if ((e as any).event && (e as any).event.event) {
-      const event = (e as any).event.event as Event;
-      event.preventDefault();
-    }
-
-    this.pointDialogDatapoint = datapoint;
-    this.pointDialogSeries = seriesInformation;
-    this.pointDialogOpen = true;
-  }
-
-  private echartsClicked(e: any) {
-    if (e.data === undefined) {
-      return;
-    }
-
-    // Was a *link* (i.e. the arrow between two datapoints) and no datapoint
-    if (e.data.name === undefined) {
-      return;
-    }
-
-    const echartsPoint = e.data as EchartsDataPoint;
-    const datapoint = this.datapoints.find(
-      (it) => it.uid === echartsPoint.name,
-    );
-
-    // Should not happen, but better be safe than sorry
-    if (!datapoint) {
-      return;
-    }
-
-    if ((e as any).event && (e as any).event.event) {
-      const event = (e as any).event.event as MouseEvent;
-      if (event.ctrlKey) {
-        const routeData = this.$router.resolve({
-          name: "run-detail",
-          params: {
-            first: datapoint.repoId,
-            second: datapoint.hash,
-          },
-        });
-        window.open(routeData.href, "_blank");
+      if (seriesId === "x" || seriesId.includes("xAxis")) {
+        this.$emit("update:zoomXStartValue", orNull(dataZooms[0], "start"));
+        this.$emit("update:zoomXEndValue", orNull(dataZooms[0], "end"));
+      } else {
+        this.$emit("update:zoomYStartValue", orNull(dataZooms[1], "start"));
+        this.$emit("update:zoomYEndValue", orNull(dataZooms[1], "end"));
+      }
+    },
+    echartsOpenContextMenu(e: any) {
+      if (!e.data) {
         return;
       }
-    }
-    this.$router.push({
-      name: "run-detail",
-      params: {
-        first: datapoint.repoId,
-        second: datapoint.hash,
-      },
-    });
-  }
-  // <!--</editor-fold>-->
 
-  // <!--<editor-fold desc="THEME HELPER">-->
-  private get numberFormat(): Intl.NumberFormat {
-    return new Intl.NumberFormat(
-      new Intl.NumberFormat().resolvedOptions().locale,
-      { maximumFractionDigits: 3 },
-    );
-  }
+      const echartsPoint = e.data as EchartsDataPoint;
 
-  private get graphBackgroundColor() {
-    return this.$vuetify.theme.currentTheme.graphBackground as string;
-  }
+      const datapoint = this.datapoints.find(
+        (it) => it.uid === echartsPoint.name,
+      );
+      const seriesInformation = this.seriesInformation[e.seriesIndex];
 
-  private get graphFailedOrUnbenchmarkedColor() {
-    return this.$vuetify.theme.currentTheme
-      .graphFailedOrUnbenchmarked as string;
-  }
+      if (!datapoint || !seriesInformation) {
+        return;
+      }
 
-  private get themeColor(): (key: string) => string {
-    return (key) => this.$vuetify.theme.currentTheme[key] as string;
-  }
+      // Hide browser right click context menu
+      if ((e as any).event && (e as any).event.event) {
+        const event = (e as any).event.event as Event;
+        event.preventDefault();
+      }
 
-  private get chartTheme() {
-    const axisSettings = () => ({
-      axisLine: {
+      this.pointDialogDatapoint = datapoint;
+      this.pointDialogSeries = seriesInformation;
+      this.pointDialogOpen = true;
+    },
+    echartsClicked(e: any) {
+      if (e.data === undefined) {
+        return;
+      }
+
+      // Was a *link* (i.e. the arrow between two datapoints) and no datapoint
+      if (e.data.name === undefined) {
+        return;
+      }
+
+      const echartsPoint = e.data as EchartsDataPoint;
+      const datapoint = this.datapoints.find(
+        (it) => it.uid === echartsPoint.name,
+      );
+
+      // Should not happen, but better be safe than sorry
+      if (!datapoint) {
+        return;
+      }
+
+      if ((e as any).event && (e as any).event.event) {
+        const event = (e as any).event.event as MouseEvent;
+        if (event.ctrlKey) {
+          const routeData = this.$router.resolve({
+            name: "run-detail",
+            params: {
+              first: datapoint.repoId,
+              second: datapoint.hash,
+            },
+          });
+          window.open(routeData.href, "_blank");
+          return;
+        }
+      }
+      this.$router.push({
+        name: "run-detail",
+        params: {
+          first: datapoint.repoId,
+          second: datapoint.hash,
+        },
+      });
+    },
+    updateGraph() {
+      this.selectAppropriateSeries();
+      const otherUnits = new Set(
+        this.seriesInformation.map((s) => s.unit).filter((u) => u !== "s"),
+      );
+
+      this.chartOptions = {
+        grid: {
+          left: 20,
+          right: 20,
+          containLabel: true,
+        },
+        xAxis: {
+          type: "time",
+          min: this.dataRangeMin.getTime(),
+          max: this.dataRangeMax.getTime(),
+          axisLabel: {
+            formatter: "{yyyy}-{MM}-{dd}",
+          },
+        },
+        yAxis: [
+          {
+            type: "value",
+            name: "s",
+            scale: !this.beginYAtZero,
+          },
+          {
+            type: "value",
+            name:
+              otherUnits.size === 1 ? otherUnits.keys().next().value : "other",
+            scale: !this.beginYAtZero,
+          },
+        ],
+        toolbox: {
+          left: "center",
+          show: true,
+          showTitle: false, // hide the default text so they don't overlap each other
+          feature: {
+            restore: { show: true, title: "Reset" },
+            saveAsImage: { show: true, title: "Save as Image" },
+            dataZoom: {
+              title: {
+                zoom: "Zoom (brush)",
+                back: "Reset zoom",
+              },
+            },
+          },
+          tooltip: {
+            show: true,
+          },
+        },
+        dataZoom: [
+          // DO NOT REORDER THE FIRST TWO OR echartsZoomed WILL BREAK!
+          {
+            id: "x",
+            xAxisIndex: [0],
+            type: "inside",
+            // Start at the correct place when changing the series type
+            startValue: this.zoomXStartValue || undefined,
+            endValue: this.zoomXEndValue || undefined,
+          },
+          {
+            id: "y",
+            type: "inside",
+            yAxisIndex: [0, 1],
+            startValue: this.zoomYStartValue || undefined,
+            endValue: this.zoomYEndValue || undefined,
+            zoomOnMouseWheel: false,
+          },
+          {
+            id: "xAxis",
+            type: "slider",
+            // Start at the correct place when changing the series type
+            startValue: this.zoomXStartValue || undefined,
+            endValue: this.zoomXEndValue || undefined,
+          },
+        ],
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {},
+          // TODO: Extract in own helper?
+          formatter: this.tooltipFormatter,
+          confine: false,
+          position: this.tooltipPositioner,
+        },
+        series: this.seriesInformation.map(this.seriesGenerator),
+      };
+
+      this.updateReferenceDatapoint();
+      this.updateMarkPoints();
+    },
+    onVisibleDatapointsChange() {
+      if (this.selectAppropriateSeries() === "re-render") {
+        this.updateGraph();
+      }
+    },
+    updateReferenceDatapoint() {
+      const series = this.chartOptions.series! as ValidEchartsSeries[];
+
+      // noinspection JSMismatchedCollectionQueryUpdate
+      const markLineData: any[] = [];
+      if (this.showReferenceMarkers) {
+        const reference = this.referenceDatapoint!;
+        const referenceValue = reference.datapoint.values.get(
+          reference.seriesId,
+        );
+        if (typeof referenceValue === "number") {
+          markLineData.push({ yAxis: referenceValue, name: "Reference" });
+        }
+      }
+      if (this.showCommitToCompareMarker) {
+        // Day equidistant points might move the point and its author date
+        const displayedPoint = this.echartsDataPoints
+          .get(this.commitToCompare!.seriesId)!
+          .find((it) => it.name === this.commitToCompare!.datapoint.uid);
+
+        if (displayedPoint) {
+          markLineData.push({
+            xAxis: displayedPoint.positionTime,
+            name: "Comparing…",
+          });
+        }
+      }
+      const hasReferenceLine = markLineData.length > 0;
+
+      const markLineJson = {
+        symbol: "none",
         lineStyle: {
-          color: "currentColor",
+          type: "dotted",
+          color: this.themeColor("error"),
+          width: 2,
         },
-      },
-      axisTick: {
-        lineStyle: {
-          color: "currentColor",
+        label: {
+          show: true,
+          color: this.themeColor("error"),
+          formatter: (it: any) => {
+            return it.name as string;
+          },
         },
+        silent: true,
+        data: markLineData as any,
+      };
+
+      // Set on one, delete on all (as the order might change)
+      if (hasReferenceLine && series.length > 0) {
+        Vue.set(series[0], "markLine", markLineJson);
+      } else {
+        series.forEach((it) => Vue.set(it, "markLine", markLineJson));
+      }
+
+      // Adjust padding so the label is not cut off on the right
+      const grid = this.chartOptions.grid as GridComponentOption;
+      grid.right = hasReferenceLine ? 70 : 20;
+    },
+    updateMarkPoints() {
+      const series = this.chartOptions.series! as ValidEchartsSeries[];
+      // noinspection JSMismatchedCollectionQueryUpdate
+      const markPointData: any[] = [];
+
+      if (this.showReferenceMarkers) {
+        const point = this.referenceDatapoint!.datapoint;
+        const displayedPoint = this.echartsDataPoints
+          .get(this.referenceDatapoint!.seriesId)!
+          .find((it) => it.name === point.uid);
+
+        if (displayedPoint) {
+          markPointData.push({
+            coord: [
+              displayedPoint.positionTime,
+              point.values.get(this.referenceDatapoint!.seriesId),
+            ],
+            label: {
+              show: true,
+              position: "inside",
+              formatter: () => "R",
+            },
+          });
+        }
+      }
+
+      const markPointJson = {
+        silent: true,
+        data: markPointData as any,
+      };
+
+      // Set on one, delete on all (as the order might change)
+      if (this.commitToCompare && series.length > 0) {
+        Vue.set(series[0], "markPoint", markPointJson);
+      } else {
+        series.forEach((it) => Vue.set(it, "markPoint", markPointJson));
+      }
+    },
+  },
+  props: {
+    beginYAtZero: { default: false, type: Boolean },
+    stacked: { default: false, type: Boolean },
+    normalized: { default: false, type: Boolean },
+    zoomXStartValue: {
+      type: Object as PropType<number | null>,
+    },
+    zoomXEndValue: {
+      type: Object as PropType<number | null>,
+    },
+    zoomYStartValue: {
+      type: Object as PropType<number | null>,
+    },
+    zoomYEndValue: {
+      type: Object as PropType<number | null>,
+    },
+    dataRangeMin: {
+      type: Object as PropType<Date>,
+    },
+    dataRangeMax: {
+      type: Object as PropType<Date>,
+    },
+    datapoints: {
+      type: Array as PropType<GraphDataPoint[]>,
+    },
+    seriesInformation: {
+      type: Array as PropType<SeriesInformation[]>,
+    },
+    visiblePointCount: {
+      type: Number,
+    },
+    commitToCompare: {
+      default: null,
+      type: Object as PropType<AttributedDatapoint | null>,
+    },
+    referenceDatapoint: {
+      default: null,
+      type: Object as PropType<AttributedDatapoint | null>,
+    },
+    refreshKey: { default: 0, type: Number },
+  },
+  watch: {
+    datapoints: [
+      {
+        handler: "updateGraph",
       },
-      axisLabel: {
-        color: "currentColor",
+    ],
+    beginYAtZero: [
+      {
+        handler: "updateGraph",
       },
-      splitLine: {
-        lineStyle: {
-          color: this.themeColor("rowHighlight"),
-        },
+    ],
+    stacked: [
+      {
+        handler: "updateGraph",
       },
-      splitArea: {
-        areaStyle: {
-          color: this.themeColor("rowHighlight"),
-        },
+    ],
+    normalized: [
+      {
+        handler: "updateGraph",
       },
-    });
-    return {
-      backgroundColor: this.graphBackgroundColor,
-      valueAxis: axisSettings(),
-      timeAxis: axisSettings(),
-      dataZoom: {
-        textStyle: {
-          color: "currentColor",
-        },
+    ],
+    dataRangeMin: [
+      {
+        handler: "updateGraph",
       },
-      toolbox: {
-        iconStyle: {
-          borderColor: "currentColor",
-        },
+    ],
+    dataRangeMax: [
+      {
+        handler: "updateGraph",
       },
-    };
-  }
-  // <!--</editor-fold>-->
-}
+    ],
+    refreshKey: [
+      {
+        handler: "updateGraph",
+      },
+    ],
+    graphFailedOrUnbenchmarkedColor: [
+      {
+        handler: "updateGraph",
+      },
+    ],
+    visibleDataPoints: [
+      {
+        handler: "onVisibleDatapointsChange",
+      },
+    ],
+    referenceDatapoint: [
+      {
+        handler: "updateReferenceDatapoint",
+      },
+      {
+        handler: "updateMarkPoints",
+      },
+    ],
+    commitToCompare: [
+      {
+        handler: "updateReferenceDatapoint",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped>

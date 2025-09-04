@@ -46,9 +46,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { SearchItemCommit } from "@/store/types";
 import { RawLocation } from "vue-router";
 import { formatDate, formatDateUTC } from "@/util/Times";
@@ -56,41 +54,44 @@ import TextChip from "@/components/misc/TextChip.vue";
 import InlineMinimalRepoDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
 import { mdiSourceCommit } from "@mdi/js";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-display": InlineMinimalRepoDisplay,
     TextChip,
   },
-})
-export default class SearchResultCommit extends Vue {
-  @Prop()
-  private readonly item!: SearchItemCommit;
-
-  private get commitLinkLocation(): RawLocation {
+  data() {
     return {
-      name: "run-detail",
-      params: { first: this.item.repoId, second: this.item.hash },
+      commitIcon: mdiSourceCommit,
     };
-  }
-
-  private get showCommitter() {
-    return this.item.committer !== this.item.author;
-  }
-
-  private formatDate(date: Date) {
-    return formatDate(date);
-  }
-
-  private formatDateUTC(date: Date) {
-    return formatDateUTC(date);
-  }
-
-  private get hasRun() {
-    return this.item.hasRun;
-  }
-
-  private readonly commitIcon = mdiSourceCommit;
-}
+  },
+  computed: {
+    commitLinkLocation(): RawLocation {
+      return {
+        name: "run-detail",
+        params: { first: this.item.repoId, second: this.item.hash },
+      };
+    },
+    showCommitter() {
+      return this.item.committer !== this.item.author;
+    },
+    hasRun() {
+      return this.item.hasRun;
+    },
+  },
+  methods: {
+    formatDate(date: Date) {
+      return formatDate(date);
+    },
+    formatDateUTC(date: Date) {
+      return formatDateUTC(date);
+    },
+  },
+  props: {
+    item: {
+      type: Object as PropType<SearchItemCommit>,
+    },
+  },
+});
 </script>
 
 <style scoped>

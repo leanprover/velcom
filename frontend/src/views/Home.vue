@@ -72,43 +72,55 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Watch } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
 import { RunDescriptionWithDifferences, RunDescription } from "@/store/types";
 import MultipleRunOverview from "@/components/overviews/MultipleRunOverview.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "multiple-run-overview": MultipleRunOverview,
   },
-})
-export default class Home extends Vue {
-  private recentAmount: number = 10;
-  private recentSignificantAmount: number = 10;
+  data() {
+    const recentSignificantAmount: number = 10;
+    const recentAmount: number = 10;
 
-  get recent(): RunDescription[] {
-    return vxm.newsModule.recentRuns;
-  }
-
-  get recentSignificant(): RunDescriptionWithDifferences[] {
-    return vxm.newsModule.recentSignificantRuns;
-  }
-
-  @Watch("recentAmount")
-  private fetchRecent() {
-    vxm.newsModule.fetchRecentRuns(this.recentAmount);
-  }
-
-  @Watch("recentSignificantAmount")
-  private fetchRecentSignificant() {
-    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount);
-  }
-
+    return {
+      recentAmount,
+      recentSignificantAmount,
+    };
+  },
+  computed: {
+    recent(): RunDescription[] {
+      return vxm.newsModule.recentRuns;
+    },
+    recentSignificant(): RunDescriptionWithDifferences[] {
+      return vxm.newsModule.recentSignificantRuns;
+    },
+  },
   created(): void {
     this.fetchRecent();
     this.fetchRecentSignificant();
-  }
-}
+  },
+  watch: {
+    recentAmount: [
+      {
+        handler: "fetchRecent",
+      },
+    ],
+    recentSignificantAmount: [
+      {
+        handler: "fetchRecentSignificant",
+      },
+    ],
+  },
+  methods: {
+    fetchRecent() {
+      vxm.newsModule.fetchRecentRuns(this.recentAmount);
+    },
+    fetchRecentSignificant() {
+      vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount);
+    },
+  },
+});
 </script>

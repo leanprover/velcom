@@ -49,92 +49,108 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop, Watch } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { StreamedRunnerOutput, TaskId } from "@/store/types";
 import { vxm } from "@/store";
 import { safeConvertAnsi } from "@/util/Texts";
 
-@Component
-export default class TaskRunnerOutput extends Vue {
-  @Prop()
-  private taskId!: TaskId;
+export default defineComponent({
+  data() {
+    const taskInQueue: boolean = true;
+    const loadingError: boolean = false;
+    const output: StreamedRunnerOutput | null = null;
+    const timer: number | null = null;
 
-  private timer: number | null = null;
-  private output: StreamedRunnerOutput | null = null;
-  private loadingError: boolean = false;
-  private taskInQueue: boolean = true;
-
-  private get taskInProgress(): boolean {
-    return !!vxm.queueModule.workers.find((it) => it.workingOn === this.taskId);
-  }
-
-  @Watch("taskId")
-  private async update() {
-    if (!this.taskId) {
-      return;
-    }
-
-    const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId);
-    if (newOutput !== null) {
-      this.output = newOutput;
-    }
-    this.loadingError = newOutput === null;
-
-    if (this.loadingError) {
-      const fetchedTask = await vxm.queueModule.fetchTaskInfo(this.taskId);
-      this.taskInQueue = fetchedTask !== null;
-      this.$emit("loading-failed");
-      return;
-    }
-
-    const element = this.$el.getElementsByClassName("runner-output")[0];
-    if (element.scrollHeight - element.scrollTop === element.clientHeight) {
-      Vue.nextTick(() => {
-        element.scrollTop = element.scrollHeight;
-      });
-    }
-  }
-
-  private get lines(): {
-    lineNumber: number;
-    text: string;
-  }[] {
-    const output = this.output;
-    if (!output) {
-      return [];
-    }
-    return output.outputLines.map((line, index) => ({
-      lineNumber: index + output.indexOfFirstLine + 1,
-      text: safeConvertAnsi(line),
-    }));
-  }
-
-  // noinspection JSUnusedLocalSymbols (Used by the watcher below)
-  private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected;
-  }
-
-  @Watch("darkThemeSelected")
-  private onDarkThemeSelectionChanged() {
-    // The ANSI conversion needs to be redone
-    this.$forceUpdate();
-  }
-
-  private mounted() {
+    return {
+      timer,
+      output,
+      loadingError,
+      taskInQueue,
+    };
+  },
+  computed: {
+    taskInProgress(): boolean {
+      return !!vxm.queueModule.workers.find(
+        (it) => it.workingOn === this.taskId,
+      );
+    },
+    lines(): {
+      lineNumber: number;
+      text: string;
+    }[] {
+      const output = this.output;
+      if (!output) {
+        return [];
+      }
+      return output.outputLines.map((line, index) => ({
+        lineNumber: index + output.indexOfFirstLine + 1,
+        text: safeConvertAnsi(line),
+      }));
+    },
+    darkThemeSelected() {
+      return vxm.userModule.darkThemeSelected;
+    },
+  },
+  mounted() {
     this.update();
     this.timer = setInterval(() => {
       this.update();
     }, 5000);
-  }
-
-  private destroyed() {
+  },
+  destroyed() {
     if (this.timer !== null) {
       clearInterval(this.timer);
     }
-  }
-}
+  },
+  props: {
+    taskId: {
+      type: Object as PropType<TaskId>,
+    },
+  },
+  watch: {
+    taskId: [
+      {
+        handler: "update",
+      },
+    ],
+    darkThemeSelected: [
+      {
+        handler: "onDarkThemeSelectionChanged",
+      },
+    ],
+  },
+  methods: {
+    async update() {
+      if (!this.taskId) {
+        return;
+      }
+
+      const newOutput = await vxm.queueModule.fetchRunnerOutput(this.taskId);
+      if (newOutput !== null) {
+        this.output = newOutput;
+      }
+      this.loadingError = newOutput === null;
+
+      if (this.loadingError) {
+        const fetchedTask = await vxm.queueModule.fetchTaskInfo(this.taskId);
+        this.taskInQueue = fetchedTask !== null;
+        this.$emit("loading-failed");
+        return;
+      }
+
+      const element = this.$el.getElementsByClassName("runner-output")[0];
+      if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+        Vue.nextTick(() => {
+          element.scrollTop = element.scrollHeight;
+        });
+      }
+    },
+    onDarkThemeSelectionChanged() {
+      // The ANSI conversion needs to be redone
+      this.$forceUpdate();
+    },
+  },
+});
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->

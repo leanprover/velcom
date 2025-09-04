@@ -34,10 +34,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { Dimension } from "@/store/types";
-import { Model, Prop } from "vue-property-decorator";
 
 class Item {
   readonly text: string;
@@ -51,44 +49,51 @@ class Item {
   }
 }
 
-@Component
-export default class ComparisonDimensionSelector extends Vue {
-  @Prop()
-  private readonly possibleDimensions!: Dimension[];
-
-  @Model("input")
-  private readonly selectedDimension!: Dimension;
-
-  @Prop()
-  private readonly errorMessage!: string | null;
-
-  private get items() {
-    return this.possibleDimensions.map((dimension) => new Item(dimension));
-  }
-
-  private get selectedItem() {
-    if (!this.selectedDimension) {
-      return null;
-    }
-    if (
-      !this.possibleDimensions.find((it) => it.equals(this.selectedDimension))
-    ) {
-      return null;
-    }
-    return (
-      this.items.find((it) => it.dimension.equals(this.selectedDimension)) ||
-      null
-    );
-  }
-
-  private selectDimension(value: Item) {
-    if (!value) {
-      this.$emit("input", null);
-    } else {
-      this.$emit("input", value.dimension);
-    }
-  }
-}
+export default defineComponent({
+  computed: {
+    items() {
+      return this.possibleDimensions.map((dimension) => new Item(dimension));
+    },
+    selectedItem() {
+      if (!this.selectedDimension) {
+        return null;
+      }
+      if (
+        !this.possibleDimensions.find((it) => it.equals(this.selectedDimension))
+      ) {
+        return null;
+      }
+      return (
+        this.items.find((it) => it.dimension.equals(this.selectedDimension)) ||
+        null
+      );
+    },
+  },
+  methods: {
+    selectDimension(value: Item) {
+      if (!value) {
+        this.$emit("input", null);
+      } else {
+        this.$emit("input", value.dimension);
+      }
+    },
+  },
+  props: {
+    possibleDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    errorMessage: {
+      type: Object as PropType<string | null>,
+    },
+    selectedDimension: {
+      type: Object as PropType<Dimension>,
+    },
+  },
+  model: {
+    prop: "selectedDimension",
+    event: "input",
+  },
+});
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->

@@ -33,35 +33,38 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import GraphDimensionSelector from "@/components/repodetail/GraphDimensionSelector.vue";
-import { Prop } from "vue-property-decorator";
 import { Dimension } from "@/store/types";
 
-@Component({
+export default defineComponent({
   components: {
     GraphDimensionSelector,
   },
-})
-export default class ExpandableDimensionSelection extends Vue {
-  private dimensionSelectionInFullscreen = false;
-
-  @Prop()
-  private readonly allDimensions!: Dimension[];
-
-  @Prop()
-  private readonly selectedDimensions!: Dimension[];
-
-  @Prop({ default: "matrix" })
-  private readonly selectorType!: "tree" | "matrix";
-
-  private updateSelectedDimensions(newDimensions: Dimension[]) {
-    this.$emit("update:selectedDimensions", newDimensions);
-  }
-
-  private updateSelectorType(type: "tree" | "matrix") {
-    this.$emit("update:selectorType", type);
-  }
-}
+  data() {
+    return {
+      dimensionSelectionInFullscreen: false,
+    };
+  },
+  methods: {
+    updateSelectedDimensions(newDimensions: Dimension[]) {
+      this.$emit("update:selectedDimensions", newDimensions);
+    },
+    updateSelectorType(type: "tree" | "matrix") {
+      this.$emit("update:selectorType", type);
+    },
+  },
+  props: {
+    allDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    selectedDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    selectorType: {
+      default: "matrix",
+      type: Object as PropType<"tree" | "matrix">,
+    },
+  },
+});
 </script>

@@ -65,10 +65,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
-import { Watch } from "vue-property-decorator";
 import { RunComparison, RunResultSuccess } from "@/store/types";
 import RunComparisonTable from "@/components/comparison/RunComparisonTable.vue";
 import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
@@ -77,7 +75,7 @@ import TarOverview from "@/components/overviews/TarOverview.vue";
 import ComparisonRunInfo from "@/components/comparison/ComparisonRunInfo.vue";
 import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
 
-@Component({
+export default defineComponent({
   components: {
     RunSignificanceChips,
     ComparisonRunInfo,
@@ -86,58 +84,78 @@ import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
     "run-info": RunInfo,
     "comparison-table": RunComparisonTable,
   },
-})
-export default class RunComparisonView extends Vue {
-  private comparison: RunComparison | null = null;
+  data() {
+    const comparison: RunComparison | null = null;
 
-  private get first(): string {
-    return this.$route.params["first"];
-  }
-
-  private get second(): string {
-    return this.$route.params["second"];
-  }
-
-  private get hash1(): string | undefined {
-    return this.$route.query["hash1"] as string | undefined;
-  }
-
-  private get hash2(): string | undefined {
-    return this.$route.query["hash2"] as string | undefined;
-  }
-
-  private get run1Successful() {
-    return (
-      this.comparison && this.comparison.run1.result instanceof RunResultSuccess
-    );
-  }
-
-  private get run2Successful() {
-    return (
-      this.comparison && this.comparison.run2.result instanceof RunResultSuccess
-    );
-  }
-
-  @Watch("first")
-  @Watch("second")
-  @Watch("hash1")
-  @Watch("hash2")
-  private async fetchData() {
-    this.comparison = null;
-
-    // We don't need reactivity on this object, we only swap it wholesale.
-    this.comparison = Object.freeze(
-      await vxm.commitDetailComparisonModule.fetchComparison({
-        first: this.first,
-        second: this.second,
-        hash1: this.hash1,
-        hash2: this.hash2,
-      }),
-    );
-  }
-
+    return {
+      comparison,
+    };
+  },
+  computed: {
+    first(): string {
+      return this.$route.params["first"];
+    },
+    second(): string {
+      return this.$route.params["second"];
+    },
+    hash1(): string | undefined {
+      return this.$route.query["hash1"] as string | undefined;
+    },
+    hash2(): string | undefined {
+      return this.$route.query["hash2"] as string | undefined;
+    },
+    run1Successful() {
+      return (
+        this.comparison &&
+        this.comparison.run1.result instanceof RunResultSuccess
+      );
+    },
+    run2Successful() {
+      return (
+        this.comparison &&
+        this.comparison.run2.result instanceof RunResultSuccess
+      );
+    },
+  },
   mounted(): void {
     this.fetchData();
-  }
-}
+  },
+  watch: {
+    first: [
+      {
+        handler: "fetchData",
+      },
+    ],
+    second: [
+      {
+        handler: "fetchData",
+      },
+    ],
+    hash1: [
+      {
+        handler: "fetchData",
+      },
+    ],
+    hash2: [
+      {
+        handler: "fetchData",
+      },
+    ],
+  },
+  methods: {
+    async fetchData() {
+      this.comparison = null;
+
+      // We don't need reactivity on this object, we only swap it wholesale.
+      this.comparison = Object.freeze(
+        await vxm.commitDetailComparisonModule.fetchComparison({
+          first: this.first,
+          second: this.second,
+          hash1: this.hash1,
+          hash2: this.hash2,
+        }),
+      );
+    },
+  },
+});
 </script>

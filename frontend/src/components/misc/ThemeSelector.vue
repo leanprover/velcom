@@ -26,24 +26,27 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import { mdiInvertColors } from "@mdi/js";
 import { vxm } from "@/store";
 
-@Component
-export default class ThemeSelector extends Vue {
-  private toggleDarkTheme() {
-    this.$emit("use-dark-theme", !this.isDarkTheme);
-  }
-
-  private get isDarkTheme(): boolean {
-    return vxm.userModule.darkThemeSelected;
-  }
-
-  // ICONS
-  private darkThemeIcon = mdiInvertColors;
-}
+export default defineComponent({
+  data() {
+    return {
+      darkThemeIcon: mdiInvertColors,
+    };
+  },
+  computed: {
+    isDarkTheme(): boolean {
+      return vxm.userModule.darkThemeSelected;
+    },
+  },
+  methods: {
+    toggleDarkTheme() {
+      this.$emit("use-dark-theme", !this.isDarkTheme);
+    },
+  },
+});
 </script>
 
 <style scoped>

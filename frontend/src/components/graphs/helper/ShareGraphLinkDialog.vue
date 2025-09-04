@@ -70,13 +70,10 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { mdiLinkVariantPlus } from "@mdi/js";
 import { copyToClipboard } from "@/util/Clipboards";
 import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
-import { Prop, Watch } from "vue-property-decorator";
-
 export type Option = {
   label: string;
   selectable: boolean;
@@ -84,41 +81,54 @@ export type Option = {
   key: keyof PermanentLinkOptions;
 };
 
-@Component
-export default class ShareGraphLinkDialog extends Vue {
-  private dialogOpen: boolean = false;
-  private options: PermanentLinkOptions = {
-    includeYZoom: true,
-    includeXZoom: true,
-    includeDataRestrictions: true,
-  };
+export default defineComponent({
+  data() {
+    const options: PermanentLinkOptions = {
+      includeYZoom: true,
+      includeXZoom: true,
+      includeDataRestrictions: true,
+    };
+    const dialogOpen: boolean = false;
 
-  @Prop()
-  private readonly linkGenerator!: (options: PermanentLinkOptions) => string;
-
-  @Prop()
-  private readonly shareOptions!: Option[];
-
-  private get permanentLinkUrl() {
-    return this.linkGenerator(this.options);
-  }
-
-  private copyPermanentLink() {
-    copyToClipboard(this.permanentLinkUrl, this.$globalSnackbar);
-  }
-
-  @Watch("dialogOpen")
-  private onDialogVisibilityChange() {
-    if (this.dialogOpen) {
-      this.options = {
-        includeDataRestrictions: true,
-        includeXZoom: true,
-        includeYZoom: true,
-      };
-    }
-  }
-
-  // ICONS
-  private permanentLinkIcon = mdiLinkVariantPlus;
-}
+    return {
+      dialogOpen,
+      options,
+      permanentLinkIcon: mdiLinkVariantPlus,
+    };
+  },
+  computed: {
+    permanentLinkUrl() {
+      return this.linkGenerator(this.options);
+    },
+  },
+  methods: {
+    copyPermanentLink() {
+      copyToClipboard(this.permanentLinkUrl, this.$globalSnackbar);
+    },
+    onDialogVisibilityChange() {
+      if (this.dialogOpen) {
+        this.options = {
+          includeDataRestrictions: true,
+          includeXZoom: true,
+          includeYZoom: true,
+        };
+      }
+    },
+  },
+  props: {
+    linkGenerator: {
+      type: Function as PropType<(options: PermanentLinkOptions) => string>,
+    },
+    shareOptions: {
+      type: Array as PropType<Option[]>,
+    },
+  },
+  watch: {
+    dialogOpen: [
+      {
+        handler: "onDialogVisibilityChange",
+      },
+    ],
+  },
+});
 </script>

@@ -20,18 +20,13 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
-
-@Component
-export default class NotFound404 extends Vue {
-  @Prop({ default: "404" })
-  private title!: string;
-
-  @Prop({ default: "Not found :/" })
-  private subtitle!: string;
-}
+import Vue, { defineComponent } from "vue";
+export default defineComponent({
+  props: {
+    title: { default: "404", type: String },
+    subtitle: { default: "Not found :/", type: String },
+  },
+});
 </script>
 
 <style scoped>

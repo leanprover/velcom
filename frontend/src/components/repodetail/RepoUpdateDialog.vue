@@ -95,113 +95,126 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import { Repo } from "@/store/types";
-import { Prop, Watch } from "vue-property-decorator";
 import { vxm } from "@/store";
 import { mdiMagnify } from "@mdi/js";
 import GithubTokenConfiguration, {
   TokenState,
 } from "@/components/repodetail/GithubTokenConfiguration.vue";
-@Component({
+export default defineComponent({
   components: { GithubTokenConfiguration },
-})
-export default class RepoUpdateDialog extends Vue {
-  private dialogOpen: boolean = false;
+  data() {
+    const githubTokenState: TokenState = "unchanged";
+    const newGithubToken: string = "";
+    const newTrackedBranches: string[] = [];
+    const searchValue: string = "";
+    const formValid: boolean = false;
+    const itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1];
+    const itemsPerPage: number = 30;
+    const repoName: string = "";
+    const remoteUrl: string = "";
+    const dialogOpen: boolean = false;
 
-  private remoteUrl: string = "";
-  private repoName: string = "";
-
-  private itemsPerPage: number = 30;
-  private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1];
-
-  private formValid: boolean = false;
-  private searchValue: string = "";
-
-  private newTrackedBranches: string[] = [];
-
-  private newGithubToken: string = "";
-  private githubTokenState: TokenState = "unchanged";
-
-  @Prop()
-  private readonly repoId!: string;
-
-  private get branchObjects(): { name: string; lowerCased: string }[] {
-    return this.repo.branches.map((it) => ({
-      name: it.name,
-      lowerCased: it.name.toLowerCase(),
-    }));
-  }
-
-  private get repo(): Repo {
-    return vxm.repoModule.repoById(this.repoId)!;
-  }
-
-  private get hasGithubToken() {
-    return this.repo.lastGithubUpdate !== undefined;
-  }
-
-  private filterName(items: { lowerCased: string }[]) {
-    return items.filter(
-      (input) => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0,
-    );
-  }
-
-  private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : "This field must not be empty!";
-  }
-
-  @Watch("dialogOpen")
-  @Watch("repoId")
-  private watchIdUpdates() {
-    this.remoteUrl = this.repo.remoteURL;
-    this.repoName = this.repo.name;
-    this.searchValue = "";
-
-    this.newTrackedBranches = this.repo.branches
-      .filter((it) => it.tracked)
-      .map((it) => it.name);
-  }
-
-  private toggleAll() {
-    if (
-      this.newTrackedBranches.length === this.repo.branches.length &&
-      this.newTrackedBranches.length > 0
-    ) {
-      this.newTrackedBranches = [];
-    } else {
-      this.newTrackedBranches = this.repo.branches.map((branch) => branch.name);
-    }
-  }
-
-  private async updateRepo() {
-    let newToken: string | undefined;
-    if (this.githubTokenState === "delete") {
-      newToken = "";
-    } else if (this.githubTokenState === "modify") {
-      newToken = this.newGithubToken;
-    }
-
-    await vxm.repoModule.updateRepo({
-      id: this.repoId,
-      name: this.repoName,
-      remoteUrl: this.remoteUrl,
-      trackedBranches: this.newTrackedBranches,
-      githubToken: newToken,
-    });
-
-    this.dialogOpen = false;
-  }
-
+    return {
+      dialogOpen,
+      remoteUrl,
+      repoName,
+      itemsPerPage,
+      itemsPerPageOptions,
+      formValid,
+      searchValue,
+      newTrackedBranches,
+      newGithubToken,
+      githubTokenState,
+      searchIcon: mdiMagnify,
+    };
+  },
+  computed: {
+    branchObjects(): { name: string; lowerCased: string }[] {
+      return this.repo.branches.map((it) => ({
+        name: it.name,
+        lowerCased: it.name.toLowerCase(),
+      }));
+    },
+    repo(): Repo {
+      return vxm.repoModule.repoById(this.repoId)!;
+    },
+    hasGithubToken() {
+      return this.repo.lastGithubUpdate !== undefined;
+    },
+  },
   mounted(): void {
     Vue.nextTick(() => this.watchIdUpdates());
-  }
+  },
+  methods: {
+    filterName(items: { lowerCased: string }[]) {
+      return items.filter(
+        (input) =>
+          input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0,
+      );
+    },
+    notEmpty(input: string): boolean | string {
+      return input.trim().length > 0 ? true : "This field must not be empty!";
+    },
+    toggleAll() {
+      if (
+        this.newTrackedBranches.length === this.repo.branches.length &&
+        this.newTrackedBranches.length > 0
+      ) {
+        this.newTrackedBranches = [];
+      } else {
+        this.newTrackedBranches = this.repo.branches.map(
+          (branch) => branch.name,
+        );
+      }
+    },
+    async updateRepo() {
+      let newToken: string | undefined;
+      if (this.githubTokenState === "delete") {
+        newToken = "";
+      } else if (this.githubTokenState === "modify") {
+        newToken = this.newGithubToken;
+      }
 
-  // ============== ICONS ==============
-  private searchIcon = mdiMagnify;
-  // ==============       ==============
-}
+      await vxm.repoModule.updateRepo({
+        id: this.repoId,
+        name: this.repoName,
+        remoteUrl: this.remoteUrl,
+        trackedBranches: this.newTrackedBranches,
+        githubToken: newToken,
+      });
+
+      this.dialogOpen = false;
+    },
+    watchIdUpdates() {
+      this.remoteUrl = this.repo.remoteURL;
+      this.repoName = this.repo.name;
+      this.searchValue = "";
+
+      this.newTrackedBranches = this.repo.branches
+        .filter((it) => it.tracked)
+        .map((it) => it.name);
+    },
+  },
+  props: {
+    repoId: {
+      type: String,
+    },
+  },
+  watch: {
+    dialogOpen: [
+      {
+        handler: "watchIdUpdates",
+      },
+    ],
+    repoId: [
+      {
+        handler: "watchIdUpdates",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped>

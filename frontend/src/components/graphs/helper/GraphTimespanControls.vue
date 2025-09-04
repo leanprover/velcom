@@ -93,11 +93,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { mdiCalendar, mdiLock, mdiLockOpenVariant } from "@mdi/js";
-import { Prop } from "vue-property-decorator";
-
 type TimeField = {
   ref: string;
   value: string;
@@ -108,156 +105,137 @@ type TimeField = {
   allowedDates?: (input: string) => boolean;
 };
 
-@Component
-export default class GraphTimespanControls extends Vue {
-  // <!--<editor-fold desc="Fields">-->
-  /**
-   * The value of the "duration" input field. Not applied until saveDuration is called.
-   */
-  private temporaryDuration: string = "" + this.duration;
+export default defineComponent({
+  data() {
+    const timeFields: TimeField[] = [
+      {
+        ref: "startDateMenu",
+        value: this.startTimeString,
+        role: "start",
+        opened: false,
+        saveFunction: this.saveStartTime,
+        allowedDates: this.allowedDatesStart,
+        rules: [],
+      },
+      {
+        ref: "endDateMenu",
+        value: this.endTimeString,
+        role: "end",
+        opened: false,
+        saveFunction: this.saveEndTime,
+        allowedDates: this.allowedDatesEnd,
+        rules: [this.ruleStopAfterStart],
+      },
+    ];
+    const dateLocked: "start" | "end" | "neither" = "end";
+    const temporaryDuration: string = "" + this.duration;
 
-  private dateLocked: "start" | "end" | "neither" = "end";
-  private readonly timeFields: TimeField[] = [
-    {
-      ref: "startDateMenu",
-      value: this.startTimeString,
-      role: "start",
-      opened: false,
-      saveFunction: this.saveStartTime,
-      allowedDates: this.allowedDatesStart,
-      rules: [],
+    return {
+      temporaryDuration,
+      dateLocked,
+      timeFields,
+      dateIcon: mdiCalendar,
+      openLock: mdiLockOpenVariant,
+      lock: mdiLock,
+    };
+  },
+  computed: {
+    duration(): number {
+      const timeDiff = this.endTime.getTime() - this.startTime.getTime();
+
+      return Math.ceil(timeDiff / (1000 * 3600 * 24)); // round up to days
     },
-    {
-      ref: "endDateMenu",
-      value: this.endTimeString,
-      role: "end",
-      opened: false,
-      saveFunction: this.saveEndTime,
-      allowedDates: this.allowedDatesEnd,
-      rules: [this.ruleStopAfterStart],
+    startTimeString(): string {
+      return this.startTime.toISOString().substring(0, 10);
     },
-  ];
-  // <!--</editor-fold>-->
+    endTimeString(): string {
+      return this.endTime.toISOString().substring(0, 10);
+    },
+    today() {
+      return new Date().toISOString().substr(0, 10);
+    },
+  },
+  methods: {
+    allowedDatesStart(dateString: string) {
+      return new Date(dateString) <= this.endTime;
+    },
+    allowedDatesEnd(dateString: string) {
+      return new Date(dateString) >= this.startTime;
+    },
+    saveStartTime(field: TimeField, value: string) {
+      this.saveMenu(field.ref, value);
+      this.$emit("update:startTime", new Date(value));
+      this.$emit("reload-graph-data");
+    },
+    saveEndTime(field: TimeField, value: string) {
+      this.saveMenu(field.ref, value);
+      this.$emit("update:endTime", new Date(value));
+      this.$emit("reload-graph-data");
+    },
+    saveMenu(ref: string, value: string) {
+      let field: any;
+      const readRef = this.$refs[ref];
 
-  // <!--<editor-fold desc="Props">-->
-  @Prop()
-  private readonly endTime!: Date;
+      if (readRef instanceof Vue) {
+        field = readRef;
+      } else if (Array.isArray(readRef)) {
+        field = readRef[0];
+      }
+      field.save(value);
+    },
+    saveDuration() {
+      const duration = parseInt(this.temporaryDuration);
 
-  @Prop()
-  private readonly startTime!: Date;
-  // <!--</editor-fold>-->
+      if (isNaN(duration)) {
+        return;
+      }
 
-  // <!--<editor-fold desc="Save helpers to bind to correct this">-->
-  private allowedDatesStart(dateString: string) {
-    return new Date(dateString) <= this.endTime;
-  }
+      if (this.duration === duration) {
+        // Do not fetch everything again
+        return;
+      }
 
-  private allowedDatesEnd(dateString: string) {
-    return new Date(dateString) >= this.startTime;
-  }
+      const durationAsMillis = duration * 1000 * 60 * 60 * 24; // ms * minutes * hours * days
 
-  private saveStartTime(field: TimeField, value: string) {
-    this.saveMenu(field.ref, value);
-    this.$emit("update:startTime", new Date(value));
-    this.$emit("reload-graph-data");
-  }
+      if (this.dateLocked === "start") {
+        this.$emit(
+          "update:endTime",
+          new Date(this.startTime.getTime() + durationAsMillis),
+        );
+      } else {
+        this.$emit(
+          "update:startTime",
+          new Date(this.endTime.getTime() - durationAsMillis),
+        );
+      }
 
-  private saveEndTime(field: TimeField, value: string) {
-    this.saveMenu(field.ref, value);
-    this.$emit("update:endTime", new Date(value));
-    this.$emit("reload-graph-data");
-  }
-
-  private saveMenu(ref: string, value: string) {
-    let field: any;
-    const readRef = this.$refs[ref];
-
-    if (readRef instanceof Vue) {
-      field = readRef;
-    } else if (Array.isArray(readRef)) {
-      field = readRef[0];
-    }
-    field.save(value);
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="Duration">-->
-  private get duration(): number {
-    const timeDiff = this.endTime.getTime() - this.startTime.getTime();
-
-    return Math.ceil(timeDiff / (1000 * 3600 * 24)); // round up to days
-  }
-
-  private saveDuration() {
-    const duration = parseInt(this.temporaryDuration);
-
-    if (isNaN(duration)) {
-      return;
-    }
-
-    if (this.duration === duration) {
-      // Do not fetch everything again
-      return;
-    }
-
-    const durationAsMillis = duration * 1000 * 60 * 60 * 24; // ms * minutes * hours * days
-
-    if (this.dateLocked === "start") {
-      this.$emit(
-        "update:endTime",
-        new Date(this.startTime.getTime() + durationAsMillis),
-      );
-    } else {
-      this.$emit(
-        "update:startTime",
-        new Date(this.endTime.getTime() - durationAsMillis),
-      );
-    }
-
-    this.$emit("reload-graph-data");
-  }
-  // <!--</editor-fold>-->
-
-  // <!--<editor-fold desc="Start/Stop time">-->
-  private get startTimeString(): string {
-    return this.startTime.toISOString().substring(0, 10);
-  }
-
-  private get endTimeString(): string {
-    return this.endTime.toISOString().substring(0, 10);
-  }
-  // <!--</editor-fold>-->
-
-  private lockDates(date: "start" | "end"): void {
-    if (this.dateLocked === "neither") {
-      this.dateLocked = date;
-    } else if ((this.dateLocked = date)) {
-      this.dateLocked = "neither";
-    } else {
-      this.dateLocked = this.dateLocked === "start" ? "end" : "start";
-    }
-  }
-
-  // <!--<editor-fold desc="Rules">-->
-  private ruleStopAfterStart(input: string): boolean | string {
-    return this.startTime <= new Date(input)
-      ? true
-      : "You have to select a date after the first one!";
-  }
-
-  private ruleIsNumber(input: string): string | boolean {
-    return isNaN(parseInt(input)) ? "Please enter a number" : true;
-  }
-  // <!--</editor-fold>-->
-
-  private get today() {
-    return new Date().toISOString().substr(0, 10);
-  }
-
-  // ============== ICONS ==============
-  private dateIcon = mdiCalendar;
-  private openLock = mdiLockOpenVariant;
-  private lock = mdiLock;
-  // ==============       ==============
-}
+      this.$emit("reload-graph-data");
+    },
+    lockDates(date: "start" | "end"): void {
+      if (this.dateLocked === "neither") {
+        this.dateLocked = date;
+      } else if ((this.dateLocked = date)) {
+        this.dateLocked = "neither";
+      } else {
+        this.dateLocked = this.dateLocked === "start" ? "end" : "start";
+      }
+    },
+    ruleStopAfterStart(input: string): boolean | string {
+      return this.startTime <= new Date(input)
+        ? true
+        : "You have to select a date after the first one!";
+    },
+    ruleIsNumber(input: string): string | boolean {
+      return isNaN(parseInt(input)) ? "Please enter a number" : true;
+    },
+  },
+  props: {
+    endTime: {
+      type: Object as PropType<Date>,
+    },
+    startTime: {
+      type: Object as PropType<Date>,
+    },
+  },
+});
 </script>

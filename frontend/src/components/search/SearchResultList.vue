@@ -50,9 +50,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { SearchItem, SearchItemCommit, SearchItemRun } from "@/store/types";
 import SearchResultCommit from "@/components/search/SearchResultCommit.vue";
 import SearchResultRun from "@/components/search/SearchResultRun.vue";
@@ -80,22 +78,25 @@ class DisplayedItem {
   }
 }
 
-@Component({
+export default defineComponent({
   components: {
     commit: SearchResultCommit,
     branch: SearchResultBranch,
     run: SearchResultRun,
     tar: SearchResultRun,
   },
-})
-export default class SearchResultList extends Vue {
-  @Prop({ default: () => [] })
-  private readonly items!: SearchItem[];
-
-  private get displayedItems(): DisplayedItem[] {
-    return this.items.map((it) => new DisplayedItem(it));
-  }
-
-  private readonly compareIcon = mdiScaleBalance;
-}
+  data() {
+    return {
+      compareIcon: mdiScaleBalance,
+    };
+  },
+  computed: {
+    displayedItems(): DisplayedItem[] {
+      return this.items.map((it) => new DisplayedItem(it));
+    },
+  },
+  props: {
+    items: { default: () => [], type: Array as PropType<SearchItem[]> },
+  },
+});
 </script>

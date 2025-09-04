@@ -60,79 +60,74 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { Repo, RepoId } from "@/store/types";
 import { vxm } from "@/store";
-import { Prop } from "vue-property-decorator";
-
-@Component
-export default class RepoBranchSelector extends Vue {
-  @Prop()
-  private readonly selectedBranches!: Map<RepoId, string[]>;
-
-  private selectedBranchesForRepo(repoId: RepoId) {
-    return this.selectedBranches.get(repoId) || [];
-  }
-
-  private get sortedRepos() {
-    return vxm.repoModule.allRepos.slice().sort((a, b) => {
-      if (a.trackedBranches.length === 0 && b.trackedBranches.length === 0) {
+export default defineComponent({
+  computed: {
+    sortedRepos() {
+      return vxm.repoModule.allRepos.slice().sort((a, b) => {
+        if (a.trackedBranches.length === 0 && b.trackedBranches.length === 0) {
+          return a.name.localeCompare(b.name);
+        }
+        if (a.trackedBranches.length === 0) {
+          return 1;
+        }
+        if (b.trackedBranches.length === 0) {
+          return -1;
+        }
         return a.name.localeCompare(b.name);
-      }
-      if (a.trackedBranches.length === 0) {
-        return 1;
-      }
-      if (b.trackedBranches.length === 0) {
-        return -1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }
-
-  private get hasConflictingNames() {
-    const distinct = new Set(this.sortedRepos.map((it) => it.name.trim()));
-    return distinct.size !== this.sortedRepos.length;
-  }
-
-  private colorForRepo(repoId: RepoId) {
-    return vxm.colorModule.colorForRepo(repoId);
-  }
-
-  private onlySomeBranchesSelected(repo: Repo) {
-    const selectedLength = this.selectedBranchesForRepo(repo.id).length;
-    return selectedLength < repo.trackedBranches.length && selectedLength > 0;
-  }
-
-  private allBranchesSelected(repo: Repo) {
-    if (repo.trackedBranches.length === 0) {
-      return false;
-    }
-    const selectedLength = this.selectedBranchesForRepo(repo.id).length;
-    return selectedLength === repo.trackedBranches.length;
-  }
-
-  private toggleRepo(repo: Repo) {
-    if (this.allBranchesSelected(repo)) {
-      this.$emit("update:set-all", {
-        repoId: repo.id,
-        branches: [],
       });
-    } else {
-      this.$emit("update:set-all", {
+    },
+    hasConflictingNames() {
+      const distinct = new Set(this.sortedRepos.map((it) => it.name.trim()));
+      return distinct.size !== this.sortedRepos.length;
+    },
+  },
+  methods: {
+    selectedBranchesForRepo(repoId: RepoId) {
+      return this.selectedBranches.get(repoId) || [];
+    },
+    colorForRepo(repoId: RepoId) {
+      return vxm.colorModule.colorForRepo(repoId);
+    },
+    onlySomeBranchesSelected(repo: Repo) {
+      const selectedLength = this.selectedBranchesForRepo(repo.id).length;
+      return selectedLength < repo.trackedBranches.length && selectedLength > 0;
+    },
+    allBranchesSelected(repo: Repo) {
+      if (repo.trackedBranches.length === 0) {
+        return false;
+      }
+      const selectedLength = this.selectedBranchesForRepo(repo.id).length;
+      return selectedLength === repo.trackedBranches.length;
+    },
+    toggleRepo(repo: Repo) {
+      if (this.allBranchesSelected(repo)) {
+        this.$emit("update:set-all", {
+          repoId: repo.id,
+          branches: [],
+        });
+      } else {
+        this.$emit("update:set-all", {
+          repoId: repo.id,
+          branches: repo.trackedBranches,
+        });
+      }
+    },
+    toggleBranch(repo: Repo, branch: string) {
+      this.$emit("update:toggle-branch", {
         repoId: repo.id,
-        branches: repo.trackedBranches,
+        branch,
       });
-    }
-  }
-
-  private toggleBranch(repo: Repo, branch: string) {
-    this.$emit("update:toggle-branch", {
-      repoId: repo.id,
-      branch,
-    });
-  }
-}
+    },
+  },
+  props: {
+    selectedBranches: {
+      type: Object as PropType<Map<RepoId, string[]>>,
+    },
+  },
+});
 </script>
 
 <style>

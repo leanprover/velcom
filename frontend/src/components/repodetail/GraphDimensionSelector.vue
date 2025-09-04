@@ -45,73 +45,85 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import MatrixDimensionSelection from "@/components/graphs/detail/MatrixDimensionSelection.vue";
 import TreeDimensionSelection from "@/components/graphs/detail/TreeDimensionSelection.vue";
 import { Dimension } from "@/store/types";
-import { Prop, Watch } from "vue-property-decorator";
 import { mdiFullscreen, mdiFullscreenExit } from "@mdi/js";
 
-@Component({
+export default defineComponent({
   components: {
     "matrix-dimension-selection": MatrixDimensionSelection,
     "tree-dimension-selection": TreeDimensionSelection,
   },
-})
-export default class GraphDimensionSelector extends Vue {
-  @Prop({ default: false })
-  private readonly isFullscreen!: boolean;
-
-  @Prop()
-  private readonly allDimensions!: Dimension[];
-
-  @Prop()
-  private readonly selectedDimensions!: Dimension[];
-
-  @Prop({ default: "matrix" })
-  private readonly selectorType!: "tree" | "matrix";
-
-  private readonly maxMatrixSelectorCellCount = 3000;
-
-  @Watch("selectedDimensions")
-  @Watch("repoId")
-  private reloadGraphData() {
-    this.$emit("reload-graph-data");
-  }
-
-  private updateSelectedDimensions(newDimensions: Dimension[]) {
-    this.$emit("update:selectedDimensions", newDimensions);
-  }
-
-  private get matrixSelectorCellCount() {
-    const benchmarks = new Set();
-    const metrics = new Set();
-    for (const dim of this.allDimensions) {
-      benchmarks.add(dim.benchmark);
-      metrics.add(dim.metric);
-    }
-    return benchmarks.size * metrics.size;
-  }
-
-  private get canUseMatrixSelector() {
-    // This limit is arbitrary. It was chosen as a round number that does not cause rendering glitches in my browser...
-    // At some point you can not see the whole matrix in full-screen either, making it less useful
-    return this.matrixSelectorCellCount < this.maxMatrixSelectorCellCount;
-  }
-
-  private get useMatrixSelector() {
-    return this.selectorType === "matrix" && this.canUseMatrixSelector;
-  }
-
-  private set useMatrixSelector(useMatrixSelector: boolean) {
-    this.$emit("update:selectorType", useMatrixSelector ? "matrix" : "tree");
-  }
-
-  // ICONS
-  private readonly expandIcon = mdiFullscreen;
-  private readonly shrinkIcon = mdiFullscreenExit;
-}
+  data() {
+    return {
+      maxMatrixSelectorCellCount: 3000,
+      expandIcon: mdiFullscreen,
+      shrinkIcon: mdiFullscreenExit,
+    };
+  },
+  computed: {
+    matrixSelectorCellCount() {
+      const benchmarks = new Set();
+      const metrics = new Set();
+      for (const dim of this.allDimensions) {
+        benchmarks.add(dim.benchmark);
+        metrics.add(dim.metric);
+      }
+      return benchmarks.size * metrics.size;
+    },
+    canUseMatrixSelector() {
+      // This limit is arbitrary. It was chosen as a round number that does not cause rendering glitches in my browser...
+      // At some point you can not see the whole matrix in full-screen either, making it less useful
+      return this.matrixSelectorCellCount < this.maxMatrixSelectorCellCount;
+    },
+    useMatrixSelector: {
+      get() {
+        return this.selectorType === "matrix" && this.canUseMatrixSelector;
+      },
+      set(useMatrixSelector: boolean) {
+        this.$emit(
+          "update:selectorType",
+          useMatrixSelector ? "matrix" : "tree",
+        );
+      },
+    },
+  },
+  methods: {
+    updateSelectedDimensions(newDimensions: Dimension[]) {
+      this.$emit("update:selectedDimensions", newDimensions);
+    },
+    reloadGraphData() {
+      this.$emit("reload-graph-data");
+    },
+  },
+  props: {
+    isFullscreen: { default: false, type: Boolean },
+    allDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    selectedDimensions: {
+      type: Array as PropType<Dimension[]>,
+    },
+    selectorType: {
+      default: "matrix",
+      type: Object as PropType<"tree" | "matrix">,
+    },
+  },
+  watch: {
+    selectedDimensions: [
+      {
+        handler: "reloadGraphData",
+      },
+    ],
+    repoId: [
+      {
+        handler: "reloadGraphData",
+      },
+    ],
+  },
+});
 </script>
 
 <style scoped>

@@ -85,9 +85,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import {
   AttributedDatapoint,
   CommitDescription,
@@ -96,116 +94,105 @@ import {
 } from "@/store/types";
 import CommitBenchmarkActions from "@/components/runs/CommitBenchmarkActions.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "benchmark-actions": CommitBenchmarkActions,
   },
-})
-export default class GraphDatapointDialog extends Vue {
-  @Prop({ default: false })
-  private readonly dialogOpen!: boolean;
+  computed: {
+    commitHasValue() {
+      return this.selectedDatapoint.successful(this.seriesId);
+    },
+    commitHasRun() {
+      return !this.selectedDatapoint.unbenchmarked(this.seriesId);
+    },
+    allowSelectAsReference(): boolean {
+      return this.commitHasValue;
+    },
+    allowSelectCompare(): boolean {
+      return !this.noCompare && this.commitHasValue;
+    },
+    hasReferenceLine() {
+      return this.referenceDatapoint !== null;
+    },
+    selectedDatapointAsCommitDescription() {
+      return new CommitDescription(
+        this.selectedDatapoint.repoId,
+        this.selectedDatapoint.hash,
+        this.selectedDatapoint.author,
+        this.selectedDatapoint.committerTime,
+        this.selectedDatapoint.summary,
+      );
+    },
+    compareLabel(): string {
+      return this.commitToCompare
+        ? "Compare this commit to commit " + this.commitToCompare.datapoint.hash
+        : "";
+    },
+  },
+  methods: {
+    setAsReference() {
+      this.$emit("update:referenceDatapoint", {
+        datapoint: this.selectedDatapoint,
+        seriesId: this.seriesId,
+      } as AttributedDatapoint);
+      this.$emit("close");
+    },
+    removeReferenceLine() {
+      this.$emit("update:referenceDatapoint", null);
+      this.$emit("close");
+    },
+    setAsCompare() {
+      this.$emit("update:commitToCompare", {
+        datapoint: this.selectedDatapoint,
+        seriesId: this.seriesId,
+      } as AttributedDatapoint);
+      this.$emit("close");
+    },
+    removeCompare() {
+      this.$emit("update:commitToCompare", null);
+      this.$emit("close");
+    },
+    compareCommits() {
+      this.pointDialogExecuteCompare();
+      this.$emit("close");
+    },
+    pointDialogExecuteCompare() {
+      if (!this.commitToCompare || !this.selectedDatapoint) {
+        return;
+      }
+      const repoId = this.commitToCompare.datapoint.repoId;
+      const hashFrom = this.commitToCompare.datapoint.hash;
+      const hashTo = this.selectedDatapoint.hash;
 
-  @Prop()
-  private readonly selectedDatapoint!: GraphDataPoint;
-
-  @Prop()
-  private readonly seriesId!: SeriesId;
-
-  @Prop({ default: null })
-  private readonly commitToCompare!: AttributedDatapoint | null;
-
-  @Prop({ default: null })
-  private readonly referenceDatapoint!: AttributedDatapoint | null;
-
-  @Prop({ default: false })
-  private readonly noCompare!: boolean;
-
-  private get commitHasValue() {
-    return this.selectedDatapoint.successful(this.seriesId);
-  }
-
-  private get commitHasRun() {
-    return !this.selectedDatapoint.unbenchmarked(this.seriesId);
-  }
-
-  private get allowSelectAsReference(): boolean {
-    return this.commitHasValue;
-  }
-
-  private get allowSelectCompare(): boolean {
-    return !this.noCompare && this.commitHasValue;
-  }
-
-  private get hasReferenceLine() {
-    return this.referenceDatapoint !== null;
-  }
-
-  private get selectedDatapointAsCommitDescription() {
-    return new CommitDescription(
-      this.selectedDatapoint.repoId,
-      this.selectedDatapoint.hash,
-      this.selectedDatapoint.author,
-      this.selectedDatapoint.committerTime,
-      this.selectedDatapoint.summary,
-    );
-  }
-
-  private get compareLabel(): string {
-    return this.commitToCompare
-      ? "Compare this commit to commit " + this.commitToCompare.datapoint.hash
-      : "";
-  }
-
-  private setAsReference() {
-    this.$emit("update:referenceDatapoint", {
-      datapoint: this.selectedDatapoint,
-      seriesId: this.seriesId,
-    } as AttributedDatapoint);
-    this.$emit("close");
-  }
-
-  private removeReferenceLine() {
-    this.$emit("update:referenceDatapoint", null);
-    this.$emit("close");
-  }
-
-  private setAsCompare() {
-    this.$emit("update:commitToCompare", {
-      datapoint: this.selectedDatapoint,
-      seriesId: this.seriesId,
-    } as AttributedDatapoint);
-    this.$emit("close");
-  }
-
-  private removeCompare() {
-    this.$emit("update:commitToCompare", null);
-    this.$emit("close");
-  }
-
-  private compareCommits() {
-    this.pointDialogExecuteCompare();
-    this.$emit("close");
-  }
-
-  private pointDialogExecuteCompare() {
-    if (!this.commitToCompare || !this.selectedDatapoint) {
-      return;
-    }
-    const repoId = this.commitToCompare.datapoint.repoId;
-    const hashFrom = this.commitToCompare.datapoint.hash;
-    const hashTo = this.selectedDatapoint.hash;
-
-    this.$router.push({
-      name: "run-comparison",
-      params: { first: repoId, second: repoId },
-      query: { hash1: hashFrom, hash2: hashTo },
-    });
-  }
-
-  private onClose() {
-    this.$emit("close");
-  }
-}
+      this.$router.push({
+        name: "run-comparison",
+        params: { first: repoId, second: repoId },
+        query: { hash1: hashFrom, hash2: hashTo },
+      });
+    },
+    onClose() {
+      this.$emit("close");
+    },
+  },
+  props: {
+    dialogOpen: { default: false, type: Boolean },
+    selectedDatapoint: {
+      type: Object as PropType<GraphDataPoint>,
+    },
+    seriesId: {
+      type: Object as PropType<SeriesId>,
+    },
+    commitToCompare: {
+      default: null,
+      type: Object as PropType<AttributedDatapoint | null>,
+    },
+    referenceDatapoint: {
+      default: null,
+      type: Object as PropType<AttributedDatapoint | null>,
+    },
+    noCompare: { default: false, type: Boolean },
+  },
+});
 </script>
 
 <style scoped>

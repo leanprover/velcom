@@ -22,38 +22,38 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Model, Prop } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
+export default defineComponent({
+  computed: {
+    selectedText(): string {
+      return this.file ? "Selected" : "Click me to select the tar to upload :)";
+    },
+    selectedFileName() {
+      return this.file ? this.file.name : "";
+    },
+  },
+  methods: {
+    fileSelected(event: Event) {
+      if (!event.target) {
+        return;
+      }
+      const files = (event.target as HTMLInputElement).files;
+      if (!files) {
+        return;
+      }
 
-@Component({})
-export default class FileSelectComponent extends Vue {
-  @Model("input", { type: File, default: () => null })
-  private readonly file!: File | null;
-
-  @Prop({ default: false })
-  private readonly errorStyle!: boolean;
-
-  private fileSelected(event: Event) {
-    if (!event.target) {
-      return;
-    }
-    const files = (event.target as HTMLInputElement).files;
-    if (!files) {
-      return;
-    }
-
-    this.$emit("input", files[0]);
-  }
-
-  private get selectedText(): string {
-    return this.file ? "Selected" : "Click me to select the tar to upload :)";
-  }
-
-  private get selectedFileName() {
-    return this.file ? this.file.name : "";
-  }
-}
+      this.$emit("input", files[0]);
+    },
+  },
+  props: {
+    errorStyle: { default: false, type: Boolean },
+    file: { type: File, default: () => null },
+  },
+  model: {
+    prop: "file",
+    event: "input",
+  },
+});
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->

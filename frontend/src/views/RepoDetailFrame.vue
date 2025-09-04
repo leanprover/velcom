@@ -45,8 +45,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import { Component } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
 import { Repo } from "@/store/types";
 import RepoSelectionComponent from "../components/misc/RepoSelectionComponent.vue";
@@ -56,7 +55,7 @@ import NotFound404 from "./NotFound404.vue";
 import RepoBaseInformation from "@/components/repodetail/RepoBaseInformation.vue";
 import RepoGraphView from "@/views/RepoGraphView.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-graph-view": RepoGraphView,
     "repo-base-information": RepoBaseInformation,
@@ -64,56 +63,56 @@ import RepoGraphView from "@/views/RepoGraphView.vue";
     "repo-add": RepoAddDialog,
     "page-404": NotFound404,
   },
-})
-export default class RepoDetailFrame extends Vue {
-  private tabMapping: Array<"information" | "graph"> = ["information", "graph"];
+  data() {
+    const tabMapping: Array<"information" | "graph"> = ["information", "graph"];
 
-  private get selectedTab() {
-    return this.tabMapping.indexOf(vxm.detailGraphModule.selectedTab);
-  }
-
-  private set selectedTab(selectedTab: number) {
-    vxm.detailGraphModule.selectedTab = this.tabMapping[selectedTab];
-  }
-
-  get selectedRepoId(): string {
-    return this.$route.params.id;
-  }
-
-  set selectedRepoId(repoId: string) {
-    if (this.selectedRepoId === repoId) {
-      return;
-    }
-    this.$router.replace({ name: "repo-detail", params: { id: repoId } });
-    vxm.detailGraphModule.selectedRepoId = repoId;
-  }
-
-  get selectedRepo(): Repo | null {
-    return this.selectedRepoId == null
-      ? null
-      : vxm.repoModule.repoById(this.selectedRepoId)!;
-  }
-
-  get allRepos(): Repo[] {
-    return vxm.repoModule.allRepos;
-  }
-
-  private get repo() {
-    return vxm.repoModule.repoById(this.selectedRepoId);
-  }
-
-  get isAdmin(): boolean {
-    return vxm.userModule.isAdmin;
-  }
-
-  get isDarkMode(): boolean {
-    return vxm.userModule.darkThemeSelected;
-  }
-
-  get repoSelected(): boolean {
-    return this.selectedRepo !== null && this.repo !== undefined;
-  }
-
+    return {
+      tabMapping,
+      plusIcon: mdiPlusCircleOutline,
+    };
+  },
+  computed: {
+    selectedTab: {
+      get() {
+        return this.tabMapping.indexOf(vxm.detailGraphModule.selectedTab);
+      },
+      set(selectedTab: number) {
+        vxm.detailGraphModule.selectedTab = this.tabMapping[selectedTab];
+      },
+    },
+    selectedRepoId: {
+      get(): string {
+        return this.$route.params.id;
+      },
+      set(repoId: string) {
+        if (this.selectedRepoId === repoId) {
+          return;
+        }
+        this.$router.replace({ name: "repo-detail", params: { id: repoId } });
+        vxm.detailGraphModule.selectedRepoId = repoId;
+      },
+    },
+    selectedRepo(): Repo | null {
+      return this.selectedRepoId == null
+        ? null
+        : vxm.repoModule.repoById(this.selectedRepoId)!;
+    },
+    allRepos(): Repo[] {
+      return vxm.repoModule.allRepos;
+    },
+    repo() {
+      return vxm.repoModule.repoById(this.selectedRepoId);
+    },
+    isAdmin(): boolean {
+      return vxm.userModule.isAdmin;
+    },
+    isDarkMode(): boolean {
+      return vxm.userModule.darkThemeSelected;
+    },
+    repoSelected(): boolean {
+      return this.selectedRepo !== null && this.repo !== undefined;
+    },
+  },
   mounted(): void {
     if (!this.selectedRepoId && vxm.detailGraphModule.selectedRepoId) {
       this.selectedRepoId = vxm.detailGraphModule.selectedRepoId;
@@ -122,10 +121,6 @@ export default class RepoDetailFrame extends Vue {
       this.selectedRepoId = vxm.repoModule.allRepos[0].id;
     }
     vxm.detailGraphModule.adjustToPermanentLink(this.$route);
-  }
-
-  // ============== ICONS ==============
-  private plusIcon = mdiPlusCircleOutline;
-  // ==============       ==============
-}
+  },
+});
 </script>

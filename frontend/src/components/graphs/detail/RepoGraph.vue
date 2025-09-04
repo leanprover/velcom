@@ -59,8 +59,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import MatrixDimensionSelection from "@/components/graphs/detail/MatrixDimensionSelection.vue";
 import TreeDimensionSelection from "@/components/graphs/detail/TreeDimensionSelection.vue";
 import { vxm } from "@/store";
@@ -72,94 +71,147 @@ import {
   DimensionId,
   SeriesInformation,
 } from "@/store/types";
-import { Prop, Watch } from "vue-property-decorator";
 import { getInnerHeight } from "@/util/Measurements";
 import { escapeHtml } from "@/util/Texts";
 import { formatDate } from "@/util/Times";
 import GraphDatapointDialog from "@/components/graphs/helper/GraphDatapointDialog.vue";
 import { selectGraphVariant } from "@/util/GraphVariantSelection";
 
-@Component({
+export default defineComponent({
   components: {
     GraphDatapointDialog,
     "matrix-dimension-selection": MatrixDimensionSelection,
     "normal-dimension-selection": TreeDimensionSelection,
   },
-})
-export default class RepoGraphs extends Vue {
-  private graphPlaceholderHeight: number = 100;
-  private graphRefreshKey = 0;
+  data() {
+    const graphPlaceholderHeight: number = 100;
 
-  @Prop()
-  private readonly reloadGraphDataCounter!: number;
-
-  @Prop()
-  private readonly selectedGraphComponent!: typeof Vue;
-
-  private get selectedDimensions(): Dimension[] {
-    return vxm.detailGraphModule.selectedDimensions;
-  }
-
-  private get yStartsAtZero() {
-    return vxm.detailGraphModule.beginYScaleAtZero;
-  }
-
-  private get stacked() {
-    return vxm.detailGraphModule.stacked;
-  }
-
-  private get normalized() {
-    return vxm.detailGraphModule.normalized;
-  }
-
-  private get overscrollToZoom() {
-    return new OverscrollToZoom(
-      () => vxm.detailGraphModule.fetchDetailGraph(),
-      vxm.detailGraphModule,
-    );
-  }
-
-  private get overlayText() {
-    if (this.selectedDimensions.length === 0) {
-      return "Please select a benchmark and metric on the left.";
-    }
-    // We do not show an overlay if we have no datapoints as you can load more by zooming out
-    return null;
-  }
-
-  @Watch("reloadGraphDataCounter")
-  private async retrieveGraphData(): Promise<void> {
-    if (this.$refs.graphComponent) {
-      const element = (this.$refs.graphComponent as Vue).$el as HTMLElement;
-      this.graphPlaceholderHeight = getInnerHeight(element);
-    }
-
-    await vxm.detailGraphModule.fetchDetailGraph();
-    const correctSeries = selectGraphVariant(
-      vxm.detailGraphModule.visiblePoints *
-        vxm.detailGraphModule.selectedDimensions.length,
-    );
-    if (correctSeries) {
-      this.$emit("selectedGraphComponent", correctSeries.component);
-    }
-  }
-
-  private mounted() {
+    return {
+      graphPlaceholderHeight,
+      graphRefreshKey: 0,
+    };
+  },
+  computed: {
+    selectedDimensions(): Dimension[] {
+      return vxm.detailGraphModule.selectedDimensions;
+    },
+    yStartsAtZero() {
+      return vxm.detailGraphModule.beginYScaleAtZero;
+    },
+    stacked() {
+      return vxm.detailGraphModule.stacked;
+    },
+    normalized() {
+      return vxm.detailGraphModule.normalized;
+    },
+    overscrollToZoom() {
+      return new OverscrollToZoom(
+        () => vxm.detailGraphModule.fetchDetailGraph(),
+        vxm.detailGraphModule,
+      );
+    },
+    overlayText() {
+      if (this.selectedDimensions.length === 0) {
+        return "Please select a benchmark and metric on the left.";
+      }
+      // We do not show an overlay if we have no datapoints as you can load more by zooming out
+      return null;
+    },
+    datapoints(): DetailDataPoint[] {
+      return vxm.detailGraphModule.detailGraph;
+    },
+    seriesInformation(): SeriesInformation[] {
+      return this.selectedDimensions.map((dimension) => ({
+        displayName: dimension.toString(),
+        id: dimension.toString(),
+        color: this.dimensionColor(dimension),
+        unit: dimension.unit,
+      }));
+    },
+    visiblePointCount() {
+      return vxm.detailGraphModule.visiblePoints;
+    },
+    dataRangeMin: {
+      get() {
+        return vxm.detailGraphModule.startTime;
+      },
+      set(date: Date) {
+        vxm.detailGraphModule.startTime = date;
+        vxm.detailGraphModule.fetchDetailGraph();
+      },
+    },
+    dataRangeMax: {
+      get() {
+        return vxm.detailGraphModule.endTime;
+      },
+      set(date: Date) {
+        vxm.detailGraphModule.endTime = date;
+        vxm.detailGraphModule.fetchDetailGraph();
+      },
+    },
+    commitToCompare: {
+      get(): AttributedDatapoint | null {
+        return vxm.detailGraphModule.commitToCompare;
+      },
+      set(commit: AttributedDatapoint | null) {
+        vxm.detailGraphModule.commitToCompare = commit;
+      },
+    },
+    referenceDatapoint: {
+      get(): AttributedDatapoint | null {
+        return vxm.detailGraphModule.referenceDatapoint;
+      },
+      set(datapoint: AttributedDatapoint | null) {
+        vxm.detailGraphModule.referenceDatapoint = datapoint;
+      },
+    },
+    zoomXStartValue: {
+      get(): number | null {
+        return vxm.detailGraphModule.zoomXStartValue;
+      },
+      set(value: number | null) {
+        vxm.detailGraphModule.zoomXStartValue = value;
+      },
+    },
+    zoomXEndValue: {
+      get(): number | null {
+        return vxm.detailGraphModule.zoomXEndValue;
+      },
+      set(value: number | null) {
+        vxm.detailGraphModule.zoomXEndValue = value;
+      },
+    },
+    zoomYStartValue: {
+      get(): number | null {
+        return vxm.detailGraphModule.zoomYStartValue;
+      },
+      set(value: number | null) {
+        vxm.detailGraphModule.zoomYStartValue = value;
+      },
+    },
+    zoomYEndValue: {
+      get(): number | null {
+        return vxm.detailGraphModule.zoomYEndValue;
+      },
+      set(value: number | null) {
+        vxm.detailGraphModule.zoomYEndValue = value;
+      },
+    },
+  },
+  mounted() {
     this.retrieveGraphData();
-  }
-
-  // <!--<editor-fold desc="Graph bindings">-->
-  private resetZoom() {
-    this.zoomYStartValue = null;
-    this.zoomYEndValue = null;
-    this.zoomXStartValue = this.dataRangeMin.getTime();
-    this.zoomXEndValue = this.dataRangeMax.getTime();
-    this.graphRefreshKey++;
-  }
-
-  private pointFormatter(point: DetailDataPoint) {
-    const committerDate = formatDate(point.committerTime);
-    return `
+  },
+  methods: {
+    resetZoom() {
+      this.zoomYStartValue = null;
+      this.zoomYEndValue = null;
+      this.zoomXStartValue = this.dataRangeMin.getTime();
+      this.zoomXEndValue = this.dataRangeMax.getTime();
+      this.graphRefreshKey++;
+    },
+    pointFormatter(point: DetailDataPoint) {
+      const committerDate = formatDate(point.committerTime);
+      return `
             <tr>
               <td>Hash</td>
               <td>${escapeHtml(point.hash)}</td>
@@ -175,104 +227,40 @@ export default class RepoGraphs extends Vue {
               </td>
             </tr>
             `;
-  }
+    },
+    dimensionColor(dimension: DimensionId) {
+      return vxm.colorModule.colorForDetailDimension(dimension);
+    },
+    async retrieveGraphData(): Promise<void> {
+      if (this.$refs.graphComponent) {
+        const element = (this.$refs.graphComponent as Vue).$el as HTMLElement;
+        this.graphPlaceholderHeight = getInnerHeight(element);
+      }
 
-  private get datapoints(): DetailDataPoint[] {
-    return vxm.detailGraphModule.detailGraph;
-  }
-
-  private get seriesInformation(): SeriesInformation[] {
-    return this.selectedDimensions.map((dimension) => ({
-      displayName: dimension.toString(),
-      id: dimension.toString(),
-      color: this.dimensionColor(dimension),
-      unit: dimension.unit,
-    }));
-  }
-
-  private dimensionColor(dimension: DimensionId) {
-    return vxm.colorModule.colorForDetailDimension(dimension);
-  }
-
-  private get visiblePointCount() {
-    return vxm.detailGraphModule.visiblePoints;
-  }
-
-  private get dataRangeMin() {
-    return vxm.detailGraphModule.startTime;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set dataRangeMin(date: Date) {
-    vxm.detailGraphModule.startTime = date;
-    vxm.detailGraphModule.fetchDetailGraph();
-  }
-
-  private get dataRangeMax() {
-    return vxm.detailGraphModule.endTime;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set dataRangeMax(date: Date) {
-    vxm.detailGraphModule.endTime = date;
-    vxm.detailGraphModule.fetchDetailGraph();
-  }
-
-  private get commitToCompare(): AttributedDatapoint | null {
-    return vxm.detailGraphModule.commitToCompare;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set commitToCompare(commit: AttributedDatapoint | null) {
-    vxm.detailGraphModule.commitToCompare = commit;
-  }
-
-  private get referenceDatapoint(): AttributedDatapoint | null {
-    return vxm.detailGraphModule.referenceDatapoint;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set referenceDatapoint(datapoint: AttributedDatapoint | null) {
-    vxm.detailGraphModule.referenceDatapoint = datapoint;
-  }
-
-  // <!--<editor-fold desc="Zoom boilerplate">-->
-  private get zoomXStartValue(): number | null {
-    return vxm.detailGraphModule.zoomXStartValue;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set zoomXStartValue(value: number | null) {
-    vxm.detailGraphModule.zoomXStartValue = value;
-  }
-
-  private get zoomXEndValue(): number | null {
-    return vxm.detailGraphModule.zoomXEndValue;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set zoomXEndValue(value: number | null) {
-    vxm.detailGraphModule.zoomXEndValue = value;
-  }
-
-  private get zoomYStartValue(): number | null {
-    return vxm.detailGraphModule.zoomYStartValue;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set zoomYStartValue(value: number | null) {
-    vxm.detailGraphModule.zoomYStartValue = value;
-  }
-
-  private get zoomYEndValue(): number | null {
-    return vxm.detailGraphModule.zoomYEndValue;
-  }
-
-  // noinspection JSUnusedLocalSymbols
-  private set zoomYEndValue(value: number | null) {
-    vxm.detailGraphModule.zoomYEndValue = value;
-  }
-  // <!--</editor-fold>-->
-  // <!--</editor-fold>-->
-}
+      await vxm.detailGraphModule.fetchDetailGraph();
+      const correctSeries = selectGraphVariant(
+        vxm.detailGraphModule.visiblePoints *
+          vxm.detailGraphModule.selectedDimensions.length,
+      );
+      if (correctSeries) {
+        this.$emit("selectedGraphComponent", correctSeries.component);
+      }
+    },
+  },
+  props: {
+    reloadGraphDataCounter: {
+      type: Number,
+    },
+    selectedGraphComponent: {
+      type: Object as PropType<typeof Vue>,
+    },
+  },
+  watch: {
+    reloadGraphDataCounter: [
+      {
+        handler: "retrieveGraphData",
+      },
+    ],
+  },
+});
 </script>

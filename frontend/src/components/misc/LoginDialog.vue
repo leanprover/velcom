@@ -40,47 +40,58 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import { Component, Watch } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
 import RepoSelectionComponent from "./RepoSelectionComponent.vue";
 
-@Component({
+export default defineComponent({
   components: {
     "repo-selection": RepoSelectionComponent,
   },
-})
-export default class LoginDialog extends Vue {
-  private loading: boolean = false;
-  private repoId: string = "";
-  private token: string = "";
+  data() {
+    const dialogOpen: boolean = false;
+    const formValid: boolean = false;
+    const token: string = "";
+    const repoId: string = "";
+    const loading: boolean = false;
 
-  private formValid: boolean = false;
-  private dialogOpen: boolean = false;
+    return {
+      loading,
+      repoId,
+      token,
+      formValid,
+      dialogOpen,
+    };
+  },
+  methods: {
+    nonEmptyToken(input: string): boolean | string {
+      return input.length > 0 ? true : "This field must not be empty!";
+    },
+    login() {
+      if (!this.formValid) {
+        return;
+      }
 
-  @Watch("dialogOpen")
-  private onOpened(opened: boolean) {
-    if (!opened) {
-      this.token = "";
-      this.repoId = "";
-    }
-  }
+      this.loading = true;
 
-  private nonEmptyToken(input: string): boolean | string {
-    return input.length > 0 ? true : "This field must not be empty!";
-  }
-
-  private login() {
-    if (!this.formValid) {
-      return;
-    }
-
-    this.loading = true;
-
-    vxm.userModule
-      .logIn(this.token)
-      .then(() => (this.dialogOpen = false))
-      .finally(() => (this.loading = false));
-  }
-}
+      vxm.userModule
+        .logIn(this.token)
+        .then(() => (this.dialogOpen = false))
+        .finally(() => (this.loading = false));
+    },
+    onOpened(opened: boolean) {
+      if (!opened) {
+        this.token = "";
+        this.repoId = "";
+      }
+    },
+  },
+  watch: {
+    dialogOpen: [
+      {
+        handler: "onOpened",
+      },
+    ],
+  },
+});
 </script>

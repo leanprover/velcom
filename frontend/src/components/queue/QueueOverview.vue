@@ -82,8 +82,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import { vxm } from "@/store";
 import { Task, Worker } from "@/store/types";
 import { mdiDelete, mdiRocket } from "@mdi/js";
@@ -92,155 +91,36 @@ import TarTaskOverview from "../overviews/TarTaskOverview.vue";
 import { formatDurationHuman } from "@/util/Times";
 import { RawLocation } from "vue-router";
 
-@Component({
+export default defineComponent({
   components: {
     COMMIT: CommitOverviewBase,
     UPLOADED_TAR: TarTaskOverview,
   },
-})
-export default class QueueOverview extends Vue {
-  private timerIds: number[] = [];
-  // noinspection JSMismatchedCollectionQueryUpdate
-  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1];
-  private defaultItemsPerPage: number = 20;
-  private liftsInProgress: Set<string> = new Set();
-  // Reactivity can be a bit annoying. We need to store this explicitly
-  private workerFormattedSinceDurations: { [workerName: string]: string } = {};
+  data() {
+    const workerFormattedSinceDurations: { [workerName: string]: string } = {};
+    const liftsInProgress: Set<string> = new Set();
+    const defaultItemsPerPage: number = 20;
+    const itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1];
+    const timerIds: number[] = [];
 
-  private get queueItems(): Task[] {
-    return vxm.queueModule.openTasks.slice();
-  }
-
-  private inProgress(task: Task): boolean {
-    return this.getWorker(task) !== undefined;
-  }
-
-  private get isAdmin() {
-    return vxm.userModule.isAdmin;
-  }
-
-  private taskLinkLocation(task: Task): RawLocation {
     return {
-      name: "task-detail",
-      params: { taskId: task.id },
+      timerIds,
+      itemsPerPageOptions,
+      defaultItemsPerPage,
+      liftsInProgress,
+      workerFormattedSinceDurations,
+      liftToFrontIcon: mdiRocket,
+      deleteIcon: mdiDelete,
     };
-  }
-
-  private liftToFront(task: Task, event: Event) {
-    if (this.liftsInProgress.has(task.id)) {
-      return;
-    }
-    this.liftsInProgress.add(task.id);
-
-    let srcElement: HTMLElement = event.target as HTMLElement;
-
-    // No animation possible
-    if (!srcElement) {
-      vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
-      return;
-    }
-
-    while (!srcElement.classList.contains("v-icon")) {
-      srcElement = srcElement.parentElement!;
-
-      // found no parent :/
-      if (!srcElement) {
-        vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
-        return;
-      }
-    }
-
-    const offsetTop = srcElement.getBoundingClientRect().top;
-    const offsetLeft = srcElement.getBoundingClientRect().left;
-    const parent = srcElement.parentElement!;
-
-    const startAngle = Math.random() * 2 * Math.PI;
-    srcElement.style.rotate = startAngle + "rad";
-
-    const clonedElement = srcElement.cloneNode(true) as HTMLElement;
-
-    vxm.queueModule
-      .dispatchPrioritizeOpenTask(task.id)
-      .then(() => {
-        parent.appendChild(clonedElement);
-
-        clonedElement.style.top = Math.round(offsetTop) + "px";
-        clonedElement.style.left = Math.round(offsetLeft) + "px";
-        clonedElement.classList.add("shoot-off");
-
-        this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop);
-      })
-      .finally(() => {
-        srcElement.style.rotate = "0deg";
-        this.liftsInProgress.delete(task.id);
-      });
-  }
-
-  private flyRocket(
-    clonedElement: HTMLElement,
-    startAngle: number,
-    rawTargetX: number,
-    rawTargetY: number,
-  ) {
-    setTimeout(() => {
-      let alpha = (Math.random() * Math.PI) / 4;
-      if (Math.random() < 0.5) {
-        alpha *= -1;
-      }
-      const rocketTilt = Math.PI / 4;
-      alpha += -startAngle + rocketTilt;
-
-      const direction = [Math.cos(alpha), Math.sin(alpha)];
-
-      while (
-        rawTargetY > 0 &&
-        rawTargetY < window.innerHeight &&
-        rawTargetX > 0 &&
-        rawTargetX < window.innerWidth
-      ) {
-        rawTargetX += direction[0];
-        rawTargetY -= direction[1];
-      }
-
-      clonedElement.style.top = rawTargetY + "px";
-      clonedElement.style.left = rawTargetX + "px";
-      clonedElement.style.rotate = -alpha + Math.PI / 4 + "rad";
-
-      const animationDuration = 6000;
-      setTimeout(() => clonedElement.remove(), animationDuration);
-    }, 1);
-  }
-
-  private deleteTask(task: Task) {
-    vxm.queueModule.dispatchDeleteOpenTask({ id: task.id });
-  }
-
-  private getWorker(task: Task): Worker | undefined {
-    return vxm.queueModule.workers.find((it) => it.workingOn === task.id);
-  }
-
-  // VTI inference is too bad to realize that never changes
-  private getWorkerUnsafe(task: Task): Worker {
-    return this.getWorker(task)!;
-  }
-
-  private formatWorkingSince(worker: Worker) {
-    if (!worker || !worker.workingSince) {
-      return "";
-    }
-    return formatDurationHuman(worker.workingSince, new Date());
-  }
-
-  private updateWorkerTimes() {
-    vxm.queueModule.workers.forEach((it) =>
-      Vue.set(
-        this.workerFormattedSinceDurations,
-        it.name,
-        this.formatWorkingSince(it),
-      ),
-    );
-  }
-
+  },
+  computed: {
+    queueItems(): Task[] {
+      return vxm.queueModule.openTasks.slice();
+    },
+    isAdmin() {
+      return vxm.userModule.isAdmin;
+    },
+  },
   created(): void {
     vxm.queueModule.fetchQueue();
     this.timerIds.push(
@@ -248,18 +128,129 @@ export default class QueueOverview extends Vue {
     );
     this.updateWorkerTimes();
     this.timerIds.push(setInterval(this.updateWorkerTimes, 1000));
-  }
-
-  // noinspection JSUnusedGlobalSymbols
+  },
   beforeDestroy(): void {
     this.timerIds.forEach(clearInterval);
-  }
+  },
+  methods: {
+    inProgress(task: Task): boolean {
+      return this.getWorker(task) !== undefined;
+    },
+    taskLinkLocation(task: Task): RawLocation {
+      return {
+        name: "task-detail",
+        params: { taskId: task.id },
+      };
+    },
+    liftToFront(task: Task, event: Event) {
+      if (this.liftsInProgress.has(task.id)) {
+        return;
+      }
+      this.liftsInProgress.add(task.id);
 
-  // ============== ICONS ==============
-  private liftToFrontIcon = mdiRocket;
-  private deleteIcon = mdiDelete;
-  // ==============       ==============
-}
+      let srcElement: HTMLElement = event.target as HTMLElement;
+
+      // No animation possible
+      if (!srcElement) {
+        vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
+        return;
+      }
+
+      while (!srcElement.classList.contains("v-icon")) {
+        srcElement = srcElement.parentElement!;
+
+        // found no parent :/
+        if (!srcElement) {
+          vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
+          return;
+        }
+      }
+
+      const offsetTop = srcElement.getBoundingClientRect().top;
+      const offsetLeft = srcElement.getBoundingClientRect().left;
+      const parent = srcElement.parentElement!;
+
+      const startAngle = Math.random() * 2 * Math.PI;
+      srcElement.style.rotate = startAngle + "rad";
+
+      const clonedElement = srcElement.cloneNode(true) as HTMLElement;
+
+      vxm.queueModule
+        .dispatchPrioritizeOpenTask(task.id)
+        .then(() => {
+          parent.appendChild(clonedElement);
+
+          clonedElement.style.top = Math.round(offsetTop) + "px";
+          clonedElement.style.left = Math.round(offsetLeft) + "px";
+          clonedElement.classList.add("shoot-off");
+
+          this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop);
+        })
+        .finally(() => {
+          srcElement.style.rotate = "0deg";
+          this.liftsInProgress.delete(task.id);
+        });
+    },
+    flyRocket(
+      clonedElement: HTMLElement,
+      startAngle: number,
+      rawTargetX: number,
+      rawTargetY: number,
+    ) {
+      setTimeout(() => {
+        let alpha = (Math.random() * Math.PI) / 4;
+        if (Math.random() < 0.5) {
+          alpha *= -1;
+        }
+        const rocketTilt = Math.PI / 4;
+        alpha += -startAngle + rocketTilt;
+
+        const direction = [Math.cos(alpha), Math.sin(alpha)];
+
+        while (
+          rawTargetY > 0 &&
+          rawTargetY < window.innerHeight &&
+          rawTargetX > 0 &&
+          rawTargetX < window.innerWidth
+        ) {
+          rawTargetX += direction[0];
+          rawTargetY -= direction[1];
+        }
+
+        clonedElement.style.top = rawTargetY + "px";
+        clonedElement.style.left = rawTargetX + "px";
+        clonedElement.style.rotate = -alpha + Math.PI / 4 + "rad";
+
+        const animationDuration = 6000;
+        setTimeout(() => clonedElement.remove(), animationDuration);
+      }, 1);
+    },
+    deleteTask(task: Task) {
+      vxm.queueModule.dispatchDeleteOpenTask({ id: task.id });
+    },
+    getWorker(task: Task): Worker | undefined {
+      return vxm.queueModule.workers.find((it) => it.workingOn === task.id);
+    },
+    getWorkerUnsafe(task: Task): Worker {
+      return this.getWorker(task)!;
+    },
+    formatWorkingSince(worker: Worker) {
+      if (!worker || !worker.workingSince) {
+        return "";
+      }
+      return formatDurationHuman(worker.workingSince, new Date());
+    },
+    updateWorkerTimes() {
+      vxm.queueModule.workers.forEach((it) =>
+        Vue.set(
+          this.workerFormattedSinceDurations,
+          it.name,
+          this.formatWorkingSince(it),
+        ),
+      );
+    },
+  },
+});
 </script>
 
 <style scoped>

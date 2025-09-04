@@ -33,10 +33,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent, PropType } from "vue";
 import { RunDescription, RunId } from "@/store/types";
-import { Prop } from "vue-property-decorator";
 import { formatDate } from "@/util/Times";
 import {
   mdiCheckCircleOutline,
@@ -44,50 +42,55 @@ import {
   mdiAlertCircleOutline,
 } from "@mdi/js";
 
-@Component
-export default class RunTimeline extends Vue {
-  @Prop()
-  private runs!: RunDescription[];
+export default defineComponent({
+  data() {
+    const runInfos: {
+      [key: string]: { icon: string; color: string; explanation: string };
+    } = {
+      SUCCESS: {
+        icon: mdiCheckCircleOutline,
+        color: "success",
+        explanation: "This run was successful",
+      },
+      PARTIAL_SUCCESS: {
+        icon: mdiProgressAlert,
+        color: "warning",
+        explanation: "This run suffered at least one failure",
+      },
+      FAILURE: {
+        icon: mdiAlertCircleOutline,
+        color: "error",
+        explanation: "This run failed completely",
+      },
+    };
 
-  @Prop({ default: null })
-  private selectedRunId!: RunId | null;
-
-  private readonly runInfos: {
-    [key: string]: { icon: string; color: string; explanation: string };
-  } = {
-    SUCCESS: {
-      icon: mdiCheckCircleOutline,
-      color: "success",
-      explanation: "This run was successful",
+    return {
+      runInfos,
+    };
+  },
+  computed: {
+    sortedRuns(): RunDescription[] {
+      return this.runs
+        .slice()
+        .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
     },
-    PARTIAL_SUCCESS: {
-      icon: mdiProgressAlert,
-      color: "warning",
-      explanation: "This run suffered at least one failure",
+  },
+  methods: {
+    formatDate(date: Date) {
+      return formatDate(date);
     },
-    FAILURE: {
-      icon: mdiAlertCircleOutline,
-      color: "error",
-      explanation: "This run failed completely",
+    runInfo(run: RunDescription) {
+      return this.runInfos[run.success];
     },
-  };
-
-  private get sortedRuns(): RunDescription[] {
-    return this.runs
-      .slice()
-      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-  }
-
-  private formatDate(date: Date) {
-    return formatDate(date);
-  }
-
-  private runInfo(run: RunDescription) {
-    return this.runInfos[run.success];
-  }
-
-  private isSelected(run: RunDescription) {
-    return run.runId === this.selectedRunId;
-  }
-}
+    isSelected(run: RunDescription) {
+      return run.runId === this.selectedRunId;
+    },
+  },
+  props: {
+    runs: {
+      type: Array as PropType<RunDescription[]>,
+    },
+    selectedRunId: { default: null, type: Object as PropType<RunId | null> },
+  },
+});
 </script>

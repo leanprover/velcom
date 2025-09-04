@@ -56,57 +56,73 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import { Component, Model, Watch } from "vue-property-decorator";
+import Vue, { defineComponent } from "vue";
 import RepoSelectionComponent from "@/components/misc/RepoSelectionComponent.vue";
 import { vxm } from "@/store";
 import FileSelectComponent from "@/components/misc/FileSelectComponent.vue";
 
-@Component({
+export default defineComponent({
   components: { FileSelectComponent, RepoSelectionComponent },
-})
-export default class UploadTarDialog extends Vue {
-  private vueFormValid: boolean = false;
-  private tarDescription: string = "";
-  private repoId: string | null = null;
-  private tarFile: File | null = null;
-  private assignToRepo: boolean = false;
+  data() {
+    const assignToRepo: boolean = false;
+    const tarFile: File | null = null;
+    const repoId: string | null = null;
+    const tarDescription: string = "";
+    const vueFormValid: boolean = false;
 
-  @Model("input", { type: Boolean })
-  private open!: boolean;
-
-  private get allRepos() {
-    return vxm.repoModule.allRepos;
-  }
-
-  @Watch("open")
-  private onOpen() {
-    if (this.open) {
-      this.tarDescription = "";
-      this.tarFile = null;
-      this.repoId = null;
-    }
-  }
-
-  private get formValid(): boolean {
-    return this.vueFormValid && this.tarFile !== null;
-  }
-
-  private async uploadTar() {
-    if (!this.formValid) {
-      return;
-    }
-    await vxm.queueModule.uploadTar({
-      repoId: this.repoId,
-      description: this.tarDescription,
-      file: this.tarFile!,
-    });
-    await vxm.queueModule.fetchQueue();
-    this.$emit("input", false);
-  }
-
-  private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : "This field must not be empty!";
-  }
-}
+    return {
+      vueFormValid,
+      tarDescription,
+      repoId,
+      tarFile,
+      assignToRepo,
+    };
+  },
+  computed: {
+    allRepos() {
+      return vxm.repoModule.allRepos;
+    },
+    formValid(): boolean {
+      return this.vueFormValid && this.tarFile !== null;
+    },
+  },
+  methods: {
+    async uploadTar() {
+      if (!this.formValid) {
+        return;
+      }
+      await vxm.queueModule.uploadTar({
+        repoId: this.repoId,
+        description: this.tarDescription,
+        file: this.tarFile!,
+      });
+      await vxm.queueModule.fetchQueue();
+      this.$emit("input", false);
+    },
+    notEmpty(input: string): boolean | string {
+      return input.trim().length > 0 ? true : "This field must not be empty!";
+    },
+    onOpen() {
+      if (this.open) {
+        this.tarDescription = "";
+        this.tarFile = null;
+        this.repoId = null;
+      }
+    },
+  },
+  model: {
+    prop: "open",
+    event: "input",
+  },
+  props: {
+    open: { type: Boolean },
+  },
+  watch: {
+    open: [
+      {
+        handler: "onOpen",
+      },
+    ],
+  },
+});
 </script>

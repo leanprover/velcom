@@ -63,8 +63,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
+import Vue, { defineComponent } from "vue";
 import RepoBranchSelector from "@/components/graphs/comparison/RepoBranchSelector.vue";
 import StatusComparisonGraph from "@/components/graphs/statuscomparison/StatusComparisonGraph.vue";
 import {
@@ -76,12 +75,11 @@ import {
 } from "@/store/types";
 import { vxm } from "@/store";
 import ExpandableDimensionSelection from "@/components/graphs/helper/ExpandableDimensionSelection.vue";
-import { Prop, Watch } from "vue-property-decorator";
 import RepoSelectionComponent from "@/components/misc/RepoSelectionComponent.vue";
 import ShareGraphLinkDialog from "@/components/graphs/helper/ShareGraphLinkDialog.vue";
 import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
 
-@Component({
+export default defineComponent({
   components: {
     ShareGraphLinkDialog,
     RepoSelectionComponent,
@@ -89,188 +87,192 @@ import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
     StatusComparisonGraph,
     RepoBranchSelector,
   },
-})
-export default class StatusComparison extends Vue {
-  private data: StatusComparisonPoint[] = [];
+  data() {
+    const data: StatusComparisonPoint[] = [];
 
-  @Prop({ default: "100%" })
-  private readonly suggestedHeight!: string;
+    return {
+      data,
+    };
+  },
+  computed: {
+    allDimensions() {
+      return vxm.repoModule.occuringDimensions(
+        vxm.repoModule.allRepos.map((it) => it.id),
+      );
+    },
+    selectedBranches() {
+      return vxm.comparisonGraphModule.selectedBranches;
+    },
+    selectedDimensions: {
+      get() {
+        return vxm.statusComparisonModule.selectedDimensions;
+      },
+      set(dimensions: Dimension[]) {
+        vxm.statusComparisonModule.selectedDimensions = dimensions;
+      },
+    },
+    dimensionSelectorType: {
+      get() {
+        return vxm.statusComparisonModule.selectedDimensionSelector;
+      },
+      set(selector: "tree" | "matrix") {
+        vxm.statusComparisonModule.selectedDimensionSelector = selector;
+      },
+    },
+    baselineRepoId: {
+      get() {
+        const baselineId = vxm.statusComparisonModule.baselineRepoId;
 
-  private get allDimensions() {
-    return vxm.repoModule.occuringDimensions(
-      vxm.repoModule.allRepos.map((it) => it.id),
-    );
-  }
+        // No baseline or doesn't exist anymore
+        if (!baselineId || !vxm.repoModule.repoById(baselineId)) {
+          return null;
+        }
 
-  private get selectedBranches() {
-    return vxm.comparisonGraphModule.selectedBranches;
-  }
+        // Baseline is not selected => Ignore it
+        if (!vxm.comparisonGraphModule.selectedBranches.has(baselineId)) {
+          return null;
+        }
 
-  private get selectedDimensions() {
-    return vxm.statusComparisonModule.selectedDimensions;
-  }
+        return baselineId;
+      },
+      set(id: RepoId | null) {
+        vxm.statusComparisonModule.baselineRepoId = id;
+      },
+    },
+    possibleBaselineRepos() {
+      return Array.from(vxm.comparisonGraphModule.selectedBranches.keys())
+        .map((id) => vxm.repoModule.repoById(id))
+        .filter((it) => it);
+    },
+    overlayText() {
+      if (this.selectedDimensions.length === 0) {
+        return "Please select a dimension on the left";
+      }
+      if (this.selectedBranches.size === 0) {
+        return "Please select a repo/branch on the left";
+      }
+      return this.baselineErrorMessage;
+    },
+    baselineErrorMessage() {
+      const baselineRepoId = this.baselineRepoId;
+      if (baselineRepoId === null) {
+        return null;
+      }
 
-  private set selectedDimensions(dimensions: Dimension[]) {
-    vxm.statusComparisonModule.selectedDimensions = dimensions;
-  }
+      const baselinePoint = this.data.find(
+        (it) => it.repoId === baselineRepoId,
+      );
+      if (!baselinePoint) {
+        return "No data found for your selected baseline";
+      }
 
-  private get dimensionSelectorType() {
-    return vxm.statusComparisonModule.selectedDimensionSelector;
-  }
+      const run = baselinePoint.run;
+      if (!run) {
+        return "Baseline has no valid run - Normalization is impossible";
+      }
 
-  private set dimensionSelectorType(selector: "tree" | "matrix") {
-    vxm.statusComparisonModule.selectedDimensionSelector = selector;
-  }
+      if (!(run.result instanceof RunResultSuccess)) {
+        return "Baseline run failed - Normalization is impossible";
+      }
 
-  private toggleRepoBranch(payload: { repoId: string; branch: string }) {
-    vxm.comparisonGraphModule.toggleRepoBranch(payload);
-  }
+      const successfulMeasurement = run.result.measurements.find(
+        (it) => it instanceof MeasurementSuccess,
+      );
+      if (!successfulMeasurement) {
+        return "All metrics for baseline run failed - Normalization is impossible";
+      }
 
-  private setRepoBranches(payload: { repoId: string; branches: string[] }) {
-    vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload);
-  }
-
-  private get baselineRepoId() {
-    const baselineId = vxm.statusComparisonModule.baselineRepoId;
-
-    // No baseline or doesn't exist anymore
-    if (!baselineId || !vxm.repoModule.repoById(baselineId)) {
       return null;
-    }
+    },
+    baselineData() {
+      if (this.baselineErrorMessage !== null) {
+        return null;
+      }
+      const baselineRepoId = vxm.statusComparisonModule.baselineRepoId;
 
-    // Baseline is not selected => Ignore it
-    if (!vxm.comparisonGraphModule.selectedBranches.has(baselineId)) {
-      return null;
-    }
+      if (baselineRepoId === null) {
+        return null;
+      }
 
-    return baselineId;
-  }
+      const baselinePoint = this.data.find(
+        (it) => it.repoId === baselineRepoId,
+      )!;
 
-  private set baselineRepoId(id: RepoId | null) {
-    vxm.statusComparisonModule.baselineRepoId = id;
-  }
+      if (!baselinePoint) {
+        return null;
+      }
 
-  private get possibleBaselineRepos() {
-    return Array.from(vxm.comparisonGraphModule.selectedBranches.keys())
-      .map((id) => vxm.repoModule.repoById(id))
-      .filter((it) => it);
-  }
-
-  private get overlayText() {
-    if (this.selectedDimensions.length === 0) {
-      return "Please select a dimension on the left";
-    }
-    if (this.selectedBranches.size === 0) {
-      return "Please select a repo/branch on the left";
-    }
-    return this.baselineErrorMessage;
-  }
-
-  private get baselineErrorMessage() {
-    const baselineRepoId = this.baselineRepoId;
-    if (baselineRepoId === null) {
-      return null;
-    }
-
-    const baselinePoint = this.data.find((it) => it.repoId === baselineRepoId);
-    if (!baselinePoint) {
-      return "No data found for your selected baseline";
-    }
-
-    const run = baselinePoint.run;
-    if (!run) {
-      return "Baseline has no valid run - Normalization is impossible";
-    }
-
-    if (!(run.result instanceof RunResultSuccess)) {
-      return "Baseline run failed - Normalization is impossible";
-    }
-
-    const successfulMeasurement = run.result.measurements.find(
-      (it) => it instanceof MeasurementSuccess,
-    );
-    if (!successfulMeasurement) {
-      return "All metrics for baseline run failed - Normalization is impossible";
-    }
-
-    return null;
-  }
-
-  private get baselineData() {
-    if (this.baselineErrorMessage !== null) {
-      return null;
-    }
-    const baselineRepoId = vxm.statusComparisonModule.baselineRepoId;
-
-    if (baselineRepoId === null) {
-      return null;
-    }
-
-    const baselinePoint = this.data.find((it) => it.repoId === baselineRepoId)!;
-
-    if (!baselinePoint) {
-      return null;
-    }
-
-    const run = baselinePoint.run!;
-    const result = run.result as RunResultSuccess;
-    return result.measurements.filter((it) => it instanceof MeasurementSuccess);
-  }
-
-  private generatePermanentLink(options: PermanentLinkOptions) {
-    return vxm.statusComparisonModule.permanentLink(options);
-  }
-
-  @Watch("selectedBranches")
-  private async onBranchesChanged(
-    newBranches: Map<RepoId, string[]>,
-    oldBranches: Map<RepoId, string[]>,
-  ) {
-    // This might happen if the repos are re-created. We only need to make an HTTP request on actual changes though
-    // TODO: This should probably be handled in the store and not the callers?
-    if (this.mapEquals(oldBranches, newBranches)) {
-      return;
-    }
+      const run = baselinePoint.run!;
+      const result = run.result as RunResultSuccess;
+      return result.measurements.filter(
+        (it) => it instanceof MeasurementSuccess,
+      );
+    },
+  },
+  async mounted() {
     await this.fetchData();
-  }
-
-  private mapEquals(
-    first: Map<RepoId, string[]>,
-    second: Map<RepoId, string[]>,
-  ) {
-    if (first.size !== second.size) {
-      return false;
-    }
-
-    for (const [key, val] of first) {
-      if (!second.has(key)) {
-        return false;
-      }
-      const firstValues = new Set(val);
-      const secondValues = second.get(key)!;
-
-      if (firstValues.size !== secondValues.length) {
+  },
+  methods: {
+    toggleRepoBranch(payload: { repoId: string; branch: string }) {
+      vxm.comparisonGraphModule.toggleRepoBranch(payload);
+    },
+    setRepoBranches(payload: { repoId: string; branches: string[] }) {
+      vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload);
+    },
+    generatePermanentLink(options: PermanentLinkOptions) {
+      return vxm.statusComparisonModule.permanentLink(options);
+    },
+    mapEquals(first: Map<RepoId, string[]>, second: Map<RepoId, string[]>) {
+      if (first.size !== second.size) {
         return false;
       }
 
-      for (const secondValue of secondValues) {
-        if (!firstValues.has(secondValue)) {
+      for (const [key, val] of first) {
+        if (!second.has(key)) {
           return false;
         }
+        const firstValues = new Set(val);
+        const secondValues = second.get(key)!;
+
+        if (firstValues.size !== secondValues.length) {
+          return false;
+        }
+
+        for (const secondValue of secondValues) {
+          if (!firstValues.has(secondValue)) {
+            return false;
+          }
+        }
       }
-    }
 
-    return true;
-  }
-
-  private async fetchData() {
-    this.data = await vxm.statusComparisonModule.fetch();
-  }
-
-  private async mounted() {
-    await this.fetchData();
-  }
-}
+      return true;
+    },
+    async fetchData() {
+      this.data = await vxm.statusComparisonModule.fetch();
+    },
+    async onBranchesChanged(
+      newBranches: Map<RepoId, string[]>,
+      oldBranches: Map<RepoId, string[]>,
+    ) {
+      // This might happen if the repos are re-created. We only need to make an HTTP request on actual changes though
+      // TODO: This should probably be handled in the store and not the callers?
+      if (this.mapEquals(oldBranches, newBranches)) {
+        return;
+      }
+      await this.fetchData();
+    },
+  },
+  props: {
+    suggestedHeight: { default: "100%", type: String },
+  },
+  watch: {
+    selectedBranches: [
+      {
+        handler: "onBranchesChanged",
+      },
+    ],
+  },
+});
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->

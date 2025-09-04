@@ -30,27 +30,25 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { CommitDescription } from "@/store/types";
 import { mdiArrowRight, mdiArrowLeft } from "@mdi/js";
 
-@Component
-export default class CommitNavigationButton extends Vue {
-  @Prop()
-  private commitDescription!: CommitDescription;
-
-  @Prop({ default: "PARENT" })
-  private type!: "PARENT" | "CHILD";
-
-  @Prop({ default: true })
-  private tracked!: boolean;
-
-  // ICONS
-  private parentCommitIcon = mdiArrowLeft;
-  private childCommitIcon = mdiArrowRight;
-}
+export default defineComponent({
+  data() {
+    return {
+      parentCommitIcon: mdiArrowLeft,
+      childCommitIcon: mdiArrowRight,
+    };
+  },
+  props: {
+    commitDescription: {
+      type: Object as PropType<CommitDescription>,
+    },
+    type: { default: "PARENT", type: Object as PropType<"PARENT" | "CHILD"> },
+    tracked: { default: true, type: Boolean },
+  },
+});
 </script>
 
 <style scoped>

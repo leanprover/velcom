@@ -26,38 +26,38 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Prop } from "vue-property-decorator";
+import Vue, { defineComponent, PropType } from "vue";
 import { RunId, TarTaskSource } from "@/store/types";
 import InlineMinimalRepoNameDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
 import { mdiScaleBalance } from "@mdi/js";
 
-@Component({
+export default defineComponent({
   components: {
     "inline-minimal-repo-display": InlineMinimalRepoNameDisplay,
   },
-})
-export default class TarOverview extends Vue {
-  @Prop()
-  private readonly tarSource!: TarTaskSource;
-
-  @Prop({ default: null })
-  private readonly runId!: RunId | null;
-
-  private get compareRunLocation() {
-    if (!this.runId) {
-      return null;
-    }
+  data() {
     return {
-      name: "search",
-      params: {
-        runId: this.runId,
-      },
+      compareIcon: mdiScaleBalance,
     };
-  }
-
-  // ICONS
-  private compareIcon = mdiScaleBalance;
-}
+  },
+  computed: {
+    compareRunLocation() {
+      if (!this.runId) {
+        return null;
+      }
+      return {
+        name: "search",
+        params: {
+          runId: this.runId,
+        },
+      };
+    },
+  },
+  props: {
+    tarSource: {
+      type: Object as PropType<TarTaskSource>,
+    },
+    runId: { default: null, type: Object as PropType<RunId | null> },
+  },
+});
 </script>
