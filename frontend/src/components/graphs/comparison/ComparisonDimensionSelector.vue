@@ -1,3 +1,59 @@
+<script setup lang="ts">
+import { Dimension } from "@/store/types";
+import { computed, ref, watch } from "vue";
+
+class Item {
+  readonly text: string;
+  readonly value: string;
+  readonly dimension: Dimension;
+
+  constructor(dimension: Dimension) {
+    this.text = dimension.toString();
+    this.value = dimension.toString();
+    this.dimension = dimension;
+  }
+}
+
+const emit = defineEmits<{
+  (e: "input", dimension: Dimension | null): void; // v-model output
+}>();
+
+const { possibleDimensions, errorMessage, value } = defineProps<{
+  possibleDimensions: Dimension[];
+  errorMessage: string | null;
+  value: Dimension; // v-model input
+}>();
+
+// v-model implementation
+const selectedDimension = ref<Dimension | null>(value);
+watch(selectedDimension, (newValue) => emit("input", newValue));
+
+const items = computed(() => {
+  return possibleDimensions.map((dimension) => new Item(dimension));
+});
+
+const selectedItem = computed(() => {
+  if (!value) {
+    return null;
+  }
+  if (!possibleDimensions.find((it) => it.equals(selectedDimension.value))) {
+    return null;
+  }
+  return (
+    items.value.find((it) => it.dimension.equals(selectedDimension.value)) ||
+    null
+  );
+});
+
+function selectDimension(value: Item) {
+  if (!value) {
+    selectedDimension.value = null;
+  } else {
+    selectedDimension.value = value.dimension;
+  }
+}
+</script>
+
 <template>
   <v-card
     :outlined="selectedItem === null"
@@ -32,64 +88,6 @@
     </v-card-text>
   </v-card>
 </template>
-
-<script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Dimension } from "@/store/types";
-import { Model, Prop } from "vue-property-decorator";
-
-class Item {
-  readonly text: string;
-  readonly value: string;
-  readonly dimension: Dimension;
-
-  constructor(dimension: Dimension) {
-    this.text = dimension.toString();
-    this.value = dimension.toString();
-    this.dimension = dimension;
-  }
-}
-
-@Component
-export default class ComparisonDimensionSelector extends Vue {
-  @Prop()
-  private readonly possibleDimensions!: Dimension[];
-
-  @Model("input")
-  private readonly selectedDimension!: Dimension;
-
-  @Prop()
-  private readonly errorMessage!: string | null;
-
-  private get items() {
-    return this.possibleDimensions.map((dimension) => new Item(dimension));
-  }
-
-  private get selectedItem() {
-    if (!this.selectedDimension) {
-      return null;
-    }
-    if (
-      !this.possibleDimensions.find((it) => it.equals(this.selectedDimension))
-    ) {
-      return null;
-    }
-    return (
-      this.items.find((it) => it.dimension.equals(this.selectedDimension)) ||
-      null
-    );
-  }
-
-  private selectDimension(value: Item) {
-    if (!value) {
-      this.$emit("input", null);
-    } else {
-      this.$emit("input", value.dimension);
-    }
-  }
-}
-</script>
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
