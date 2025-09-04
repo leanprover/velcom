@@ -1,3 +1,92 @@
+<script setup lang="ts">
+import { Repo, RepoId } from "@/store/types";
+import { computed } from "vue";
+import { vxm } from "@/store";
+
+const emit = defineEmits<{
+  (
+    e: "update:set-all",
+    payload: {
+      repoId: RepoId;
+      branches: string[];
+    },
+  ): void;
+  (
+    e: "update:toggle-branch",
+    payload: {
+      repoId: RepoId;
+      branch: string;
+    },
+  ): void;
+}>();
+
+const { selectedBranches } = defineProps<{
+  selectedBranches: Map<RepoId, string[]>;
+}>();
+
+function selectedBranchesForRepo(repoId: RepoId) {
+  return selectedBranches.get(repoId) || [];
+}
+
+const sortedRepos = computed(() => {
+  return vxm.repoModule.allRepos.slice().sort((a, b) => {
+    if (a.trackedBranches.length === 0 && b.trackedBranches.length === 0) {
+      return a.name.localeCompare(b.name);
+    }
+    if (a.trackedBranches.length === 0) {
+      return 1;
+    }
+    if (b.trackedBranches.length === 0) {
+      return -1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+});
+
+const hasConflictingNames = computed(() => {
+  const distinct = new Set(sortedRepos.value.map((it) => it.name.trim()));
+  return distinct.size !== sortedRepos.value.length;
+});
+
+function colorForRepo(repoId: RepoId) {
+  return vxm.colorModule.colorForRepo(repoId);
+}
+
+function onlySomeBranchesSelected(repo: Repo) {
+  const selectedLength = selectedBranchesForRepo(repo.id).length;
+  return selectedLength < repo.trackedBranches.length && selectedLength > 0;
+}
+
+function allBranchesSelected(repo: Repo) {
+  if (repo.trackedBranches.length === 0) {
+    return false;
+  }
+  const selectedLength = selectedBranchesForRepo(repo.id).length;
+  return selectedLength === repo.trackedBranches.length;
+}
+
+function toggleRepo(repo: Repo) {
+  if (allBranchesSelected(repo)) {
+    emit("update:set-all", {
+      repoId: repo.id,
+      branches: [],
+    });
+  } else {
+    emit("update:set-all", {
+      repoId: repo.id,
+      branches: repo.trackedBranches,
+    });
+  }
+}
+
+function toggleBranch(repo: Repo, branch: string) {
+  emit("update:toggle-branch", {
+    repoId: repo.id,
+    branch,
+  });
+}
+</script>
+
 <template>
   <v-expansion-panels multiple accordion>
     <v-expansion-panel
@@ -58,82 +147,6 @@
     </v-expansion-panel>
   </v-expansion-panels>
 </template>
-
-<script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Repo, RepoId } from "@/store/types";
-import { vxm } from "@/store";
-import { Prop } from "vue-property-decorator";
-
-@Component
-export default class RepoBranchSelector extends Vue {
-  @Prop()
-  private readonly selectedBranches!: Map<RepoId, string[]>;
-
-  private selectedBranchesForRepo(repoId: RepoId) {
-    return this.selectedBranches.get(repoId) || [];
-  }
-
-  private get sortedRepos() {
-    return vxm.repoModule.allRepos.slice().sort((a, b) => {
-      if (a.trackedBranches.length === 0 && b.trackedBranches.length === 0) {
-        return a.name.localeCompare(b.name);
-      }
-      if (a.trackedBranches.length === 0) {
-        return 1;
-      }
-      if (b.trackedBranches.length === 0) {
-        return -1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }
-
-  private get hasConflictingNames() {
-    const distinct = new Set(this.sortedRepos.map((it) => it.name.trim()));
-    return distinct.size !== this.sortedRepos.length;
-  }
-
-  private colorForRepo(repoId: RepoId) {
-    return vxm.colorModule.colorForRepo(repoId);
-  }
-
-  private onlySomeBranchesSelected(repo: Repo) {
-    const selectedLength = this.selectedBranchesForRepo(repo.id).length;
-    return selectedLength < repo.trackedBranches.length && selectedLength > 0;
-  }
-
-  private allBranchesSelected(repo: Repo) {
-    if (repo.trackedBranches.length === 0) {
-      return false;
-    }
-    const selectedLength = this.selectedBranchesForRepo(repo.id).length;
-    return selectedLength === repo.trackedBranches.length;
-  }
-
-  private toggleRepo(repo: Repo) {
-    if (this.allBranchesSelected(repo)) {
-      this.$emit("update:set-all", {
-        repoId: repo.id,
-        branches: [],
-      });
-    } else {
-      this.$emit("update:set-all", {
-        repoId: repo.id,
-        branches: repo.trackedBranches,
-      });
-    }
-  }
-
-  private toggleBranch(repo: Repo, branch: string) {
-    this.$emit("update:toggle-branch", {
-      repoId: repo.id,
-      branch,
-    });
-  }
-}
-</script>
 
 <style>
 .colored-checkbox .v-icon {
