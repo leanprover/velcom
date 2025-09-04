@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import Vue, { defineComponent, PropType } from "vue";
+import { defineComponent, PropType } from "vue";
 import Dygraph from "dygraphs";
 import {
   AttributedDatapoint,
@@ -46,28 +46,12 @@ export default defineComponent({
     "datapoint-dialog": GraphDatapointDialog,
   },
   data() {
-    const pointDialogOpen: boolean = false;
-    const pointDialogSeries: SeriesInformation | null = null;
-    const pointDialogDatapoint: DetailDataPoint | null = null;
-    const graph: Dygraph = undefined;
-
     return {
-      graph,
-      pointDialogDatapoint,
-      pointDialogSeries,
-      pointDialogOpen,
-      fancyPanningInteractions: Object.assign(
-        {},
-        Dygraph.defaultInteractionModel,
-        {
-          mouseup: (event: MouseEvent, g: any, context: any) => {
-            if (context.isPanning) {
-              (Dygraph as any).endPan(event, g, context);
-              this.dygraphsPanned();
-            }
-          },
-        },
-      ),
+      graph: undefined as unknown as Dygraph, // hack
+      pointDialogDatapoint: null as DetailDataPoint | null,
+      pointDialogSeries: null as SeriesInformation | null,
+      pointDialogOpen: false,
+      fancyPanningInteractions: null as any,
     };
   },
   computed: {
@@ -90,6 +74,20 @@ export default defineComponent({
     selectorLineWidth(): number {
       return vxm.userModule.darkThemeSelected ? 2 : 1.5;
     },
+  },
+  created() {
+    this.fancyPanningInteractions = Object.assign(
+      {},
+      Dygraph.defaultInteractionModel,
+      {
+        mouseup: (event: MouseEvent, g: any, context: any) => {
+          if (context.isPanning) {
+            (Dygraph as any).endPan(event, g, context);
+            this.dygraphsPanned();
+          }
+        },
+      },
+    );
   },
   mounted(): void {
     window.addEventListener("resize", this.onResize);
