@@ -1,5 +1,32 @@
+<script setup lang="ts">
+import RunInfo from "@/components/rundetail/RunInfo.vue";
+import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
+import TarOverview from "@/components/overviews/TarOverview.vue";
+import { CommitTaskSource, Run, TarTaskSource } from "@/store/types";
+import { computed } from "vue";
+
+const { run, title } = defineProps<{
+  run: Run;
+  title: string;
+}>();
+
+const commit = computed(() => {
+  if (run.source instanceof CommitTaskSource) {
+    return run.source.commitDescription;
+  }
+  return null;
+});
+
+const tar = computed(() => {
+  if (run.source instanceof TarTaskSource) {
+    return run.source;
+  }
+  return null;
+});
+</script>
+
 <template>
-  <run-info :run="run">
+  <RunInfo :run="run">
     <template #title>
       <span>{{ title }}</span>
       <v-spacer></v-spacer>
@@ -17,55 +44,17 @@
     <template #before-body>
       <v-row class="mx-1" v-if="commit">
         <v-col>
-          <commit-overview-base
+          <CommitOverviewBase
             :commit="commit"
             :outlined="true"
-          ></commit-overview-base>
+          ></CommitOverviewBase>
         </v-col>
       </v-row>
       <v-row class="mx-1" v-if="tar" justify="center">
         <v-col cols="auto">
-          <tar-overview :tar-source="tar"></tar-overview>
+          <TarOverview :tar-source="tar"></TarOverview>
         </v-col>
       </v-row>
     </template>
-  </run-info>
+  </RunInfo>
 </template>
-<script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
-import RunInfo from "@/components/rundetail/RunInfo.vue";
-import TarOverview from "@/components/overviews/TarOverview.vue";
-import { CommitTaskSource, Run, TarTaskSource } from "@/store/types";
-import { Prop } from "vue-property-decorator";
-
-@Component({
-  components: {
-    "commit-overview-base": CommitOverviewBase,
-    "tar-overview": TarOverview,
-    "run-info": RunInfo,
-  },
-})
-export default class ComparisonRunInfo extends Vue {
-  @Prop()
-  private readonly run!: Run;
-
-  @Prop()
-  private readonly title!: string;
-
-  private get commit() {
-    if (this.run.source instanceof CommitTaskSource) {
-      return this.run.source.commitDescription;
-    }
-    return null;
-  }
-
-  private get tar() {
-    if (this.run.source instanceof TarTaskSource) {
-      return this.run.source;
-    }
-    return null;
-  }
-}
-</script>
