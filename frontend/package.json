@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint --no-fix",
-    "fmt": "prettier . --write"
+    "fmt": "prettier . --write",
+    "fmtchk": "prettier . --check"
   },
   "dependencies": {
     "@types/dygraphs": "^1.1.11",
