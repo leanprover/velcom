@@ -200,18 +200,12 @@ export default defineComponent({
     "v-chart": EChartsComp,
   },
   data() {
-    const pointDialogSeries: SeriesInformation | null = null;
-    const pointDialogDatapoint: GraphDataPoint | null = null;
-    const pointDialogOpen: boolean = false;
-    const seriesGenerator: SeriesGenerationFunction = this.buildLineSeries;
-    const chartOptions: ECOption = {};
-
     return {
-      chartOptions,
-      seriesGenerator,
-      pointDialogOpen,
-      pointDialogDatapoint,
-      pointDialogSeries,
+      chartOptions: {} as ECOption,
+      seriesGenerator: undefined as unknown as SeriesGenerationFunction, // hack
+      pointDialogOpen: false,
+      pointDialogDatapoint: null as GraphDataPoint | null,
+      pointDialogSeries: null as SeriesInformation | null,
     };
   },
   computed: {
@@ -298,6 +292,9 @@ export default defineComponent({
         },
       };
     },
+  },
+  created() {
+    this.seriesGenerator = this.buildLineSeries;
   },
   mounted(): void {
     this.updateGraph();
