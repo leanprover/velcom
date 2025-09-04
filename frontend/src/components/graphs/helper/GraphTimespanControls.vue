@@ -45,7 +45,8 @@
                       :allowed-dates="field.allowedDates"
                       :events="[startTimeString, endTimeString]"
                       :event-color="
-                        (date) => (date === startTimeString ? 'blue' : 'red')
+                        (date: string) =>
+                          date === startTimeString ? 'blue' : 'red'
                       "
                     >
                       <v-btn
@@ -107,33 +108,10 @@ type TimeField = {
 
 export default defineComponent({
   data() {
-    const timeFields: TimeField[] = [
-      {
-        ref: "startDateMenu",
-        value: this.startTimeString,
-        role: "start",
-        opened: false,
-        saveFunction: this.saveStartTime,
-        allowedDates: this.allowedDatesStart,
-        rules: [],
-      },
-      {
-        ref: "endDateMenu",
-        value: this.endTimeString,
-        role: "end",
-        opened: false,
-        saveFunction: this.saveEndTime,
-        allowedDates: this.allowedDatesEnd,
-        rules: [this.ruleStopAfterStart],
-      },
-    ];
-    const dateLocked: "start" | "end" | "neither" = "end";
-    const temporaryDuration: string = "" + this.duration;
-
     return {
-      temporaryDuration,
-      dateLocked,
-      timeFields,
+      temporaryDuration: "",
+      dateLocked: "end" as "start" | "end" | "neither",
+      timeFields: [] as TimeField[],
       dateIcon: mdiCalendar,
       openLock: mdiLockOpenVariant,
       lock: mdiLock,
@@ -154,6 +132,29 @@ export default defineComponent({
     today() {
       return new Date().toISOString().substr(0, 10);
     },
+  },
+  created() {
+    this.temporaryDuration = "" + this.duration;
+    this.timeFields = [
+      {
+        ref: "startDateMenu",
+        value: this.startTimeString,
+        role: "start",
+        opened: false,
+        saveFunction: this.saveStartTime,
+        allowedDates: this.allowedDatesStart,
+        rules: [],
+      },
+      {
+        ref: "endDateMenu",
+        value: this.endTimeString,
+        role: "end",
+        opened: false,
+        saveFunction: this.saveEndTime,
+        allowedDates: this.allowedDatesEnd,
+        rules: [this.ruleStopAfterStart],
+      },
+    ];
   },
   methods: {
     allowedDatesStart(dateString: string) {
