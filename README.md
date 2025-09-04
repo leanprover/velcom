@@ -7,7 +7,6 @@ how different metrics have developed over time.
 
 Here are a few links to get started:
 - [Installation](docs/install.md)
-- [CLI readme](cli/README.md)
 - [Benchmark repo specification](docs/bench_repo_specification.md)
 - [Guide to contributing](docs/contributing.md)
 
