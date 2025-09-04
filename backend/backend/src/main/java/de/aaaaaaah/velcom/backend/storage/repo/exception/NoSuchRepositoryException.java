@@ -9,33 +9,32 @@ import java.util.NoSuchElementException;
  */
 public class NoSuchRepositoryException extends NoSuchElementException {
 
-	private final String dirName;
-	private final RepoStorage storage;
+  private final String dirName;
+  private final RepoStorage storage;
 
-	/**
-	 * Consturcts a new {@link NoSuchRepositoryException}.
-	 *
-	 * @param dirName the directory that is missing a repository
-	 * @param storage the storage
-	 */
-	public NoSuchRepositoryException(String dirName, RepoStorage storage) {
-		super("no repository exists with given name " + dirName + " in storage " + storage);
-		this.dirName = dirName;
-		this.storage = storage;
-	}
+  /**
+   * Consturcts a new {@link NoSuchRepositoryException}.
+   *
+   * @param dirName the directory that is missing a repository
+   * @param storage the storage
+   */
+  public NoSuchRepositoryException(String dirName, RepoStorage storage) {
+    super("no repository exists with given name " + dirName + " in storage " + storage);
+    this.dirName = dirName;
+    this.storage = storage;
+  }
 
-	/**
-	 * @return the directory that is missing the repository
-	 */
-	public String getDirName() {
-		return dirName;
-	}
+  /**
+   * @return the directory that is missing the repository
+   */
+  public String getDirName() {
+    return dirName;
+  }
 
-	/**
-	 * @return the storage where the repository is missing in
-	 */
-	public RepoStorage getStorage() {
-		return storage;
-	}
-
+  /**
+   * @return the storage where the repository is missing in
+   */
+  public RepoStorage getStorage() {
+    return storage;
+  }
 }

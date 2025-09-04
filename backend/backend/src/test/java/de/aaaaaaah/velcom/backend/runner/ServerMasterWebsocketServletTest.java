@@ -24,135 +24,130 @@ import org.junit.jupiter.api.Test;
 
 class ServerMasterWebsocketServletTest {
 
-	private ServerMasterWebsocketServlet servlet;
-	private String runnerName;
+  private ServerMasterWebsocketServlet servlet;
+  private String runnerName;
 
-	private WebSocketCreator creator;
-	private String runnerToken;
-	private ServletUpgradeRequest upgradeRequest;
-	private ServletUpgradeResponse upgradeResponse;
-	private Dispatcher dispatcher;
+  private WebSocketCreator creator;
+  private String runnerToken;
+  private ServletUpgradeRequest upgradeRequest;
+  private ServletUpgradeResponse upgradeResponse;
+  private Dispatcher dispatcher;
 
-	@BeforeEach
-	void setUp() {
-		runnerToken = "runner token";
-		runnerName = "name";
+  @BeforeEach
+  void setUp() {
+    runnerToken = "runner token";
+    runnerName = "name";
 
-		this.upgradeRequest = mock(ServletUpgradeRequest.class);
-		when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName()))
-			.thenReturn(runnerName);
-		when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
-			.thenReturn(runnerToken);
+    this.upgradeRequest = mock(ServletUpgradeRequest.class);
+    when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName()))
+        .thenReturn(runnerName);
+    when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
+        .thenReturn(runnerToken);
 
-		upgradeResponse = mock(ServletUpgradeResponse.class);
-		dispatcher = mock(Dispatcher.class);
+    upgradeResponse = mock(ServletUpgradeResponse.class);
+    dispatcher = mock(Dispatcher.class);
 
-		servlet = new ServerMasterWebsocketServlet(
-			dispatcher,
-			mock(Serializer.class),
-			runnerToken,
-			mock(BenchRepo.class)
-		);
-		WebSocketServerFactory factory = new WebSocketServerFactory();
-		servlet.configure(factory);
-		this.creator = factory.getCreator();
-	}
+    servlet =
+        new ServerMasterWebsocketServlet(
+            dispatcher, mock(Serializer.class), runnerToken, mock(BenchRepo.class));
+    WebSocketServerFactory factory = new WebSocketServerFactory();
+    servlet.configure(factory);
+    this.creator = factory.getCreator();
+  }
 
-	@Test
-	void rejectsConnectionWithoutAuthHeader() throws Exception {
-		when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
-			.thenReturn(null);
+  @Test
+  void rejectsConnectionWithoutAuthHeader() throws Exception {
+    when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
+        .thenReturn(null);
 
-		assertRejectedInvalidToken();
-	}
+    assertRejectedInvalidToken();
+  }
 
-	@Test
-	void rejectsConnectionWithoutName() throws Exception {
-		when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName()))
-			.thenReturn(null);
+  @Test
+  void rejectsConnectionWithoutName() throws Exception {
+    when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_NAME.getName()))
+        .thenReturn(null);
 
-		assertRejectedInvalidToken();
-	}
+    assertRejectedInvalidToken();
+  }
 
-	@Test
-	void rejectsConnectionWithInvalidToken() throws Exception {
-		when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
-			.thenReturn("hello");
+  @Test
+  void rejectsConnectionWithInvalidToken() throws Exception {
+    when(upgradeRequest.getHeader(RunnerConnectionHeader.CONNECT_RUNNER_TOKEN.getName()))
+        .thenReturn("hello");
 
-		assertRejectedInvalidToken();
-	}
+    assertRejectedInvalidToken();
+  }
 
-	@Test
-	void rejectsNameAlreadyTaken() throws Exception {
-		TeleRunner runner = mock(TeleRunner.class);
-		when(runner.hasConnection()).thenReturn(true);
-		when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
+  @Test
+  void rejectsNameAlreadyTaken() throws Exception {
+    TeleRunner runner = mock(TeleRunner.class);
+    when(runner.hasConnection()).thenReturn(true);
+    when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
 
-		assertThat(requestConnection()).isNull();
-		verify(upgradeResponse).sendError(
-			RunnerDenyReason.NAME_ALREADY_USED.getCode(),
-			RunnerDenyReason.NAME_ALREADY_USED.getMessage()
-		);
-		verify(upgradeResponse).addHeader(
-			RunnerConnectionHeader.DISCONNECT_DENY_REASON.getName(),
-			RunnerDenyReason.NAME_ALREADY_USED.getHeaderValue()
-		);
-		verify(dispatcher, never()).addRunner(any());
-	}
+    assertThat(requestConnection()).isNull();
+    verify(upgradeResponse)
+        .sendError(
+            RunnerDenyReason.NAME_ALREADY_USED.getCode(),
+            RunnerDenyReason.NAME_ALREADY_USED.getMessage());
+    verify(upgradeResponse)
+        .addHeader(
+            RunnerConnectionHeader.DISCONNECT_DENY_REASON.getName(),
+            RunnerDenyReason.NAME_ALREADY_USED.getHeaderValue());
+    verify(dispatcher, never()).addRunner(any());
+  }
 
-	@Test
-	void allowsSameNameWhenDisconnected() {
-		TeleRunner runner = mock(TeleRunner.class);
-		RunnerConnection connection = mock(RunnerConnection.class);
+  @Test
+  void allowsSameNameWhenDisconnected() {
+    TeleRunner runner = mock(TeleRunner.class);
+    RunnerConnection connection = mock(RunnerConnection.class);
 
-		when(runner.hasConnection()).thenReturn(false);
-		when(runner.createConnection()).thenReturn(connection);
-		when(runner.isDisposed()).thenReturn(false);
-		when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
+    when(runner.hasConnection()).thenReturn(false);
+    when(runner.createConnection()).thenReturn(connection);
+    when(runner.isDisposed()).thenReturn(false);
+    when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
 
-		assertThat(requestConnection()).isSameAs(connection);
-		// Does not yet add it, as it is a new runner and needs to be ready first
-		verify(dispatcher, never()).addRunner(runner);
-	}
+    assertThat(requestConnection()).isSameAs(connection);
+    // Does not yet add it, as it is a new runner and needs to be ready first
+    verify(dispatcher, never()).addRunner(runner);
+  }
 
-	@Test
-	void allowsSameNameWhenDisconnectedAndDisposed() {
-		TeleRunner runner = mock(TeleRunner.class);
-		RunnerConnection connection = mock(RunnerConnection.class);
-		when(runner.hasConnection()).thenReturn(false);
-		when(runner.createConnection()).thenReturn(connection);
-		when(runner.isDisposed()).thenReturn(true);
-		when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
+  @Test
+  void allowsSameNameWhenDisconnectedAndDisposed() {
+    TeleRunner runner = mock(TeleRunner.class);
+    RunnerConnection connection = mock(RunnerConnection.class);
+    when(runner.hasConnection()).thenReturn(false);
+    when(runner.createConnection()).thenReturn(connection);
+    when(runner.isDisposed()).thenReturn(true);
+    when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.of(runner));
 
-		assertThat(requestConnection()).isNotNull().isNotSameAs(connection);
-		// Does not yet add it, as it is a new runner and needs to be ready first
-		verify(dispatcher, never()).addRunner(runner);
-	}
+    assertThat(requestConnection()).isNotNull().isNotSameAs(connection);
+    // Does not yet add it, as it is a new runner and needs to be ready first
+    verify(dispatcher, never()).addRunner(runner);
+  }
 
-	@Test
-	void acceptsNewRunner() {
-		when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.empty());
+  @Test
+  void acceptsNewRunner() {
+    when(dispatcher.getTeleRunner(runnerName)).thenReturn(Optional.empty());
 
-		assertThat(requestConnection()).isNotNull();
-		// Does not yet add it, as it is a new runner and needs to be ready first
-		verify(dispatcher, never()).addRunner(any());
-	}
+    assertThat(requestConnection()).isNotNull();
+    // Does not yet add it, as it is a new runner and needs to be ready first
+    verify(dispatcher, never()).addRunner(any());
+  }
 
-	private void assertRejectedInvalidToken() throws IOException {
-		assertThat(requestConnection()).isNull();
-		verify(upgradeResponse).sendError(
-			RunnerDenyReason.TOKEN_INVALID.getCode(),
-			RunnerDenyReason.TOKEN_INVALID.getMessage()
-		);
-		verify(upgradeResponse).addHeader(
-			RunnerConnectionHeader.DISCONNECT_DENY_REASON.getName(),
-			RunnerDenyReason.TOKEN_INVALID.getHeaderValue()
-		);
-		verify(dispatcher, never()).addRunner(any());
-	}
+  private void assertRejectedInvalidToken() throws IOException {
+    assertThat(requestConnection()).isNull();
+    verify(upgradeResponse)
+        .sendError(
+            RunnerDenyReason.TOKEN_INVALID.getCode(), RunnerDenyReason.TOKEN_INVALID.getMessage());
+    verify(upgradeResponse)
+        .addHeader(
+            RunnerConnectionHeader.DISCONNECT_DENY_REASON.getName(),
+            RunnerDenyReason.TOKEN_INVALID.getHeaderValue());
+    verify(dispatcher, never()).addRunner(any());
+  }
 
-	private Object requestConnection() {
-		return creator.createWebSocket(upgradeRequest, upgradeResponse);
-	}
-
+  private Object requestConnection() {
+    return creator.createWebSocket(upgradeRequest, upgradeResponse);
+  }
 }

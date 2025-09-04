@@ -10,15 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class GetStatusTest extends SerializerBasedTest {
 
-	@Test
-	void serializeToEmptyObject() {
-		JsonNode tree = serializer.serializeTree(new GetStatus());
-		assertEquals(objectMapper.createObjectNode(), tree);
-	}
+  @Test
+  void serializeToEmptyObject() {
+    JsonNode tree = serializer.serializeTree(new GetStatus());
+    assertEquals(objectMapper.createObjectNode(), tree);
+  }
 
-	@Test
-	void deserializeFromEmptyObject() {
-		Optional<GetStatus> result = serializer.deserialize("{}", GetStatus.class);
-		assertTrue(result.isPresent());
-	}
+  @Test
+  void deserializeFromEmptyObject() {
+    Optional<GetStatus> result = serializer.deserialize("{}", GetStatus.class);
+    assertTrue(result.isPresent());
+  }
 }

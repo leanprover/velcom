@@ -11,43 +11,47 @@ import java.util.Collection;
 
 public class DimensionWriteAccess extends DimensionReadAccess {
 
-	private final AvailableDimensionsCache availableDimensionsCache;
-	private final RunCache runCache;
+  private final AvailableDimensionsCache availableDimensionsCache;
+  private final RunCache runCache;
 
-	public DimensionWriteAccess(DatabaseStorage databaseStorage,
-		AvailableDimensionsCache availableDimensionsCache, RunCache runCache) {
+  public DimensionWriteAccess(
+      DatabaseStorage databaseStorage,
+      AvailableDimensionsCache availableDimensionsCache,
+      RunCache runCache) {
 
-		super(databaseStorage);
+    super(databaseStorage);
 
-		this.availableDimensionsCache = availableDimensionsCache;
-		this.runCache = runCache;
-	}
+    this.availableDimensionsCache = availableDimensionsCache;
+    this.runCache = runCache;
+  }
 
-	/**
-	 * Deletes the given dimensions atomically. If any dimension does not exist, <em>nothing</em> is
-	 * deleted and an exception is raised.
-	 *
-	 * @param dimensions the dimensions to delete
-	 * @throws NoSuchDimensionException if a dimension does not exist
-	 */
-	public void deleteDimensions(Collection<Dimension> dimensions) {
-		databaseStorage.acquireWriteTransaction(db -> {
-			// This is not a good idea with most databases, but should be fine with SQLite as it is
-			// in-process.
-			for (Dimension dimension : dimensions) {
-				int affectedRows = db.dsl()
-					.deleteFrom(DIMENSION)
-					.where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
-					.and(DIMENSION.METRIC.eq(dimension.getMetric()))
-					.execute();
+  /**
+   * Deletes the given dimensions atomically. If any dimension does not exist, <em>nothing</em> is
+   * deleted and an exception is raised.
+   *
+   * @param dimensions the dimensions to delete
+   * @throws NoSuchDimensionException if a dimension does not exist
+   */
+  public void deleteDimensions(Collection<Dimension> dimensions) {
+    databaseStorage.acquireWriteTransaction(
+        db -> {
+          // This is not a good idea with most databases, but should be fine with SQLite as it is
+          // in-process.
+          for (Dimension dimension : dimensions) {
+            int affectedRows =
+                db.dsl()
+                    .deleteFrom(DIMENSION)
+                    .where(DIMENSION.BENCHMARK.eq(dimension.getBenchmark()))
+                    .and(DIMENSION.METRIC.eq(dimension.getMetric()))
+                    .execute();
 
-				if (affectedRows == 0) {
-					throw new NoSuchDimensionException(dimension);
-				}
-			}
-		});
+            if (affectedRows == 0) {
+              throw new NoSuchDimensionException(dimension);
+            }
+          }
+        });
 
-		availableDimensionsCache.invalidateAll();
-		runCache.invalidateAll();
-	}
+    availableDimensionsCache.invalidateAll();
+    runCache.invalidateAll();
+  }
 }

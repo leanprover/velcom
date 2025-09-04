@@ -1,42 +1,42 @@
-import { createModule, mutation } from 'vuex-class-component'
-import { hexToHsl, hslToHex } from '@/util/ColorUtils'
-import { vxm } from '..'
-import { DimensionId, RepoId } from '@/store/types'
+import { createModule, mutation } from "vuex-class-component";
+import { hexToHsl, hslToHex } from "@/util/ColorUtils";
+import { vxm } from "..";
+import { DimensionId, RepoId } from "@/store/types";
 
 const VxModule = createModule({
-  namespaced: 'colorModule',
-  strict: false
-})
+  namespaced: "colorModule",
+  strict: false,
+});
 
 export class ColorStore extends VxModule {
   /* see the muted qualitative colour scheme on
    * https://personal.sron.nl/~pault/#sec:qualitative
    */
   private mutedColors: string[] = [
-    '#332288',
-    '#88CCEE',
-    '#44AA99',
-    '#117733',
-    '#999933',
-    '#DDCC77',
-    '#CC6677',
-    '#882255',
-    '#AA4499'
-  ]
+    "#332288",
+    "#88CCEE",
+    "#44AA99",
+    "#117733",
+    "#999933",
+    "#DDCC77",
+    "#CC6677",
+    "#882255",
+    "#AA4499",
+  ];
 
   /* see the light qualitative colour scheme on
    * https://personal.sron.nl/~pault/#sec:qualitative
    */
   private pastelColors: string[] = [
-    '#77AADD',
-    '#99DDFF',
-    '#44BB99',
-    '#BBCC33',
-    '#AAAA00',
-    '#EEDD88',
-    '#EE8866',
-    '#FFAABB'
-  ]
+    "#77AADD",
+    "#99DDFF",
+    "#44BB99",
+    "#BBCC33",
+    "#AAAA00",
+    "#EEDD88",
+    "#EE8866",
+    "#FFAABB",
+  ];
 
   /**
    * Generates a new hex colors whose hue is the hue of the last color added to this store,
@@ -47,30 +47,30 @@ export class ColorStore extends VxModule {
    */
   @mutation
   addColors(amount: number): void {
-    vxm.colorModule.addColorToTheme({ amount, muted: true })
-    vxm.colorModule.addColorToTheme({ amount, muted: false })
+    vxm.colorModule.addColorToTheme({ amount, muted: true });
+    vxm.colorModule.addColorToTheme({ amount, muted: false });
   }
 
   @mutation
   addColorToTheme(payload: { amount: number; muted: boolean }): void {
     // generating new colors in hsl color space using golden ratio to maximize difference
-    const colors = payload.muted ? this.mutedColors : this.pastelColors
+    const colors = payload.muted ? this.mutedColors : this.pastelColors;
 
-    const phi = 1.6180339887
-    const saturation = 0.5
-    const lightness = 0.5
+    const phi = 1.6180339887;
+    const saturation = 0.5;
+    const lightness = 0.5;
 
     for (let i = 0; i < payload.amount; i++) {
-      const lastColor = colors[colors.length - 1]
-      let hue = hexToHsl(lastColor)[0]
+      const lastColor = colors[colors.length - 1];
+      let hue = hexToHsl(lastColor)[0];
 
-      hue += phi
-      hue %= 1
-      const newColor = hslToHex(hue, saturation, lightness)
+      hue += phi;
+      hue %= 1;
+      const newColor = hslToHex(hue, saturation, lightness);
       if (payload.muted) {
-        this.mutedColors.push(newColor)
+        this.mutedColors.push(newColor);
       } else {
-        this.pastelColors.push(newColor)
+        this.pastelColors.push(newColor);
       }
     }
   }
@@ -83,9 +83,7 @@ export class ColorStore extends VxModule {
    * @memberof ColorModuleStore
    */
   get allColors(): string[] {
-    return vxm.userModule.darkThemeSelected
-      ? this.pastelColors
-      : this.mutedColors
+    return vxm.userModule.darkThemeSelected ? this.pastelColors : this.mutedColors;
   }
 
   /**
@@ -97,12 +95,10 @@ export class ColorStore extends VxModule {
   get colorByIndex(): (index: number) => string {
     return (index: number) => {
       if (index > this.allColors.length) {
-        this.addColors(index - this.allColors.length + 1)
+        this.addColors(index - this.allColors.length + 1);
       }
-      return vxm.userModule.darkThemeSelected
-        ? this.pastelColors[index]
-        : this.mutedColors[index]
-    }
+      return vxm.userModule.darkThemeSelected ? this.pastelColors[index] : this.mutedColors[index];
+    };
   }
 
   /**
@@ -110,11 +106,9 @@ export class ColorStore extends VxModule {
    */
   get colorForRepo(): (repoId: RepoId) => string {
     return (repoId: RepoId) => {
-      const index = vxm.repoModule.allReposSortedById.findIndex(
-        value => value.id === repoId
-      )
-      return this.colorByIndex(index)
-    }
+      const index = vxm.repoModule.allReposSortedById.findIndex((value) => value.id === repoId);
+      return this.colorByIndex(index);
+    };
   }
 
   /**
@@ -122,12 +116,12 @@ export class ColorStore extends VxModule {
    */
   get colorForDetailDimension(): (dimensionId: DimensionId) => string {
     return (dimensionId: DimensionId) => {
-      const index = vxm.detailGraphModule.colorIndex(dimensionId)
+      const index = vxm.detailGraphModule.colorIndex(dimensionId);
       if (index === undefined) {
-        return 'red'
+        return "red";
       }
-      return this.colorByIndex(index)
-    }
+      return this.colorByIndex(index);
+    };
   }
 
   /**
@@ -138,7 +132,7 @@ export class ColorStore extends VxModule {
   static toPlainObject(store: ColorStore): unknown {
     return {
       mutedColors: store.mutedColors,
-      pastelColors: store.pastelColors
-    }
+      pastelColors: store.pastelColors,
+    };
   }
 }

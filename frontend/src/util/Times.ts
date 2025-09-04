@@ -7,26 +7,26 @@
  */
 
 export function formatDurationHuman(start: Date, end: Date): string {
-  const [hours, minutes, seconds] = durationToParts(start, end)
-  let result = ''
+  const [hours, minutes, seconds] = durationToParts(start, end);
+  let result = "";
 
   if (hours === 0 && minutes === 0 && seconds === 0) {
-    return '0 seconds'
+    return "0 seconds";
   }
 
   if (hours > 0) {
-    result += `${hours} hours`
+    result += `${hours} hours`;
   }
   if (minutes > 0) {
-    result += result.length > 0 ? ' and ' : ''
-    result += `${minutes} minutes`
+    result += result.length > 0 ? " and " : "";
+    result += `${minutes} minutes`;
   }
   if (seconds > 0) {
-    result += result.length > 0 ? ' and ' : ''
-    result += `${seconds} seconds`
+    result += result.length > 0 ? " and " : "";
+    result += `${seconds} seconds`;
   }
 
-  return result
+  return result;
 }
 
 /**
@@ -37,25 +37,25 @@ export function formatDurationHuman(start: Date, end: Date): string {
  * @param {Date} end the end date
  */
 export function formatDurationShort(start: Date, end: Date): string {
-  const [hours, minutes, seconds] = durationToParts(start, end)
+  const [hours, minutes, seconds] = durationToParts(start, end);
 
-  const hoursString = leftZeroPad(2, hours)
-  const minutesString = leftZeroPad(2, minutes)
-  const secondsString = leftZeroPad(2, seconds)
+  const hoursString = leftZeroPad(2, hours);
+  const minutesString = leftZeroPad(2, minutes);
+  const secondsString = leftZeroPad(2, seconds);
 
-  return `${hoursString}:${minutesString}:${secondsString}`
+  return `${hoursString}:${minutesString}:${secondsString}`;
 }
 
 function durationToParts(start: Date, end: Date): [number, number, number] {
-  const differenceMillis = Math.abs(end.getTime() - start.getTime())
-  let remainingDifferenceSeconds = differenceMillis / 1000
+  const differenceMillis = Math.abs(end.getTime() - start.getTime());
+  let remainingDifferenceSeconds = differenceMillis / 1000;
 
-  const hours = Math.floor(remainingDifferenceSeconds / (60 * 60))
-  remainingDifferenceSeconds -= hours * 60 * 60
-  const minutes = Math.floor(remainingDifferenceSeconds / 60)
-  remainingDifferenceSeconds -= minutes * 60
+  const hours = Math.floor(remainingDifferenceSeconds / (60 * 60));
+  remainingDifferenceSeconds -= hours * 60 * 60;
+  const minutes = Math.floor(remainingDifferenceSeconds / 60);
+  remainingDifferenceSeconds -= minutes * 60;
 
-  return [hours, minutes, Math.floor(remainingDifferenceSeconds)]
+  return [hours, minutes, Math.floor(remainingDifferenceSeconds)];
 }
 
 /**
@@ -66,17 +66,17 @@ function durationToParts(start: Date, end: Date): [number, number, number] {
  * @returns {string} the formatted date
  */
 export function formatDate(date: number | Date): string {
-  const myDate = date instanceof Date ? date : getDate(date)
+  const myDate = date instanceof Date ? date : getDate(date);
 
-  let resultString: string = myDate.getFullYear() + ''
-  resultString += '-' + leftZeroPad(2, myDate.getMonth() + 1)
-  resultString += '-' + leftZeroPad(2, myDate.getDate())
+  let resultString: string = myDate.getFullYear() + "";
+  resultString += "-" + leftZeroPad(2, myDate.getMonth() + 1);
+  resultString += "-" + leftZeroPad(2, myDate.getDate());
 
-  resultString += ' '
-  resultString += leftZeroPad(2, myDate.getHours()) + ':'
-  resultString += leftZeroPad(2, myDate.getMinutes())
+  resultString += " ";
+  resultString += leftZeroPad(2, myDate.getHours()) + ":";
+  resultString += leftZeroPad(2, myDate.getMinutes());
 
-  return resultString
+  return resultString;
 }
 
 /**
@@ -87,19 +87,19 @@ export function formatDate(date: number | Date): string {
  * @returns {string} the formatted date
  */
 export function formatDateUTC(date: number | Date): string {
-  const myDate = date instanceof Date ? date : getDate(date)
+  const myDate = date instanceof Date ? date : getDate(date);
 
-  let resultString: string = myDate.getFullYear() + ''
-  resultString += '-' + leftZeroPad(2, myDate.getUTCMonth() + 1)
-  resultString += '-' + leftZeroPad(2, myDate.getUTCDate())
+  let resultString: string = myDate.getFullYear() + "";
+  resultString += "-" + leftZeroPad(2, myDate.getUTCMonth() + 1);
+  resultString += "-" + leftZeroPad(2, myDate.getUTCDate());
 
-  resultString += ' '
-  resultString += leftZeroPad(2, myDate.getUTCHours()) + ':'
-  resultString += leftZeroPad(2, myDate.getUTCMinutes())
+  resultString += " ";
+  resultString += leftZeroPad(2, myDate.getUTCHours()) + ":";
+  resultString += leftZeroPad(2, myDate.getUTCMinutes());
 
-  resultString += ' UTC'
+  resultString += " UTC";
 
-  return resultString
+  return resultString;
 }
 
 /**
@@ -109,33 +109,30 @@ export function formatDateUTC(date: number | Date): string {
  * @param relative the input string
  * @param anchor the anchor it is relative to
  */
-export function dateFromRelative(
-  relative: string,
-  anchor: Date = new Date()
-): Date | undefined {
-  const number: number = parseFloat(relative.substring(0, relative.length - 1))
+export function dateFromRelative(relative: string, anchor: Date = new Date()): Date | undefined {
+  const number: number = parseFloat(relative.substring(0, relative.length - 1));
 
-  let multiplier: number
-  if (relative.endsWith('d')) {
+  let multiplier: number;
+  if (relative.endsWith("d")) {
     // millis * seconds in minute * minutes in hour * day
-    multiplier = 1000 * 60 * 60 * 24
-  } else if (relative.endsWith('w')) {
+    multiplier = 1000 * 60 * 60 * 24;
+  } else if (relative.endsWith("w")) {
     // millis * seconds in minute * minutes in hour * day * 7
-    multiplier = 1000 * 60 * 60 * 24 * 7
-  } else if (relative.endsWith('m')) {
+    multiplier = 1000 * 60 * 60 * 24 * 7;
+  } else if (relative.endsWith("m")) {
     // millis * seconds in minute * minutes in hour * day * 30
-    multiplier = 1000 * 60 * 60 * 24 * 30
-  } else if (relative.endsWith('y')) {
+    multiplier = 1000 * 60 * 60 * 24 * 30;
+  } else if (relative.endsWith("y")) {
     // millis * seconds in minute * minutes in hour * day * 365
-    multiplier = 1000 * 60 * 60 * 24 * 465
+    multiplier = 1000 * 60 * 60 * 24 * 465;
   } else {
-    return undefined
+    return undefined;
   }
 
   if (isNaN(number)) {
-    return undefined
+    return undefined;
   }
-  return new Date(anchor.getTime() + number * multiplier)
+  return new Date(anchor.getTime() + number * multiplier);
 }
 
 /**
@@ -146,18 +143,18 @@ export function dateFromRelative(
  * @returns {Date} the matching date
  */
 export function getDate(date: number): Date {
-  const myDate = new Date()
+  const myDate = new Date();
   // Time takes an epoch MILLIS string
-  myDate.setTime(date * 1000)
-  return myDate
+  myDate.setTime(date * 1000);
+  return myDate;
 }
 
 function leftZeroPad(length: number, input: number) {
-  let asString = input + ''
+  let asString = input + "";
   while (asString.length < length) {
-    asString = '0' + asString
+    asString = "0" + asString;
   }
-  return asString
+  return asString;
 }
 
 /**
@@ -166,9 +163,9 @@ function leftZeroPad(length: number, input: number) {
  * @param date the date to round down
  */
 export function roundDateDown(date: Date): Date {
-  const copy = new Date(date)
-  copy.setHours(0, 0, 0, 0) // this midnight
-  return copy
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0); // this midnight
+  return copy;
 }
 
 /**
@@ -182,14 +179,10 @@ export function roundDateUp(date: Date): Date {
   // Do not lift midnight to the next day as roundDateUp calls should be
   // chainable:
   // roundDateUp(date) == roundDateUp(roundDateUp(date))
-  if (
-    date.getHours() === 0 &&
-    date.getMinutes() === 0 &&
-    date.getSeconds() === 0
-  ) {
-    return date
+  if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
+    return date;
   }
-  const copy = new Date(date)
-  copy.setDate(copy.getDate() + 1)
-  return roundDateDown(copy)
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + 1);
+  return roundDateDown(copy);
 }

@@ -11,29 +11,31 @@ import org.eclipse.jgit.transport.sshd.ProxyDataFactory;
 import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 
-/**
- * A {@link SshdSessionFactory} that ignores server keys.
- */
+/** A {@link SshdSessionFactory} that ignores server keys. */
 public class KnownHostsIgnoringSshdFactory extends SshdSessionFactory {
 
-	public KnownHostsIgnoringSshdFactory(KeyCache keyCache, ProxyDataFactory proxies) {
-		super(keyCache, proxies);
-	}
+  public KnownHostsIgnoringSshdFactory(KeyCache keyCache, ProxyDataFactory proxies) {
+    super(keyCache, proxies);
+  }
 
-	@Override
-	protected ServerKeyDatabase getServerKeyDatabase(File homeDir, File sshDir) {
-		return new ServerKeyDatabase() {
-			@Override
-			public List<PublicKey> lookup(String connectAddress, InetSocketAddress remoteAddress,
-				Configuration config) {
-				return Collections.emptyList();
-			}
+  @Override
+  protected ServerKeyDatabase getServerKeyDatabase(File homeDir, File sshDir) {
+    return new ServerKeyDatabase() {
+      @Override
+      public List<PublicKey> lookup(
+          String connectAddress, InetSocketAddress remoteAddress, Configuration config) {
+        return Collections.emptyList();
+      }
 
-			@Override
-			public boolean accept(String connectAddress, InetSocketAddress remoteAddress,
-				PublicKey serverKey, Configuration config, CredentialsProvider provider) {
-				return true;
-			}
-		};
-	}
+      @Override
+      public boolean accept(
+          String connectAddress,
+          InetSocketAddress remoteAddress,
+          PublicKey serverKey,
+          Configuration config,
+          CredentialsProvider provider) {
+        return true;
+      }
+    };
+  }
 }

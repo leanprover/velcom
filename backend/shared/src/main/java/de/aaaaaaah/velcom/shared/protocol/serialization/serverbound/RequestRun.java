@@ -8,11 +8,8 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
  */
 public class RequestRun implements ServerBound {
 
-	@Override
-	public ServerBoundPacket asPacket(Serializer serializer) {
-		return new ServerBoundPacket(
-			ServerBoundPacketType.REQUEST_RUN,
-			serializer.serializeTree(this)
-		);
-	}
+  @Override
+  public ServerBoundPacket asPacket(Serializer serializer) {
+    return new ServerBoundPacket(ServerBoundPacketType.REQUEST_RUN, serializer.serializeTree(this));
+  }
 }

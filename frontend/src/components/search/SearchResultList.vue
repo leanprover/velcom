@@ -7,31 +7,19 @@
   >
     <template v-slot:default="props">
       <v-row>
-        <v-col
-          v-for="item in props.items"
-          :key="item.name"
-          cols="12"
-          class="py-1"
-        >
+        <v-col v-for="item in props.items" :key="item.name" cols="12" class="py-1">
           <component :is="item.type" :item="item.item">
             <template #compare-actions="{ hasRun }">
               <v-tooltip left>
                 <template #activator="{ on }">
                   <div v-on="on">
-                    <v-btn
-                      icon
-                      small
-                      :disabled="!hasRun"
-                      @click="$emit('mark-compare', item.item)"
-                    >
+                    <v-btn icon small :disabled="!hasRun" @click="$emit('mark-compare', item.item)">
                       <v-icon>{{ compareIcon }}</v-icon>
                     </v-btn>
                   </div>
                 </template>
                 <span v-if="hasRun">Mark this run for comparison</span>
-                <span v-else>
-                  Can't compare commits that were never benchmarked
-                </span>
+                <span v-else> Can't compare commits that were never benchmarked </span>
               </v-tooltip>
             </template>
           </component>
@@ -50,32 +38,32 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { SearchItem, SearchItemCommit, SearchItemRun } from '@/store/types'
-import SearchResultCommit from '@/components/search/SearchResultCommit.vue'
-import SearchResultRun from '@/components/search/SearchResultRun.vue'
-import { mdiScaleBalance } from '@mdi/js'
-import SearchResultBranch from '@/components/search/SearchResultBranch.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { SearchItem, SearchItemCommit, SearchItemRun } from "@/store/types";
+import SearchResultCommit from "@/components/search/SearchResultCommit.vue";
+import SearchResultRun from "@/components/search/SearchResultRun.vue";
+import { mdiScaleBalance } from "@mdi/js";
+import SearchResultBranch from "@/components/search/SearchResultBranch.vue";
 
 class DisplayedItem {
-  readonly id: string
-  readonly type: string
-  readonly item: SearchItem
+  readonly id: string;
+  readonly type: string;
+  readonly item: SearchItem;
 
   constructor(item: SearchItem) {
-    this.item = item
+    this.item = item;
 
     if (item instanceof SearchItemCommit) {
-      this.type = 'commit'
-      this.id = item.repoId + item.hash
+      this.type = "commit";
+      this.id = item.repoId + item.hash;
     } else if (item instanceof SearchItemRun) {
-      this.type = item.tarDescription ? 'tar' : 'run'
-      this.id = item.id
+      this.type = item.tarDescription ? "tar" : "run";
+      this.id = item.id;
     } else {
-      this.type = 'branch'
-      this.id = item.repoId + item.hash
+      this.type = "branch";
+      this.id = item.repoId + item.hash;
     }
   }
 }
@@ -85,17 +73,17 @@ class DisplayedItem {
     commit: SearchResultCommit,
     branch: SearchResultBranch,
     run: SearchResultRun,
-    tar: SearchResultRun
-  }
+    tar: SearchResultRun,
+  },
 })
 export default class SearchResultList extends Vue {
   @Prop({ default: () => [] })
-  private readonly items!: SearchItem[]
+  private readonly items!: SearchItem[];
 
   private get displayedItems(): DisplayedItem[] {
-    return this.items.map(it => new DisplayedItem(it))
+    return this.items.map((it) => new DisplayedItem(it));
   }
 
-  private readonly compareIcon = mdiScaleBalance
+  private readonly compareIcon = mdiScaleBalance;
 }
 </script>

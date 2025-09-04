@@ -57,12 +57,7 @@
     </v-toolbar>
 
     <!-- Navigation drawer -->
-    <v-navigation-drawer
-      class="hidden-md-and-up"
-      v-model="drawerShown"
-      app
-      temporary
-    >
+    <v-navigation-drawer class="hidden-md-and-up" v-model="drawerShown" app temporary>
       <v-toolbar dark color="toolbarColor">
         <v-list>
           <v-list-item>
@@ -93,90 +88,84 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { VuetifyIcon } from 'vuetify/types/services/icons'
-import VueRouterEx from 'vue-router/types/router'
-import router from '../../router'
-import LoginDialog from './LoginDialog.vue'
-import { mdiAccountCircleOutline, mdiLogout } from '@mdi/js'
-import { vxm } from '@/store'
-import { Watch } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { VuetifyIcon } from "vuetify/types/services/icons";
+import VueRouterEx from "vue-router/types/router";
+import router from "../../router";
+import LoginDialog from "./LoginDialog.vue";
+import { mdiAccountCircleOutline, mdiLogout } from "@mdi/js";
+import { vxm } from "@/store";
+import { Watch } from "vue-property-decorator";
 
 class NavigationItem {
-  readonly routeName: string
-  readonly icon: VuetifyIcon
-  readonly label: string
+  readonly routeName: string;
+  readonly icon: VuetifyIcon;
+  readonly label: string;
 
   constructor(routeName: string, icon: VuetifyIcon, label: string) {
-    this.routeName = routeName
-    this.icon = icon
-    this.label = label
+    this.routeName = routeName;
+    this.icon = icon;
+    this.label = label;
   }
 }
 
 @Component({
   components: {
-    login: LoginDialog
-  }
+    login: LoginDialog,
+  },
 })
 export default class NavigationBar extends Vue {
-  private iconFontSize = 22
-  private title = 'VelCom'
+  private iconFontSize = 22;
+  private title = "VelCom";
 
-  private lastNavigatedRoute: string | null = null
-  private drawerShown = false
+  private lastNavigatedRoute: string | null = null;
+  private drawerShown = false;
 
   get validRoutes(): NavigationItem[] {
     return router.routes
       .filter(this.filterRoute)
-      .map(
-        route =>
-          new NavigationItem(route.name!, route.meta!.icon, route.meta!.label)
-      )
+      .map((route) => new NavigationItem(route.name!, route.meta!.icon, route.meta!.label));
   }
 
   private filterRoute(route: VueRouterEx.RouteConfig): boolean {
-    if (
-      vxm.repoModule.allRepos.length <= 1 &&
-      route.name === 'repo-comparison'
-    ) {
-      return false
+    if (vxm.repoModule.allRepos.length <= 1 && route.name === "repo-comparison") {
+      return false;
     }
     if (route.meta!.adminOnly && !this.isAdmin) {
-      return false
+      return false;
     }
-    return route.meta!.navigable
+    return route.meta!.navigable;
   }
 
   private get currentRouteName(): string {
-    return this.$route.name!
+    return this.$route.name!;
   }
 
-  @Watch('currentRouteName')
+  @Watch("currentRouteName")
   private onRouteChange(newValue: string) {
-    this.lastNavigatedRoute = newValue
+    this.lastNavigatedRoute = newValue;
   }
 
   get isAdmin(): boolean {
-    return vxm.userModule.isAdmin
+    return vxm.userModule.isAdmin;
   }
 
   private logout(): void {
-    vxm.userModule.logOut()
+    vxm.userModule.logOut();
   }
 
   private refresh(routeName: string): void {
     if (this.lastNavigatedRoute === routeName) {
-      this.lastNavigatedRoute = null
-      return
+      this.lastNavigatedRoute = null;
+      return;
     }
-    this.$emit('refresh-view')
+    this.$emit("refresh-view");
   }
 
   // ============== ICONS ==============
-  private loginIcon = mdiAccountCircleOutline
-  private logoutIcon = mdiLogout
+  private loginIcon = mdiAccountCircleOutline;
+  private logoutIcon = mdiLogout;
   // ==============       ==============
 }
 </script>

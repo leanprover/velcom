@@ -18,129 +18,123 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A thread that periodically asks a runner for its status.
- */
+/** A thread that periodically asks a runner for its status. */
 public class PeriodicStatusRequester {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicStatusRequester.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicStatusRequester.class);
 
-	private final Thread worker;
-	private final TeleRunner teleRunner;
-	private final RunnerConnection connection;
-	private final StateMachine<TeleRunnerState> stateMachine;
-	private volatile boolean cancelled;
+  private final Thread worker;
+  private final TeleRunner teleRunner;
+  private final RunnerConnection connection;
+  private final StateMachine<TeleRunnerState> stateMachine;
+  private volatile boolean cancelled;
 
-	public PeriodicStatusRequester(TeleRunner teleRunner, RunnerConnection connection,
-		StateMachine<TeleRunnerState> stateMachine) {
-		this.teleRunner = teleRunner;
-		this.connection = connection;
-		this.stateMachine = stateMachine;
+  public PeriodicStatusRequester(
+      TeleRunner teleRunner,
+      RunnerConnection connection,
+      StateMachine<TeleRunnerState> stateMachine) {
+    this.teleRunner = teleRunner;
+    this.connection = connection;
+    this.stateMachine = stateMachine;
 
-		this.worker = new Thread(this::run, "PeriodicStatusRequester");
-		this.worker.setDaemon(true);
-	}
+    this.worker = new Thread(this::run, "PeriodicStatusRequester");
+    this.worker.setDaemon(true);
+  }
 
-	/**
-	 * Starts the requester.
-	 */
-	public void start() {
-		this.worker.start();
-	}
+  /** Starts the requester. */
+  public void start() {
+    this.worker.start();
+  }
 
-	private void run() {
-		while (!cancelled) {
-			try {
-				iteration();
-				// Keep some distance to not overload the runner with too many requests
-				//noinspection BusyWait
-				Thread.sleep(Delays.REQUEST_STATUS_INTERVAL.toMillis());
-			} catch (Exception e) {
-				if (cancelled) {
-					return;
-				}
-				LOGGER.error("Error communicating with runner or handling results", e);
-				try {
-					clearResults();
-				} catch (Exception e2) {
-					LOGGER.error("Error telling runner to clear results", e2);
-					connection.close(StatusCode.INTERNAL_ERROR);
-				}
-			}
-		}
-	}
+  private void run() {
+    while (!cancelled) {
+      try {
+        iteration();
+        // Keep some distance to not overload the runner with too many requests
+        //noinspection BusyWait
+        Thread.sleep(Delays.REQUEST_STATUS_INTERVAL.toMillis());
+      } catch (Exception e) {
+        if (cancelled) {
+          return;
+        }
+        LOGGER.error("Error communicating with runner or handling results", e);
+        try {
+          clearResults();
+        } catch (Exception e2) {
+          LOGGER.error("Error telling runner to clear results", e2);
+          connection.close(StatusCode.INTERNAL_ERROR);
+        }
+      }
+    }
+  }
 
-	private void iteration() throws ExecutionException {
-		try {
-			GetStatusReply statusReply = requestStatus();
-			teleRunner.setRunnerInformation(statusReply);
+  private void iteration() throws ExecutionException {
+    try {
+      GetStatusReply statusReply = requestStatus();
+      teleRunner.setRunnerInformation(statusReply);
 
-			if (!statusReply.isResultAvailable()) {
-				return;
-			}
+      if (!statusReply.isResultAvailable()) {
+        return;
+      }
 
-			GetResultReply requestResults = requestResults();
-			UUID runId = requestResults.getRunId();
+      GetResultReply requestResults = requestResults();
+      UUID runId = requestResults.getRunId();
 
-			// The runner has a result - we don't know why :( Tell it to clear it and move on
-			if (teleRunner.getCurrentTask().isEmpty()) {
-				LOGGER.info(
-					"{} had a result but we don't know why. Clearing it.", teleRunner.getRunnerName()
-				);
-				clearResults();
-				return;
-			}
-			// The runner has a *different* result than we expected. Disconnect.
-			if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
-				LOGGER.info(
-					"{} had a different result than we expected: {} instead of {}.",
-					teleRunner.getRunnerName(), runId, teleRunner.getCurrentTask().get().getId().getId()
-				);
-				clearResults();
-				connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
-				return;
-			}
+      // The runner has a result - we don't know why :( Tell it to clear it and move on
+      if (teleRunner.getCurrentTask().isEmpty()) {
+        LOGGER.info(
+            "{} had a result but we don't know why. Clearing it.", teleRunner.getRunnerName());
+        clearResults();
+        return;
+      }
+      // The runner has a *different* result than we expected. Disconnect.
+      if (!teleRunner.getCurrentTask().get().getId().getId().equals(runId)) {
+        LOGGER.info(
+            "{} had a different result than we expected: {} instead of {}.",
+            teleRunner.getRunnerName(),
+            runId,
+            teleRunner.getCurrentTask().get().getId().getId());
+        clearResults();
+        connection.close(StatusCode.ILLEGAL_BEHAVIOUR);
+        return;
+      }
 
-			LOGGER.info("Got results for run {} from {}", runId, teleRunner.getRunnerName());
-			teleRunner.handleResults(requestResults);
+      LOGGER.info("Got results for run {} from {}", runId, teleRunner.getRunnerName());
+      teleRunner.handleResults(requestResults);
 
-			clearResults();
-		} catch (InterruptedException | CancellationException ignored) {
-		}
-	}
+      clearResults();
+    } catch (InterruptedException | CancellationException ignored) {
+    }
+  }
 
-	private GetStatusReply requestStatus()
-		throws InterruptedException, ExecutionException {
-		AwaitGetStatusReply statusReplyState = new AwaitGetStatusReply(teleRunner, connection);
+  private GetStatusReply requestStatus() throws InterruptedException, ExecutionException {
+    AwaitGetStatusReply statusReplyState = new AwaitGetStatusReply(teleRunner, connection);
 
-		stateMachine.switchFromRestingState(statusReplyState);
-		connection.send(new GetStatus().asPacket(connection.getSerializer()));
+    stateMachine.switchFromRestingState(statusReplyState);
+    connection.send(new GetStatus().asPacket(connection.getSerializer()));
 
-		return statusReplyState.getReplyFuture().get();
-	}
+    return statusReplyState.getReplyFuture().get();
+  }
 
-	private GetResultReply requestResults()
-		throws InterruptedException, ExecutionException {
-		AwaitGetResultReply resultReplyState = new AwaitGetResultReply(teleRunner, connection);
-		stateMachine.switchFromRestingState(resultReplyState);
-		connection.send(new GetResult().asPacket(connection.getSerializer()));
+  private GetResultReply requestResults() throws InterruptedException, ExecutionException {
+    AwaitGetResultReply resultReplyState = new AwaitGetResultReply(teleRunner, connection);
+    stateMachine.switchFromRestingState(resultReplyState);
+    connection.send(new GetResult().asPacket(connection.getSerializer()));
 
-		return resultReplyState.getReplyFuture().get();
-	}
+    return resultReplyState.getReplyFuture().get();
+  }
 
-	private void clearResults() throws InterruptedException, ExecutionException {
-		AwaitClearResultReply clearResultState = new AwaitClearResultReply(teleRunner, connection);
-		stateMachine.switchFromRestingState(clearResultState);
-		connection.send(new ClearResult().asPacket(connection.getSerializer()));
+  private void clearResults() throws InterruptedException, ExecutionException {
+    AwaitClearResultReply clearResultState = new AwaitClearResultReply(teleRunner, connection);
+    stateMachine.switchFromRestingState(clearResultState);
+    connection.send(new ClearResult().asPacket(connection.getSerializer()));
 
-		clearResultState.getReplyFuture().get();
-	}
+    clearResultState.getReplyFuture().get();
+  }
 
-	/**
-	 * Stops this requestor and tears down the thread. This object can not be reused.
-	 */
-	public void cancel() {
-		cancelled = true;
-		worker.interrupt();
-	}
+  /** Stops this requestor and tears down the thread. This object can not be reused. */
+  public void cancel() {
+    cancelled = true;
+    worker.interrupt();
+  }
 }

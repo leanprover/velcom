@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { dateFromRelative, roundDateDown, roundDateUp } from '@/util/Times'
-import { Route } from 'vue-router'
+import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
+import { dateFromRelative, roundDateDown, roundDateUp } from "@/util/Times";
+import { Route } from "vue-router";
 
 /**
  * Converts something to a string or undefined, if it was falsy or undefined.
@@ -9,7 +9,7 @@ import { Route } from 'vue-router'
  * @param it the object to convert
  */
 export function orUndefined(it: any): string | undefined {
-  return it ? '' + it : undefined
+  return it ? "" + it : undefined;
 }
 
 /**
@@ -19,7 +19,7 @@ export function orUndefined(it: any): string | undefined {
  * @param subst the alternative to use if it was undefined
  */
 export function orElse(it: any, subst: any): string {
-  return it ? '' + it : '' + subst
+  return it ? "" + it : "" + subst;
 }
 
 /**
@@ -33,12 +33,12 @@ export function orElse(it: any, subst: any): string {
 export function respectOptions<T>(
   options: PermanentLinkOptions | undefined,
   name: keyof PermanentLinkOptions,
-  value: T
+  value: T,
 ): T | undefined {
   if (!options || options[name]) {
-    return value
+    return value;
   }
-  return undefined
+  return undefined;
 }
 
 /**
@@ -52,12 +52,12 @@ export function respectOptions<T>(
 export function extractFloatFromQuery(
   link: Route,
   name: string,
-  action: (value: number) => void
+  action: (value: number) => void,
 ): void {
-  const queryValue = link.query[name]
-  if (queryValue && typeof queryValue === 'string') {
+  const queryValue = link.query[name];
+  if (queryValue && typeof queryValue === "string") {
     if (!isNaN(parseFloat(queryValue))) {
-      action(parseFloat(queryValue))
+      action(parseFloat(queryValue));
     }
   }
 }
@@ -78,30 +78,30 @@ export function extractDateFromQuery(
   link: Route,
   name: string,
   relative: Date,
-  action: (value: number) => void
+  action: (value: number) => void,
 ): void {
-  const queryValue = link.query[name]
-  if (queryValue && typeof queryValue === 'string') {
+  const queryValue = link.query[name];
+  if (queryValue && typeof queryValue === "string") {
     if (queryValue.match(/^([+-])?(\d|\.)+$/)) {
-      action(parseFloat(queryValue))
-      return
+      action(parseFloat(queryValue));
+      return;
     }
-    const relativeDate = dateFromRelative(queryValue, relative)
+    const relativeDate = dateFromRelative(queryValue, relative);
     if (relativeDate) {
-      action(relativeDate.getTime())
+      action(relativeDate.getTime());
     }
   }
 }
 
 export type ZoomDateRangeStore = {
-  zoomXStartValue: number | null
-  zoomXEndValue: number | null
-  zoomYStartValue: number | null
-  zoomYEndValue: number | null
+  zoomXStartValue: number | null;
+  zoomXEndValue: number | null;
+  zoomYStartValue: number | null;
+  zoomYEndValue: number | null;
 
-  startTime: Date
-  endTime: Date
-}
+  startTime: Date;
+  endTime: Date;
+};
 
 /**
  * Parses the zoom and date range (start / end) from a given link and sets the
@@ -110,29 +110,26 @@ export type ZoomDateRangeStore = {
  * @param link the link to parse it from
  * @param store the store to set it on
  */
-export function parseAndSetZoomAndDateRange(
-  link: Route,
-  store: ZoomDateRangeStore
-) {
+export function parseAndSetZoomAndDateRange(link: Route, store: ZoomDateRangeStore) {
   // Anchors to the current date
-  extractDateFromQuery(link, 'zoomXEnd', new Date(), value => {
-    store.zoomXEndValue = value
-    store.endTime = roundDateUp(new Date(value))
-  })
+  extractDateFromQuery(link, "zoomXEnd", new Date(), (value) => {
+    store.zoomXEndValue = value;
+    store.endTime = roundDateUp(new Date(value));
+  });
   // Anchors to the end date (or the current one if not specified)
   extractDateFromQuery(
     link,
-    'zoomXStart',
+    "zoomXStart",
     new Date(store.zoomXEndValue || new Date().getTime()),
-    value => {
-      store.zoomXStartValue = value
-      store.startTime = roundDateDown(new Date(value))
-    }
-  )
-  extractFloatFromQuery(link, 'zoomYStart', value => {
-    store.zoomYStartValue = value
-  })
-  extractFloatFromQuery(link, 'zoomYEnd', value => {
-    store.zoomYEndValue = value
-  })
+    (value) => {
+      store.zoomXStartValue = value;
+      store.startTime = roundDateDown(new Date(value));
+    },
+  );
+  extractFloatFromQuery(link, "zoomYStart", (value) => {
+    store.zoomYStartValue = value;
+  });
+  extractFloatFromQuery(link, "zoomYEnd", (value) => {
+    store.zoomYEndValue = value;
+  });
 }

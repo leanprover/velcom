@@ -85,267 +85,287 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The backend's main class. Contains the core initialisation routines for the web server.
- */
+/** The backend's main class. Contains the core initialisation routines for the web server. */
 public class ServerMain extends Application<GlobalConfig> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
 
-	/**
-	 * The backend's main class's main method. Starts the web server.
-	 *
-	 * @param args the command line arguments
-	 * @throws Exception if the web server can not be started
-	 */
-	public static void main(String[] args) throws Exception {
-		System.out.println("Welcome to VelCom!");
-		System.out.printf("Version:     %s (backend)%n", GitProperties.getVersion());
-		System.out.printf("Build time:  %s%n", GitProperties.getBuildTime());
-		System.out.printf("Commit hash: %s%n", GitProperties.getHash());
-		System.out.println();
+  /**
+   * The backend's main class's main method. Starts the web server.
+   *
+   * @param args the command line arguments
+   * @throws Exception if the web server can not be started
+   */
+  public static void main(String[] args) throws Exception {
+    System.out.println("Welcome to VelCom!");
+    System.out.printf("Version:     %s (backend)%n", GitProperties.getVersion());
+    System.out.printf("Build time:  %s%n", GitProperties.getBuildTime());
+    System.out.printf("Commit hash: %s%n", GitProperties.getHash());
+    System.out.println();
 
-		new ServerMain().run(args);
-	}
+    new ServerMain().run(args);
+  }
 
-	@Override
-	public void initialize(Bootstrap<GlobalConfig> bootstrap) {
-		bootstrap.addBundle(new MultiPartBundle());
-	}
+  @Override
+  public void initialize(Bootstrap<GlobalConfig> bootstrap) {
+    bootstrap.addBundle(new MultiPartBundle());
+  }
 
-	@Override
-	public void run(GlobalConfig configuration, Environment environment) throws Exception {
-		configureMetrics(environment);
-		configureDummyHealthCheck(environment);
+  @Override
+  public void run(GlobalConfig configuration, Environment environment) throws Exception {
+    configureMetrics(environment);
+    configureDummyHealthCheck(environment);
 
-		// Storage layer
-		ManagedDirs managedDirs = new ManagedDirs(
-			configuration.getDataDir(),
-			configuration.getCacheDir(),
-			configuration.getTmpDir()
-		);
-		managedDirs.createAndCleanDirs();
+    // Storage layer
+    ManagedDirs managedDirs =
+        new ManagedDirs(
+            configuration.getDataDir(), configuration.getCacheDir(), configuration.getTmpDir());
+    managedDirs.createAndCleanDirs();
 
-		DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
-		RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
-		TarFileStorage tarFileStorage = new TarFileStorage(managedDirs.getTarsDir());
+    DatabaseStorage databaseStorage = new DatabaseStorage(managedDirs.getJdbcUrl());
+    RepoStorage repoStorage = new RepoStorage(managedDirs.getReposDir());
+    TarFileStorage tarFileStorage = new TarFileStorage(managedDirs.getTarsDir());
 
-		// Caches
-		AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
-		LatestRunCache latestRunCache = new LatestRunCache();
-		RunCache runCache = new RunCache();
+    // Caches
+    AvailableDimensionsCache availableDimensionsCache = new AvailableDimensionsCache();
+    LatestRunCache latestRunCache = new LatestRunCache();
+    RunCache runCache = new RunCache();
 
-		// Access layer
-		TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
-		CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
-		DimensionWriteAccess dimensionAccess = new DimensionWriteAccess(databaseStorage,
-			availableDimensionsCache, runCache);
-		RepoWriteAccess repoAccess = new RepoWriteAccess(databaseStorage, availableDimensionsCache,
-			runCache, latestRunCache);
-		ArchiveReadAccess archiveAccess = new ArchiveReadAccess(
-			managedDirs.getArchivesDir(),
-			repoStorage,
-			tarFileStorage,
-			configuration.getBenchmarkRepoRemoteUrl()
-		);
-		BenchmarkWriteAccess benchmarkAccess = new BenchmarkWriteAccess(databaseStorage,
-			availableDimensionsCache, latestRunCache);
+    // Access layer
+    TaskWriteAccess taskAccess = new TaskWriteAccess(databaseStorage, tarFileStorage);
+    CommitReadAccess commitAccess = new CommitReadAccess(databaseStorage);
+    DimensionWriteAccess dimensionAccess =
+        new DimensionWriteAccess(databaseStorage, availableDimensionsCache, runCache);
+    RepoWriteAccess repoAccess =
+        new RepoWriteAccess(databaseStorage, availableDimensionsCache, runCache, latestRunCache);
+    ArchiveReadAccess archiveAccess =
+        new ArchiveReadAccess(
+            managedDirs.getArchivesDir(),
+            repoStorage,
+            tarFileStorage,
+            configuration.getBenchmarkRepoRemoteUrl());
+    BenchmarkWriteAccess benchmarkAccess =
+        new BenchmarkWriteAccess(databaseStorage, availableDimensionsCache, latestRunCache);
 
-		taskAccess.resetAllTaskStatuses();
-		taskAccess.cleanUpTarFiles();
+    taskAccess.resetAllTaskStatuses();
+    taskAccess.cleanUpTarFiles();
 
-		// Data layer
-		Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
-		BenchRepo benchRepo = new BenchRepo(archiveAccess);
-		SignificanceFactors significanceFactors = new SignificanceFactors(
-			configuration.getSignificanceRelativeThreshold(),
-			configuration.getSignificanceStddevThreshold(),
-			configuration.getSignificanceMinStddevAmount()
-		);
-		RunComparator runComparator = new RunComparator(significanceFactors);
-		SignificanceDetector significanceDetector = new SignificanceDetector(significanceFactors,
-			runComparator);
-		SignificantRunsCollector significantRunsCollector = new SignificantRunsCollector(
-			significanceFactors, benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-			significanceDetector);
+    // Data layer
+    Queue queue = new Queue(taskAccess, archiveAccess, benchmarkAccess);
+    BenchRepo benchRepo = new BenchRepo(archiveAccess);
+    SignificanceFactors significanceFactors =
+        new SignificanceFactors(
+            configuration.getSignificanceRelativeThreshold(),
+            configuration.getSignificanceStddevThreshold(),
+            configuration.getSignificanceMinStddevAmount());
+    RunComparator runComparator = new RunComparator(significanceFactors);
+    SignificanceDetector significanceDetector =
+        new SignificanceDetector(significanceFactors, runComparator);
+    SignificantRunsCollector significantRunsCollector =
+        new SignificantRunsCollector(
+            significanceFactors,
+            benchmarkAccess,
+            commitAccess,
+            dimensionAccess,
+            runCache,
+            latestRunCache,
+            significanceDetector);
 
-		// Listener
-		Listener listener = new Listener(
-			databaseStorage,
-			repoStorage,
-			benchmarkAccess,
-			commitAccess,
-			dimensionAccess,
-			repoAccess,
-			benchRepo,
-			significanceDetector,
-			queue,
-			configuration.getPollInterval(),
-			configuration.getVacuumInterval(),
-			configuration.getFrontendUrl()
-		);
+    // Listener
+    Listener listener =
+        new Listener(
+            databaseStorage,
+            repoStorage,
+            benchmarkAccess,
+            commitAccess,
+            dimensionAccess,
+            repoAccess,
+            benchRepo,
+            significanceDetector,
+            queue,
+            configuration.getPollInterval(),
+            configuration.getVacuumInterval(),
+            configuration.getFrontendUrl());
 
-		// Dispatcher
-		Dispatcher dispatcher = new Dispatcher(
-			queue,
-			configuration.getDisconnectedRunnerGracePeriod()
-		);
-		RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
-		RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
+    // Dispatcher
+    Dispatcher dispatcher = new Dispatcher(queue, configuration.getDisconnectedRunnerGracePeriod());
+    RunnerAwareServerFactory.getInstance().setDispatcher(dispatcher);
+    RunnerAwareServerFactory.getInstance().setBenchRepo(benchRepo);
 
-		// API
-		configureSerialization(environment);
-		configureExceptionMappers(environment);
-		configureAuthentication(environment, configuration.getWebAdminToken());
-		configureCors(environment);
+    // API
+    configureSerialization(environment);
+    configureExceptionMappers(environment);
+    configureAuthentication(environment, configuration.getWebAdminToken());
+    configureCors(environment);
 
-		// Endpoints
-		Stream.of(
-			new AllDimensionsEndpoint(dimensionAccess),
-			new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
-			new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
-			new CompareEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator, significanceDetector, significanceFactors),
-			new DebugEndpoint(benchmarkAccess, dispatcher),
-			new DimensionsEndpoint(dimensionAccess),
-			new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
-			new GraphDetailEndpoint(commitAccess, benchmarkAccess, dimensionAccess, repoAccess, runCache,
-				latestRunCache),
-			new GraphStatusComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess, repoAccess,
-				significanceFactors),
-			new ListenerEndpoint(listener),
-			new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
-			new RecentRunsEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache,
-				significantRunsCollector),
-			new RepoEndpoint(dimensionAccess, repoAccess, availableDimensionsCache,
-				listener),
-			new RunEndpoint(benchmarkAccess, commitAccess, dimensionAccess, runCache, latestRunCache,
-				runComparator, significanceFactors, significantRunsCollector),
-			new SearchEndpoint(benchmarkAccess, commitAccess, repoAccess),
-			new TestTokenEndpoint()
-		).forEach(endpoint -> environment.jersey().register(endpoint));
-	}
+    // Endpoints
+    Stream.of(
+            new AllDimensionsEndpoint(dimensionAccess),
+            new AllReposEndpoint(dimensionAccess, repoAccess, availableDimensionsCache),
+            new CommitEndpoint(benchmarkAccess, commitAccess, runCache),
+            new CompareEndpoint(
+                benchmarkAccess,
+                commitAccess,
+                dimensionAccess,
+                runCache,
+                latestRunCache,
+                runComparator,
+                significanceDetector,
+                significanceFactors),
+            new DebugEndpoint(benchmarkAccess, dispatcher),
+            new DimensionsEndpoint(dimensionAccess),
+            new GraphComparisonEndpoint(benchmarkAccess, commitAccess, dimensionAccess),
+            new GraphDetailEndpoint(
+                commitAccess,
+                benchmarkAccess,
+                dimensionAccess,
+                repoAccess,
+                runCache,
+                latestRunCache),
+            new GraphStatusComparisonEndpoint(
+                benchmarkAccess, commitAccess, dimensionAccess, repoAccess, significanceFactors),
+            new ListenerEndpoint(listener),
+            new QueueEndpoint(commitAccess, repoAccess, queue, dispatcher),
+            new RecentRunsEndpoint(
+                benchmarkAccess, commitAccess, dimensionAccess, runCache, significantRunsCollector),
+            new RepoEndpoint(dimensionAccess, repoAccess, availableDimensionsCache, listener),
+            new RunEndpoint(
+                benchmarkAccess,
+                commitAccess,
+                dimensionAccess,
+                runCache,
+                latestRunCache,
+                runComparator,
+                significanceFactors,
+                significantRunsCollector),
+            new SearchEndpoint(benchmarkAccess, commitAccess, repoAccess),
+            new TestTokenEndpoint())
+        .forEach(endpoint -> environment.jersey().register(endpoint));
+  }
 
-	private void configureMetrics(Environment environment) {
-		PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
-			PrometheusConfig.DEFAULT
-		);
+  private void configureMetrics(Environment environment) {
+    PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
-		registry.config().commonTags("application", "Velcom");
+    registry.config().commonTags("application", "Velcom");
 
-		Metrics.globalRegistry.add(registry);
+    Metrics.globalRegistry.add(registry);
 
-		Metrics.globalRegistry.config().meterFilter(new MeterFilter() {
-			@Override
-			public MeterFilterReply accept(Id id) {
-				return MeterFilterReply.NEUTRAL;
-			}
+    Metrics.globalRegistry
+        .config()
+        .meterFilter(
+            new MeterFilter() {
+              @Override
+              public MeterFilterReply accept(Id id) {
+                return MeterFilterReply.NEUTRAL;
+              }
 
-			@Override
-			public Id map(Id id) {
-				final String cacheTag = id.getTag("cache");
-				if (cacheTag == null) {
-					return id;
-				}
+              @Override
+              public Id map(Id id) {
+                final String cacheTag = id.getTag("cache");
+                if (cacheTag == null) {
+                  return id;
+                }
 
-				// meter is a cache meter => prepend cacheTag to name
-				return new Id(
-					cacheTag + "_" + id.getName(),
-					Tags.of(id.getTags()),
-					id.getBaseUnit(),
-					id.getDescription(),
-					id.getType()
-				);
-			}
-		});
+                // meter is a cache meter => prepend cacheTag to name
+                return new Id(
+                    cacheTag + "_" + id.getName(),
+                    Tags.of(id.getTags()),
+                    id.getBaseUnit(),
+                    id.getDescription(),
+                    id.getType());
+              }
+            });
 
-		try {
-			Class.forName("org.aspectj.weaver.WeaverMessages");
-			LOGGER.info("AspectJ weaver agent detected, providing detailed timing metrics");
-			Gauge.builder("aspectj.weaver.enabled", () -> 1).register(registry);
-		} catch (ClassNotFoundException e) {
-			LOGGER.warn("AspectJ weaver agent NOT FOUND! Many metrics will NOT be available");
-			Gauge.builder("aspectj.weaver.enabled", () -> 0).register(registry);
-		}
+    try {
+      Class.forName("org.aspectj.weaver.WeaverMessages");
+      LOGGER.info("AspectJ weaver agent detected, providing detailed timing metrics");
+      Gauge.builder("aspectj.weaver.enabled", () -> 1).register(registry);
+    } catch (ClassNotFoundException e) {
+      LOGGER.warn("AspectJ weaver agent NOT FOUND! Many metrics will NOT be available");
+      Gauge.builder("aspectj.weaver.enabled", () -> 0).register(registry);
+    }
 
-		new ClassLoaderMetrics().bindTo(Metrics.globalRegistry);
-		new JvmCompilationMetrics().bindTo(Metrics.globalRegistry);
-		new JvmGcMetrics().bindTo(Metrics.globalRegistry);
-		new JvmHeapPressureMetrics().bindTo(Metrics.globalRegistry);
-		new JvmMemoryMetrics().bindTo(Metrics.globalRegistry);
-		new JvmThreadMetrics().bindTo(Metrics.globalRegistry);
-		new ProcessorMetrics().bindTo(Metrics.globalRegistry);
-		new UptimeMetrics().bindTo(Metrics.globalRegistry);
+    new ClassLoaderMetrics().bindTo(Metrics.globalRegistry);
+    new JvmCompilationMetrics().bindTo(Metrics.globalRegistry);
+    new JvmGcMetrics().bindTo(Metrics.globalRegistry);
+    new JvmHeapPressureMetrics().bindTo(Metrics.globalRegistry);
+    new JvmMemoryMetrics().bindTo(Metrics.globalRegistry);
+    new JvmThreadMetrics().bindTo(Metrics.globalRegistry);
+    new ProcessorMetrics().bindTo(Metrics.globalRegistry);
+    new UptimeMetrics().bindTo(Metrics.globalRegistry);
 
-		environment.admin()
-			.addServlet("prometheusMetrics", new HttpServlet() {
-				@Override
-				protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-					throws IOException {
-					resp.setStatus(HttpServletResponse.SC_OK);
-					resp.getWriter().write(registry.scrape());
-				}
-			})
-			.addMapping("/prometheusMetrics");
-	}
+    environment
+        .admin()
+        .addServlet(
+            "prometheusMetrics",
+            new HttpServlet() {
+              @Override
+              protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+                  throws IOException {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write(registry.scrape());
+              }
+            })
+        .addMapping("/prometheusMetrics");
+  }
 
-	/**
-	 * Since we've never used and don't plan on using health checks any time soon, this function
-	 * disables the big scary warning dropwizard shows on startup.
-	 */
-	private void configureDummyHealthCheck(Environment environment) {
-		environment.healthChecks().register("dummy", new HealthCheck() {
-			@Override
-			protected Result check() {
-				return Result.healthy();
-			}
-		});
-	}
+  /**
+   * Since we've never used and don't plan on using health checks any time soon, this function
+   * disables the big scary warning dropwizard shows on startup.
+   */
+  private void configureDummyHealthCheck(Environment environment) {
+    environment
+        .healthChecks()
+        .register(
+            "dummy",
+            new HealthCheck() {
+              @Override
+              protected Result check() {
+                return Result.healthy();
+              }
+            });
+  }
 
-	private void configureSerialization(Environment environment) {
-		// This mapper should be configured the same as the one in SerializingTest.java
-		environment.getObjectMapper()
-			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-			.setSerializationInclusion(Include.NON_NULL);
-	}
+  private void configureSerialization(Environment environment) {
+    // This mapper should be configured the same as the one in SerializingTest.java
+    environment
+        .getObjectMapper()
+        .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+        .setSerializationInclusion(Include.NON_NULL);
+  }
 
-	private void configureExceptionMappers(Environment environment) {
-		environment.jersey().register(new InvalidQueryParamsExceptionMapper());
-		environment.jersey().register(new NoSuchCommitExceptionMapper());
-		environment.jersey().register(new NoSuchDimensionExceptionMapper());
-		environment.jersey().register(new NoSuchRepoExceptionMapper());
-		environment.jersey().register(new NoSuchRunExceptionMapper());
-		environment.jersey().register(new NoSuchTaskExceptionMapper());
-		environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
-		environment.jersey().register(new ArgumentParseExceptionMapper());
-	}
+  private void configureExceptionMappers(Environment environment) {
+    environment.jersey().register(new InvalidQueryParamsExceptionMapper());
+    environment.jersey().register(new NoSuchCommitExceptionMapper());
+    environment.jersey().register(new NoSuchDimensionExceptionMapper());
+    environment.jersey().register(new NoSuchRepoExceptionMapper());
+    environment.jersey().register(new NoSuchRunExceptionMapper());
+    environment.jersey().register(new NoSuchTaskExceptionMapper());
+    environment.jersey().register(new TaskAlreadyExistsExceptionMapper());
+    environment.jersey().register(new ArgumentParseExceptionMapper());
+  }
 
-	private void configureAuthentication(Environment environment, String adminToken) {
-		environment.jersey().register(
-			new AuthDynamicFeature(
-				new BasicCredentialAuthFilter.Builder<Admin>()
-					.setAuthenticator(new AdminAuthenticator(adminToken))
-					.buildAuthFilter()
-			)
-		);
-		environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Admin.class));
-	}
+  private void configureAuthentication(Environment environment, String adminToken) {
+    environment
+        .jersey()
+        .register(
+            new AuthDynamicFeature(
+                new BasicCredentialAuthFilter.Builder<Admin>()
+                    .setAuthenticator(new AdminAuthenticator(adminToken))
+                    .buildAuthFilter()));
+    environment.jersey().register(new AuthValueFactoryProvider.Binder<>(Admin.class));
+  }
 
-	private void configureCors(Environment environment) {
-		var filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-		filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-		filter.setInitParameter(
-			CrossOriginFilter.ALLOWED_METHODS_PARAM,
-			"GET,PUT,POST,DELETE,OPTIONS,PATCH"
-		);
-		filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-		filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-		filter.setInitParameter(
-			"allowedHeaders",
-			"Content-Type,Authorization,X-Requested-With,Content-Length,Accept-Encoding,Origin"
-		);
-		filter.setInitParameter("allowCredentials", "true");
-	}
-
-
+  private void configureCors(Environment environment) {
+    var filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+    filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+    filter.setInitParameter(
+        CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");
+    filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+    filter.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+    filter.setInitParameter(
+        "allowedHeaders",
+        "Content-Type,Authorization,X-Requested-With,Content-Length,Accept-Encoding,Origin");
+    filter.setInitParameter("allowCredentials", "true");
+  }
 }

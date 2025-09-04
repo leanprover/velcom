@@ -18,19 +18,11 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="12" sm="auto" class="flex-shrink-too mr-3">
               <v-list-item-title
-                :class="
-                  $vuetify.breakpoint.xs
-                    ? ['d-flex', 'flex-wrap', 'justify-center']
-                    : []
-                "
+                :class="$vuetify.breakpoint.xs ? ['d-flex', 'flex-wrap', 'justify-center'] : []"
               >
                 <repo-display :repoId="commit.repoId"></repo-display>
                 <span v-if="$vuetify.breakpoint.smAndUp" class="mx-2">—</span>
-                <span
-                  style="flex: 0 0 100%"
-                  class="my-1"
-                  v-if="$vuetify.breakpoint.xs"
-                ></span>
+                <span style="flex: 0 0 100%" class="my-1" v-if="$vuetify.breakpoint.xs"></span>
                 <router-link
                   class="concealed-link"
                   style="max-width: 100%"
@@ -41,19 +33,14 @@
               </v-list-item-title>
               <v-list-item-subtitle>
                 <span class="author">{{ commit.author }}</span> authored on
-                <span class="time" :title="formattedDateUTC">{{
-                  formattedDate
-                }}</span>
+                <span class="time" :title="formattedDateUTC">{{ formattedDate }}</span>
               </v-list-item-subtitle>
               <v-list-item-content v-if="$scopedSlots['content']" class="py-0">
                 <slot name="content"></slot>
               </v-list-item-content>
             </v-col>
             <v-col cols="auto">
-              <v-container
-                fluid
-                :class="$vuetify.breakpoint.mdAndUp ? ['ma-0', 'pa-0'] : []"
-              >
+              <v-container fluid :class="$vuetify.breakpoint.mdAndUp ? ['ma-0', 'pa-0'] : []">
                 <v-row no-gutters align="center" justify="center">
                   <v-col cols="auto">
                     <text-chip :text="commit.hash"></text-chip>
@@ -71,44 +58,44 @@
   </v-card>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { formatDate, formatDateUTC } from '@/util/Times'
-import { CommitDescription } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '../misc/InlineMinimalRepoDisplay.vue'
-import TextChip from '../misc/TextChip.vue'
-import { RawLocation } from 'vue-router'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { formatDate, formatDateUTC } from "@/util/Times";
+import { CommitDescription } from "@/store/types";
+import InlineMinimalRepoNameDisplay from "../misc/InlineMinimalRepoDisplay.vue";
+import TextChip from "../misc/TextChip.vue";
+import { RawLocation } from "vue-router";
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoNameDisplay,
-    'text-chip': TextChip
-  }
+    "repo-display": InlineMinimalRepoNameDisplay,
+    "text-chip": TextChip,
+  },
 })
 export default class CommitOverviewBase extends Vue {
   @Prop()
-  private commit!: CommitDescription
+  private commit!: CommitDescription;
 
   @Prop({ default: false })
-  private outlined!: boolean
+  private outlined!: boolean;
 
   @Prop({ default: null })
-  private linkLocation!: RawLocation
+  private linkLocation!: RawLocation;
 
   private get formattedDate() {
-    return formatDate(this.commit.authorDate || new Date(0))
+    return formatDate(this.commit.authorDate || new Date(0));
   }
 
   private get formattedDateUTC() {
-    return formatDateUTC(this.commit.authorDate || new Date(0))
+    return formatDateUTC(this.commit.authorDate || new Date(0));
   }
 
   private get commitLinkLocation(): RawLocation {
     return {
-      name: 'run-detail',
-      params: { first: this.commit.repoId, second: this.commit.hash }
-    }
+      name: "run-detail",
+      params: { first: this.commit.repoId, second: this.commit.hash },
+    };
   }
 }
 </script>

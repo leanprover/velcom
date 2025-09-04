@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Test;
 
 class OSCheckTest {
 
-	@Test
-	void returnsCorrectValue() {
-		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-			assertThat(OSCheck.isStupidWindows()).isTrue();
-		} else {
-			assertThat(OSCheck.isStupidWindows()).isFalse();
-		}
-	}
+  @Test
+  void returnsCorrectValue() {
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+      assertThat(OSCheck.isStupidWindows()).isTrue();
+    } else {
+      assertThat(OSCheck.isStupidWindows()).isFalse();
+    }
+  }
 }

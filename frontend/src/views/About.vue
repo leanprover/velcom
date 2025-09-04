@@ -20,10 +20,7 @@
                   <v-col>
                     <v-row no-gutters align="baseline" justify="center">
                       <v-col class="shapeshifter-container" cols="auto">
-                        <canvas
-                          id="myCanvas"
-                          @click="flutterByMyButterfly"
-                        ></canvas>
+                        <canvas id="myCanvas" @click="flutterByMyButterfly"></canvas>
                         <div
                           id="shapeshifter-logo"
                           class="shapeshifter play"
@@ -33,36 +30,32 @@
                     </v-row>
                     <v-row align="center" justify="center">
                       <p class="text-center">
-                        "The name stands for 'Velocity Commit', and velocity is
-                        related to speed and performance.
-                        <br />It also sounds like a German saying 'welcome',
-                        which is nice and friendly."
+                        "The name stands for 'Velocity Commit', and velocity is related to speed and
+                        performance.
+                        <br />It also sounds like a German saying 'welcome', which is nice and
+                        friendly."
                       </p>
                     </v-row>
                     <v-row align="center" justify="center" class="mt-10">
                       <p class="text-center">
-                        VelCom is a project which was realized as part of the
-                        lecture "Software Engineering Practice" at the Karlsruhe
-                        Institute of Technology (KIT) during winter semester
-                        2019/20.
+                        VelCom is a project which was realized as part of the lecture "Software
+                        Engineering Practice" at the Karlsruhe Institute of Technology (KIT) during
+                        winter semester 2019/20.
                         <br />The goal was to create a website that...
                       </p>
                     </v-row>
                     <v-row align="center" justify="center">
                       <ul>
                         <li>benchmarks software in the long term</li>
-                        <li>
-                          manages repositories and commits in an intelligent
-                          manner
-                        </li>
+                        <li>manages repositories and commits in an intelligent manner</li>
                         <li>provides appealing visualisations of benchmarks</li>
                         <li>is easy to set up</li>
                       </ul>
                     </v-row>
                     <v-row align="center" justify="center" class="mt-10">
                       <p>
-                        If you are interested in learning more about the maniacs
-                        behind VelCom, please visit
+                        If you are interested in learning more about the maniacs behind VelCom,
+                        please visit
                         <a href="https://www.aaaaaaah.de/">AAAAAAAH!</a>
                       </p>
                     </v-row>
@@ -86,20 +79,18 @@
                   <div v-else class="title">
                     Hey, this is the default impressum. Not much to see here.
                     <p>
-                      You can change me by providing a file called
-                      "Impressum.html" at the root of this domain (which is
+                      You can change me by providing a file called "Impressum.html" at the root of
+                      this domain (which is
                       <a :href="impressumLocation">{{ impressumLocation }}</a
                       >).
                     </p>
                     <p>
-                      This should be quite easy, as you can place it into the
-                      "dist" folder this frontend is currently being served
-                      from.
+                      This should be quite easy, as you can place it into the "dist" folder this
+                      frontend is currently being served from.
                     </p>
                     <p>
                       You can use
-                      <a
-                        href="https://vuetifyjs.com/en/styles/typography#typography"
+                      <a href="https://vuetifyjs.com/en/styles/typography#typography"
                         >Vuetify html classes</a
                       >
                       for formatting me, or just plain HTML with style tags.
@@ -116,142 +107,126 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import axios from 'axios'
+import Vue from "vue";
+import Component from "vue-class-component";
+import axios from "axios";
 
 @Component
 export default class About extends Vue {
-  private htmlImpressum: string | null = null
-  private fluttering: boolean = false
+  private htmlImpressum: string | null = null;
+  private fluttering: boolean = false;
 
   private relativeUrlToBase(path: string) {
-    return document.location.protocol + '//' + document.location.host + path
+    return document.location.protocol + "//" + document.location.host + path;
   }
 
   private get gitHash() {
-    const fullHash: string = process.env.__COMMIT_HASH__
+    const fullHash: string = process.env.__COMMIT_HASH__;
     // Only show the first few characters on very small screens - they are probably unique enough
     if (this.$vuetify.breakpoint.xs) {
-      return fullHash.substr(0, 10)
+      return fullHash.substr(0, 10);
     }
-    return fullHash
+    return fullHash;
   }
 
   private get impressumLocation() {
-    return this.relativeUrlToBase('/Impressum.html')
+    return this.relativeUrlToBase("/Impressum.html");
   }
 
   private flutterByMyButterfly() {
-    const element = document.getElementById('shapeshifter-logo')!
+    const element = document.getElementById("shapeshifter-logo")!;
 
-    const canvas = document.getElementById('myCanvas')! as HTMLCanvasElement
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    const context = canvas.getContext('2d')!
-    context.fillStyle = '#989cff'
+    const canvas = document.getElementById("myCanvas")! as HTMLCanvasElement;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = "#989cff";
 
     if (this.fluttering) {
-      element.classList.remove('flutterByMyButterfly')
-      this.fluttering = false
-      context.clearRect(0, 0, canvas.width, canvas.height)
-      return
+      element.classList.remove("flutterByMyButterfly");
+      this.fluttering = false;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      return;
     }
-    this.fluttering = true
-    element.classList.add('flutterByMyButterfly')
+    this.fluttering = true;
+    element.classList.add("flutterByMyButterfly");
 
-    const elementWidthOffset = element.getBoundingClientRect().width / 2
-    let elementHeightOffset = element.getBoundingClientRect().height / 2
-    elementHeightOffset += elementHeightOffset / 4 + 25
+    const elementWidthOffset = element.getBoundingClientRect().width / 2;
+    let elementHeightOffset = element.getBoundingClientRect().height / 2;
+    elementHeightOffset += elementHeightOffset / 4 + 25;
 
     // https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli#Equations
 
-    const { y: yMin } = this.evalLemniscate(Math.PI / 2, 0)
+    const { y: yMin } = this.evalLemniscate(Math.PI / 2, 0);
 
-    const { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI)
+    const { y: yMax } = this.evalLemniscate(Math.PI / 2, Math.PI);
 
-    const height = Math.abs(yMax - yMin)
+    const height = Math.abs(yMax - yMin);
 
     // let theta = 5.39317816
-    let theta = Math.PI / 2
-    let time = 4.94277244164
+    let theta = Math.PI / 2;
+    let time = 4.94277244164;
     const callback = () => {
-      if (!element.classList.contains('flutterByMyButterfly')) {
-        return
+      if (!element.classList.contains("flutterByMyButterfly")) {
+        return;
       }
-      const xOffset = window.innerWidth / 2 - elementWidthOffset
-      const yOffset = -elementHeightOffset / 2 + height / 2
+      const xOffset = window.innerWidth / 2 - elementWidthOffset;
+      const yOffset = -elementHeightOffset / 2 + height / 2;
 
-      let { x, y } = this.evalLemniscate(theta, time)
-      x += xOffset
-      y += yOffset
+      let { x, y } = this.evalLemniscate(theta, time);
+      x += xOffset;
+      y += yOffset;
 
       for (let i = 0; i < Math.PI / 4; i += (Math.PI * 2) / 20) {
-        const { x, y } = this.evalLemniscate(theta - i / 2, time - i)
-        context.fillRect(
-          x + xOffset + elementWidthOffset,
-          y + yOffset + elementHeightOffset,
-          2,
-          2
-        )
+        const { x, y } = this.evalLemniscate(theta - i / 2, time - i);
+        context.fillRect(x + xOffset + elementWidthOffset, y + yOffset + elementHeightOffset, 2, 2);
       }
 
-      element.style.top = y + 'px'
-      element.style.left = x + 'px'
-      requestAnimationFrame(callback)
+      element.style.top = y + "px";
+      element.style.left = x + "px";
+      requestAnimationFrame(callback);
 
-      time += (Math.PI * 2) / 60 / 10
-      theta += (Math.PI * 2) / 60 / 100
-    }
+      time += (Math.PI * 2) / 60 / 10;
+      theta += (Math.PI * 2) / 60 / 100;
+    };
 
-    requestAnimationFrame(callback)
+    requestAnimationFrame(callback);
   }
 
-  private evalLemniscate(
-    theta: number,
-    time: number
-  ): { x: number; y: number } {
-    const sqrt2 = Math.sqrt(2)
+  private evalLemniscate(theta: number, time: number): { x: number; y: number } {
+    const sqrt2 = Math.sqrt(2);
 
-    const a = Math.min(window.innerWidth, window.innerHeight) / 4
+    const a = Math.min(window.innerWidth, window.innerHeight) / 4;
 
-    const sint = Math.sin(time)
-    const cost = Math.cos(time)
-    const denominator = sint * sint + 1
-    let x = (a * sqrt2 * cost) / denominator
-    let y = (a * sqrt2 * cost * sint) / denominator
+    const sint = Math.sin(time);
+    const cost = Math.cos(time);
+    const denominator = sint * sint + 1;
+    let x = (a * sqrt2 * cost) / denominator;
+    let y = (a * sqrt2 * cost * sint) / denominator;
 
-    const baseAngle = Math.atan2(y, x)
-    const baseDistance = Math.sqrt(x * x + y * y)
+    const baseAngle = Math.atan2(y, x);
+    const baseDistance = Math.sqrt(x * x + y * y);
 
-    x = Math.cos(baseAngle + theta) * baseDistance
+    x = Math.cos(baseAngle + theta) * baseDistance;
 
-    y = Math.sin(baseAngle + theta) * baseDistance
+    y = Math.sin(baseAngle + theta) * baseDistance;
 
-    return { x, y }
+    return { x, y };
   }
 
   async mounted(): Promise<void> {
-    axios
-      .get(this.impressumLocation, { hideFromSnackbar: true })
-      .then(response => {
-        axios
-          .get(
-            this.relativeUrlToBase(
-              '/hello I am a random url that is hopefully not mapped'
-            ),
-            { hideFromSnackbar: true }
-          )
-          .then(randomResponse => {
-            if (
-              response.status === 200 &&
-              response.data !== randomResponse.data
-            ) {
-              this.htmlImpressum = response.data
-            }
-          })
-          .catch(() => (this.htmlImpressum = response.data))
-      })
+    axios.get(this.impressumLocation, { hideFromSnackbar: true }).then((response) => {
+      axios
+        .get(this.relativeUrlToBase("/hello I am a random url that is hopefully not mapped"), {
+          hideFromSnackbar: true,
+        })
+        .then((randomResponse) => {
+          if (response.status === 200 && response.data !== randomResponse.data) {
+            this.htmlImpressum = response.data;
+          }
+        })
+        .catch(() => (this.htmlImpressum = response.data));
+    });
   }
 }
 </script>

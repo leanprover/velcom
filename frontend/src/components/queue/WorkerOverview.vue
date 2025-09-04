@@ -5,14 +5,10 @@
         <v-card :disabled="worker.lostConnection">
           <v-card-title>
             {{ worker.name }}
-            <span v-if="worker.lostConnection" class="ml-2 font-italic">
-              (Lost connection)
-            </span>
+            <span v-if="worker.lostConnection" class="ml-2 font-italic"> (Lost connection) </span>
           </v-card-title>
           <v-card-text>
-            <span class="worker-description">{{
-              formatWorkerInformation(worker)
-            }}</span>
+            <span class="worker-description">{{ formatWorkerInformation(worker) }}</span>
           </v-card-text>
         </v-card>
       </v-col>
@@ -26,21 +22,21 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Worker } from '@/store/types'
-import { Prop } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Worker } from "@/store/types";
+import { Prop } from "vue-property-decorator";
 
 @Component
 export default class WorkerOverview extends Vue {
   @Prop()
-  private workers!: Worker[]
+  private workers!: Worker[];
 
   private formatWorkerInformation(worker: Worker) {
     if (!worker.info) {
-      return 'No data known :/'
+      return "No data known :/";
     }
-    return worker.info
+    return worker.info;
   }
 }
 </script>

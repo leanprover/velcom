@@ -17,48 +17,43 @@ import java.util.Set;
  */
 public class AvailableDimensionsCache {
 
-	private static final int MAXIMUM_SIZE = 500;
+  private static final int MAXIMUM_SIZE = 500;
 
-	private final Cache<RepoId, Set<Dimension>> cache;
+  private final Cache<RepoId, Set<Dimension>> cache;
 
-	public AvailableDimensionsCache() {
-		cache = Caffeine.newBuilder()
-			.maximumSize(MAXIMUM_SIZE)
-			.build();
-	}
+  public AvailableDimensionsCache() {
+    cache = Caffeine.newBuilder().maximumSize(MAXIMUM_SIZE).build();
+  }
 
-	public Map<RepoId, Set<Dimension>> getAvailableDimensions(DimensionReadAccess dimensionAccess,
-		Collection<RepoId> repoIds) {
+  public Map<RepoId, Set<Dimension>> getAvailableDimensions(
+      DimensionReadAccess dimensionAccess, Collection<RepoId> repoIds) {
 
-		return cache.getAll(
-			repoIds,
-			missingIdsIt -> {
-				List<RepoId> missingIds = new ArrayList<>();
-				missingIdsIt.forEach(missingIds::add);
-				return dimensionAccess.getAvailableDimensions(missingIds);
-			}
-		);
-	}
+    return cache.getAll(
+        repoIds,
+        missingIdsIt -> {
+          List<RepoId> missingIds = new ArrayList<>();
+          missingIdsIt.forEach(missingIds::add);
+          return dimensionAccess.getAvailableDimensions(missingIds);
+        });
+  }
 
-	public Set<Dimension> getAvailableDimensionsFor(DimensionReadAccess dimensionReadAccess,
-		RepoId repoId) {
+  public Set<Dimension> getAvailableDimensionsFor(
+      DimensionReadAccess dimensionReadAccess, RepoId repoId) {
 
-		return cache.get(repoId, dimensionReadAccess::getAvailableDimensions);
-	}
+    return cache.get(repoId, dimensionReadAccess::getAvailableDimensions);
+  }
 
-	/**
-	 * Invalidate a specific repo's entry.
-	 *
-	 * @param repoId the id of the repo whose dimensions to remove from the cache
-	 */
-	public void invalidate(RepoId repoId) {
-		cache.invalidate(repoId);
-	}
+  /**
+   * Invalidate a specific repo's entry.
+   *
+   * @param repoId the id of the repo whose dimensions to remove from the cache
+   */
+  public void invalidate(RepoId repoId) {
+    cache.invalidate(repoId);
+  }
 
-	/**
-	 * Invalidate all entries.
-	 */
-	public void invalidateAll() {
-		cache.invalidateAll();
-	}
+  /** Invalidate all entries. */
+  public void invalidateAll() {
+    cache.invalidateAll();
+  }
 }

@@ -6,7 +6,7 @@
       <v-chip
         :to="{
           name: 'run-detail',
-          params: { first: run.id }
+          params: { first: run.id },
         }"
         outlined
         label
@@ -17,10 +17,7 @@
     <template #before-body>
       <v-row class="mx-1" v-if="commit">
         <v-col>
-          <commit-overview-base
-            :commit="commit"
-            :outlined="true"
-          ></commit-overview-base>
+          <commit-overview-base :commit="commit" :outlined="true"></commit-overview-base>
         </v-col>
       </v-row>
       <v-row class="mx-1" v-if="tar" justify="center">
@@ -32,40 +29,40 @@
   </run-info>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
-import RunInfo from '@/components/rundetail/RunInfo.vue'
-import TarOverview from '@/components/overviews/TarOverview.vue'
-import { CommitTaskSource, Run, TarTaskSource } from '@/store/types'
-import { Prop } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
+import RunInfo from "@/components/rundetail/RunInfo.vue";
+import TarOverview from "@/components/overviews/TarOverview.vue";
+import { CommitTaskSource, Run, TarTaskSource } from "@/store/types";
+import { Prop } from "vue-property-decorator";
 
 @Component({
   components: {
-    'commit-overview-base': CommitOverviewBase,
-    'tar-overview': TarOverview,
-    'run-info': RunInfo
-  }
+    "commit-overview-base": CommitOverviewBase,
+    "tar-overview": TarOverview,
+    "run-info": RunInfo,
+  },
 })
 export default class ComparisonRunInfo extends Vue {
   @Prop()
-  private readonly run!: Run
+  private readonly run!: Run;
 
   @Prop()
-  private readonly title!: string
+  private readonly title!: string;
 
   private get commit() {
     if (this.run.source instanceof CommitTaskSource) {
-      return this.run.source.commitDescription
+      return this.run.source.commitDescription;
     }
-    return null
+    return null;
   }
 
   private get tar() {
     if (this.run.source instanceof TarTaskSource) {
-      return this.run.source
+      return this.run.source;
     }
-    return null
+    return null;
   }
 }
 </script>

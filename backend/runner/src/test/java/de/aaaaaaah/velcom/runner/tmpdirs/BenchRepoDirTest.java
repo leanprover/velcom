@@ -11,65 +11,62 @@ import org.junit.jupiter.api.io.TempDir;
 
 class BenchRepoDirTest {
 
-	@TempDir
-	Path tempFolder;
+  @TempDir Path tempFolder;
 
-	private Path benchRepoDir;
-	private BenchRepoDir dir;
+  private Path benchRepoDir;
+  private BenchRepoDir dir;
 
-	@BeforeEach
-	void setUp() throws IOException {
-		benchRepoDir = tempFolder.resolve("benchrepo");
-		dir = new BenchRepoDir(benchRepoDir);
-	}
+  @BeforeEach
+  void setUp() throws IOException {
+    benchRepoDir = tempFolder.resolve("benchrepo");
+    dir = new BenchRepoDir(benchRepoDir);
+  }
 
-	@Test
-	void readsNoHash() {
-		assertThat(dir.getHash()).isEmpty();
-	}
+  @Test
+  void readsNoHash() {
+    assertThat(dir.getHash()).isEmpty();
+  }
 
-	@Test
-	void writesCorrectHash() throws IOException {
-		String hash = "12345";
-		dir.setHash(hash);
+  @Test
+  void writesCorrectHash() throws IOException {
+    String hash = "12345";
+    dir.setHash(hash);
 
-		assertThat(dir.getHash()).isPresent().contains(hash);
-	}
+    assertThat(dir.getHash()).isPresent().contains(hash);
+  }
 
-	@Test
-	void readsCorrectHash() throws IOException {
-		String hash = "12345";
-		dir.setHash(hash);
+  @Test
+  void readsCorrectHash() throws IOException {
+    String hash = "12345";
+    dir.setHash(hash);
 
-		assertThat(new BenchRepoDir(benchRepoDir).getHash()).isPresent().contains(hash);
-	}
+    assertThat(new BenchRepoDir(benchRepoDir).getHash()).isPresent().contains(hash);
+  }
 
-	@Test
-	void clearResetsHash() throws IOException {
-		String hash = "12345";
-		dir.setHash(hash);
+  @Test
+  void clearResetsHash() throws IOException {
+    String hash = "12345";
+    dir.setHash(hash);
 
-		dir.clear();
+    dir.clear();
 
-		assertThat(dir.getHash()).isEmpty();
-	}
+    assertThat(dir.getHash()).isEmpty();
+  }
 
-	@Test
-	void clearDeletesRepo() throws IOException {
-		Files.createDirectory(benchRepoDir);
+  @Test
+  void clearDeletesRepo() throws IOException {
+    Files.createDirectory(benchRepoDir);
 
-		Files.writeString(benchRepoDir.resolve("file"), "Hello world");
-		Files.createDirectory(benchRepoDir.resolve("directory"));
-		Files.createDirectory(benchRepoDir.resolve("non-empty-directory"));
-		Files.writeString(
-			benchRepoDir.resolve("non-empty-directory").resolve("test.tx"),
-			"Hello world"
-		);
+    Files.writeString(benchRepoDir.resolve("file"), "Hello world");
+    Files.createDirectory(benchRepoDir.resolve("directory"));
+    Files.createDirectory(benchRepoDir.resolve("non-empty-directory"));
+    Files.writeString(
+        benchRepoDir.resolve("non-empty-directory").resolve("test.tx"), "Hello world");
 
-		assertThat(benchRepoDir).isNotEmptyDirectory();
+    assertThat(benchRepoDir).isNotEmptyDirectory();
 
-		dir.clear();
+    dir.clear();
 
-		assertThat(benchRepoDir).doesNotExist();
-	}
+    assertThat(benchRepoDir).doesNotExist();
+  }
 }

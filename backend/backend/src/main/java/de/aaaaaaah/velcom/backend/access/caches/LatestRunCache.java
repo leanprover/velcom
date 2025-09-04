@@ -23,91 +23,85 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LatestRunCache {
 
-	private static final int MAXIMUM_SIZE = 10000;
+  private static final int MAXIMUM_SIZE = 10000;
 
-	private final ConcurrentHashMap<RepoId, Cache<CommitHash, Optional<RunId>>> cache;
+  private final ConcurrentHashMap<RepoId, Cache<CommitHash, Optional<RunId>>> cache;
 
-	public LatestRunCache() {
-		cache = new ConcurrentHashMap<>();
-	}
+  public LatestRunCache() {
+    cache = new ConcurrentHashMap<>();
+  }
 
-	private Cache<CommitHash, Optional<RunId>> getCacheForRepo(RepoId repoId) {
-		return cache.computeIfAbsent(
-			repoId,
-			missingRepoId -> Caffeine.newBuilder()
-				.maximumSize(MAXIMUM_SIZE)
-				.build()
-		);
-	}
+  private Cache<CommitHash, Optional<RunId>> getCacheForRepo(RepoId repoId) {
+    return cache.computeIfAbsent(
+        repoId, missingRepoId -> Caffeine.newBuilder().maximumSize(MAXIMUM_SIZE).build());
+  }
 
-	public Optional<RunId> getLatestRunId(BenchmarkReadAccess benchmarkAccess, RepoId repoId,
-		CommitHash commitHash) {
+  public Optional<RunId> getLatestRunId(
+      BenchmarkReadAccess benchmarkAccess, RepoId repoId, CommitHash commitHash) {
 
-		return getCacheForRepo(repoId).get(
-			commitHash,
-			missingHash -> benchmarkAccess.getLatestRunId(repoId, missingHash)
-		);
-	}
+    return getCacheForRepo(repoId)
+        .get(commitHash, missingHash -> benchmarkAccess.getLatestRunId(repoId, missingHash));
+  }
 
-	public Map<CommitHash, RunId> getLatestRunIds(BenchmarkReadAccess benchmarkAccess,
-		RepoId repoId, Collection<CommitHash> commitHashes) {
+  public Map<CommitHash, RunId> getLatestRunIds(
+      BenchmarkReadAccess benchmarkAccess, RepoId repoId, Collection<CommitHash> commitHashes) {
 
-		return getCacheForRepo(repoId).getAll(
-			commitHashes,
-			missingHashesIterator -> {
-				List<CommitHash> missingHashes = new ArrayList<>();
-				missingHashesIterator.forEach(missingHashes::add);
-				Map<CommitHash, RunId> missingIds = benchmarkAccess.getLatestRunIds(repoId, missingHashes);
-				return missingHashes.stream()
-					.collect(toMap(
-						it -> it,
-						it -> Optional.ofNullable(missingIds.get(it))
-					));
-			}
-		).entrySet().stream()
-			.filter(entry -> entry.getValue().isPresent())
-			.collect(toMap(
-				Entry::getKey,
-				entry -> entry.getValue().get()
-			));
-	}
+    return getCacheForRepo(repoId)
+        .getAll(
+            commitHashes,
+            missingHashesIterator -> {
+              List<CommitHash> missingHashes = new ArrayList<>();
+              missingHashesIterator.forEach(missingHashes::add);
+              Map<CommitHash, RunId> missingIds =
+                  benchmarkAccess.getLatestRunIds(repoId, missingHashes);
+              return missingHashes.stream()
+                  .collect(toMap(it -> it, it -> Optional.ofNullable(missingIds.get(it))));
+            })
+        .entrySet()
+        .stream()
+        .filter(entry -> entry.getValue().isPresent())
+        .collect(toMap(Entry::getKey, entry -> entry.getValue().get()));
+  }
 
-	public Optional<Run> getLatestRun(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
-		RepoId repoId, CommitHash commitHash) {
+  public Optional<Run> getLatestRun(
+      BenchmarkReadAccess benchmarkAccess,
+      RunCache runCache,
+      RepoId repoId,
+      CommitHash commitHash) {
 
-		return getLatestRunId(benchmarkAccess, repoId, commitHash)
-			.map(runId -> runCache.getRun(benchmarkAccess, runId));
-	}
+    return getLatestRunId(benchmarkAccess, repoId, commitHash)
+        .map(runId -> runCache.getRun(benchmarkAccess, runId));
+  }
 
-	public Map<CommitHash, Run> getLatestRuns(BenchmarkReadAccess benchmarkAccess, RunCache runCache,
-		RepoId repoId, Collection<CommitHash> commitHashes) {
+  public Map<CommitHash, Run> getLatestRuns(
+      BenchmarkReadAccess benchmarkAccess,
+      RunCache runCache,
+      RepoId repoId,
+      Collection<CommitHash> commitHashes) {
 
-		Map<CommitHash, RunId> latestRunIds = getLatestRunIds(benchmarkAccess, repoId, commitHashes);
-		Map<RunId, Run> runs = runCache.getRuns(benchmarkAccess, latestRunIds.values());
+    Map<CommitHash, RunId> latestRunIds = getLatestRunIds(benchmarkAccess, repoId, commitHashes);
+    Map<RunId, Run> runs = runCache.getRuns(benchmarkAccess, latestRunIds.values());
 
-		return latestRunIds.entrySet().stream()
-			.collect(toMap(
-				Entry::getKey,
-				entry -> runs.get(entry.getValue())
-			));
-	}
+    return latestRunIds.entrySet().stream()
+        .collect(toMap(Entry::getKey, entry -> runs.get(entry.getValue())));
+  }
 
-	/**
-	 * Invalidate the latest run for a specific commit.
-	 *
-	 * @param repoId the commit's repo
-	 * @param commitHash the commit hash
-	 */
-	public void invalidate(RepoId repoId, CommitHash commitHash) {
-		getCacheForRepo(repoId).invalidate(commitHash);
-	}
+  /**
+   * Invalidate the latest run for a specific commit.
+   *
+   * @param repoId the commit's repo
+   * @param commitHash the commit hash
+   */
+  public void invalidate(RepoId repoId, CommitHash commitHash) {
+    getCacheForRepo(repoId).invalidate(commitHash);
+  }
 
-	/**
-	 * Invalidate an entire repo's latest runs.
-	 *
-	 * @param repoId the repo's id
-	 */
-	public void invalidate(RepoId repoId) {
-		cache.remove(repoId);
-	}
+  /**
+   * Invalidate an entire repo's latest runs.
+   *
+   * @param repoId the repo's id
+   */
+  public void invalidate(RepoId repoId) {
+    cache.remove(repoId);
+  }
 }

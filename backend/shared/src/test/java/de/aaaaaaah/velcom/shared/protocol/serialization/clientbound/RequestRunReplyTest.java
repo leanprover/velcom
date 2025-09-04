@@ -11,29 +11,23 @@ import org.junit.jupiter.api.Test;
 
 class RequestRunReplyTest extends SerializerBasedTest {
 
-	@Test
-	void deserializeWithNoOptionals() throws JsonProcessingException {
-		String json = "{\"bench\": false, \"run\": false}";
-		Optional<RequestRunReply> result = serializer.deserialize(json, RequestRunReply.class);
+  @Test
+  void deserializeWithNoOptionals() throws JsonProcessingException {
+    String json = "{\"bench\": false, \"run\": false}";
+    Optional<RequestRunReply> result = serializer.deserialize(json, RequestRunReply.class);
 
-		assertTrue(result.isPresent());
-		assertEquals(
-			new RequestRunReply(false, null, false, null),
-			result.get()
-		);
-	}
+    assertTrue(result.isPresent());
+    assertEquals(new RequestRunReply(false, null, false, null), result.get());
+  }
 
-	@Test
-	void deserializeWithAllOptionals() throws JsonProcessingException {
-		String json = "{\"bench\": true, \"bench_hash\": \"yay, I'm a hash\", \"run\": true, \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\"}";
-		Optional<RequestRunReply> result = serializer.deserialize(json, RequestRunReply.class);
+  @Test
+  void deserializeWithAllOptionals() throws JsonProcessingException {
+    String json =
+        "{\"bench\": true, \"bench_hash\": \"yay, I'm a hash\", \"run\": true, \"run_id\": \"576afdcb-eaf9-46b2-9287-fc3bf8df83df\"}";
+    Optional<RequestRunReply> result = serializer.deserialize(json, RequestRunReply.class);
 
-		UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
-		assertTrue(result.isPresent());
-		assertEquals(
-			new RequestRunReply(true, "yay, I'm a hash", true, uuid),
-			result.get()
-		);
-	}
-
+    UUID uuid = UUID.fromString("576afdcb-eaf9-46b2-9287-fc3bf8df83df");
+    assertTrue(result.isPresent());
+    assertEquals(new RequestRunReply(true, "yay, I'm a hash", true, uuid), result.get());
+  }
 }

@@ -17,7 +17,7 @@
           color: item.changeColor,
           width: '6em',
           opacity: 0.9,
-          'font-size': '0.8rem'
+          'font-size': '0.8rem',
         }"
         class="d-inline-block"
       >
@@ -29,9 +29,7 @@
     </template>
 
     <template #[`item.stddevDiff`]="{ item, value }">
-      <span v-if="Number.isFinite(value)">
-        {{ item.formatNumber(value) }} σ
-      </span>
+      <span v-if="Number.isFinite(value)"> {{ item.formatNumber(value) }} σ </span>
       <span v-else>-</span>
     </template>
 
@@ -51,33 +49,33 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Vue from "vue";
+import Component from "vue-class-component";
 import {
   Dimension,
   DimensionDifference,
   DimensionInterpretation,
   MeasurementSuccess,
   Run,
-  RunResultSuccess
-} from '@/store/types'
-import { Prop } from 'vue-property-decorator'
+  RunResultSuccess,
+} from "@/store/types";
+import { Prop } from "vue-property-decorator";
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
-  { maximumFractionDigits: 3, notation: 'compact' }
-)
+  { maximumFractionDigits: 3, notation: "compact" },
+);
 
 class TableItem {
-  readonly benchmark: string
-  readonly metric: string
-  readonly unit: string
-  readonly valueFirst?: number
-  readonly difference?: number
-  readonly differencePercent?: number
-  readonly valueSecond?: number
-  readonly changeColor: string
-  readonly stddevDiff?: number
+  readonly benchmark: string;
+  readonly metric: string;
+  readonly unit: string;
+  readonly valueFirst?: number;
+  readonly difference?: number;
+  readonly differencePercent?: number;
+  readonly valueSecond?: number;
+  readonly changeColor: string;
+  readonly stddevDiff?: number;
 
   constructor(
     benchmark: string,
@@ -88,114 +86,109 @@ class TableItem {
     difference?: number,
     differencePercent?: number,
     stddevDiff?: number,
-    valueSecond?: number
+    valueSecond?: number,
   ) {
-    this.benchmark = benchmark
-    this.metric = metric
-    this.unit = unit
-    this.valueFirst = valueFirst
-    this.difference = difference
-    this.differencePercent = differencePercent
-    this.stddevDiff = stddevDiff
-    this.valueSecond = valueSecond
-    this.changeColor = this.computeChangeColor(interpretation, difference)
+    this.benchmark = benchmark;
+    this.metric = metric;
+    this.unit = unit;
+    this.valueFirst = valueFirst;
+    this.difference = difference;
+    this.differencePercent = differencePercent;
+    this.stddevDiff = stddevDiff;
+    this.valueSecond = valueSecond;
+    this.changeColor = this.computeChangeColor(interpretation, difference);
   }
 
   formatNumber(number?: number): string {
     if (number === undefined) {
-      return '-'
+      return "-";
     }
     if (Math.abs(number) === 0) {
-      return '0'
+      return "0";
     }
-    return numberFormat.format(number)
+    return numberFormat.format(number);
   }
 
-  private computeChangeColor(
-    interpretation: DimensionInterpretation,
-    change?: number
-  ): string {
+  private computeChangeColor(interpretation: DimensionInterpretation, change?: number): string {
     if (change === undefined || Math.abs(change) === 0 || isNaN(change)) {
-      return ''
+      return "";
     }
 
-    if (interpretation === 'NEUTRAL') {
-      return ''
+    if (interpretation === "NEUTRAL") {
+      return "";
     }
 
-    let bad = false
-    if (interpretation === 'LESS_IS_BETTER') {
-      bad = change > 0
-    } else if (interpretation === 'MORE_IS_BETTER') {
-      bad = change < 0
+    let bad = false;
+    if (interpretation === "LESS_IS_BETTER") {
+      bad = change > 0;
+    } else if (interpretation === "MORE_IS_BETTER") {
+      bad = change < 0;
     }
 
     if (bad) {
-      return 'var(--v-warning-base)'
+      return "var(--v-warning-base)";
     }
-    return 'var(--v-success-base)'
+    return "var(--v-success-base)";
   }
 }
 
 @Component
 export default class RunComparisonTable extends Vue {
   @Prop()
-  private first!: Run
+  private first!: Run;
 
   @Prop()
-  private second!: Run
+  private second!: Run;
 
   @Prop({ default: () => [] })
-  private differences!: DimensionDifference[]
+  private differences!: DimensionDifference[];
 
   private get headers() {
     return [
-      { text: 'Benchmark', value: 'benchmark', align: 'left' },
-      { text: 'Metric', value: 'metric', align: 'left' },
-      { text: 'Unit', value: 'unit', align: 'left' },
-      { text: 'Change/Stddev', value: 'stddevDiff', align: 'left' },
-      { text: this.first.id, value: 'valueFirst', align: 'right' },
+      { text: "Benchmark", value: "benchmark", align: "left" },
+      { text: "Metric", value: "metric", align: "left" },
+      { text: "Unit", value: "unit", align: "left" },
+      { text: "Change/Stddev", value: "stddevDiff", align: "left" },
+      { text: this.first.id, value: "valueFirst", align: "right" },
       {
-        text: '->',
-        value: 'difference',
+        text: "->",
+        value: "difference",
         filterable: false,
-        align: 'end'
+        align: "end",
       },
-      { text: this.second.id, value: 'valueSecond', align: 'left' }
-    ]
+      { text: this.second.id, value: "valueSecond", align: "left" },
+    ];
   }
 
   /**
    * Cache the differences indexed by dimension as that is the main lookup direction in the item generation.
    */
   get differencesPerDimension(): Map<string, DimensionDifference> {
-    const diffsPerDim: Map<string, DimensionDifference> = new Map()
+    const diffsPerDim: Map<string, DimensionDifference> = new Map();
     for (const diff of this.differences) {
       // We only have one measurement per dimension, so this index is safe and won't collide.
       // Safety assertion if this ever changes
       if (diffsPerDim.has(diff.dimension.toString())) {
-        throw new Error(
-          'Duplicated dimension detected: ' + diff.dimension.toString()
-        )
+        throw new Error("Duplicated dimension detected: " + diff.dimension.toString());
       }
       // We never partially modify the contents, ignore changes to them.
-      diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff))
+      diffsPerDim.set(diff.dimension.toString(), Object.freeze(diff));
     }
-    return diffsPerDim
+    return diffsPerDim;
   }
 
   private get items(): TableItem[] {
     const allDimensions = this.getDimensionsForRun(this.first).concat(
-      this.getDimensionsForRun(this.second)
-    )
+      this.getDimensionsForRun(this.second),
+    );
 
-    const uniqueDimensions: Map<string, Dimension> = new Map()
-    allDimensions.forEach(dim => {
-      uniqueDimensions.set(dim.toString(), dim)
-    })
+    const uniqueDimensions: Map<string, Dimension> = new Map();
+    allDimensions.forEach((dim) => {
+      uniqueDimensions.set(dim.toString(), dim);
+    });
 
     return Array.from(uniqueDimensions.values()).map(
-      dimension =>
+      (dimension) =>
         new TableItem(
           dimension.benchmark,
           dimension.metric,
@@ -205,53 +198,53 @@ export default class RunComparisonTable extends Vue {
           this.getDifference(dimension),
           this.getDifferencePercent(dimension),
           this.getStddevDiff(dimension),
-          this.getValue(this.second, dimension)
-        )
-    )
+          this.getValue(this.second, dimension),
+        ),
+    );
   }
 
   private getDimensionsForRun(run: Run): Dimension[] {
     if (run.result instanceof RunResultSuccess) {
-      return run.result.measurements.map(it => it.dimension)
+      return run.result.measurements.map((it) => it.dimension);
     }
-    return []
+    return [];
   }
 
   private getDifference(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString())
+    const difference = this.differencesPerDimension.get(dimension.toString());
     if (difference) {
-      return difference.absDiff
+      return difference.absDiff;
     }
-    return undefined
+    return undefined;
   }
 
   private getDifferencePercent(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString())
+    const difference = this.differencesPerDimension.get(dimension.toString());
     if (difference) {
-      return difference.relDiff
+      return difference.relDiff;
     }
-    return undefined
+    return undefined;
   }
 
   private getStddevDiff(dimension: Dimension): number | undefined {
-    const difference = this.differencesPerDimension.get(dimension.toString())
+    const difference = this.differencesPerDimension.get(dimension.toString());
     if (difference) {
-      return difference.stddevDiff
+      return difference.stddevDiff;
     }
-    return undefined
+    return undefined;
   }
 
   private getValue(run: Run, dimension: Dimension): number | undefined {
     if (run.result instanceof RunResultSuccess) {
-      const relevantMeasurement = run.result.forDimension(dimension)
+      const relevantMeasurement = run.result.forDimension(dimension);
       if (!relevantMeasurement) {
-        return undefined
+        return undefined;
       }
       if (relevantMeasurement instanceof MeasurementSuccess) {
-        return relevantMeasurement.value
+        return relevantMeasurement.value;
       }
     }
-    return undefined
+    return undefined;
   }
 }
 </script>

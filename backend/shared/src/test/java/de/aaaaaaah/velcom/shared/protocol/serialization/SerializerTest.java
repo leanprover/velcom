@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 
 public class SerializerTest extends SerializerBasedTest {
 
-	@Test
-	void deserializeFailReturnsEmpty() {
-		assertThat(serializer.deserialize("hello", SerializerBasedTest.class)).isEmpty();
-	}
+  @Test
+  void deserializeFailReturnsEmpty() {
+    assertThat(serializer.deserialize("hello", SerializerBasedTest.class)).isEmpty();
+  }
 }

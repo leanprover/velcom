@@ -21,24 +21,24 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import StatusComparison from '@/views/StatusComparison.vue'
-import TimelineComparison from '@/views/TimelineComparison.vue'
-import { vxm } from '@/store'
+import Vue from "vue";
+import Component from "vue-class-component";
+import StatusComparison from "@/views/StatusComparison.vue";
+import TimelineComparison from "@/views/TimelineComparison.vue";
+import { vxm } from "@/store";
 
 @Component({
-  components: { TimelineComparison, StatusComparison }
+  components: { TimelineComparison, StatusComparison },
 })
 export default class Comparison extends Vue {
-  private tabMapping: Array<'timeline' | 'status'> = ['timeline', 'status']
+  private tabMapping: Array<"timeline" | "status"> = ["timeline", "status"];
 
   private set selectedTab(tabIndex: number) {
-    vxm.statusComparisonModule.selectedTab = this.tabMapping[tabIndex]
+    vxm.statusComparisonModule.selectedTab = this.tabMapping[tabIndex];
   }
 
   private get selectedTab(): number {
-    return this.tabMapping.indexOf(vxm.statusComparisonModule.selectedTab)
+    return this.tabMapping.indexOf(vxm.statusComparisonModule.selectedTab);
   }
 
   private get height() {
@@ -48,27 +48,27 @@ export default class Comparison extends Vue {
     //   - 25px Tabs
     //   -  8px tab margin
     //   -  4px lift it up a bit
-    return 'calc(100vh - 64px - 8px - 25px - 8px - 4px)'
+    return "calc(100vh - 64px - 8px - 25px - 8px - 4px)";
   }
 
   private async mounted() {
     // They will be fetched on page load anyways, but we *need* to make sure they are already loaded!
     // Otherwise we might not find our selected dimension
     if (vxm.repoModule.allRepos.length === 0) {
-      await vxm.repoModule.fetchRepos()
+      await vxm.repoModule.fetchRepos();
     }
 
     // No query, so do not adjust to anything
     if (Object.keys(this.$route.query).length === 0) {
-      return
+      return;
     }
 
-    if (!this.$route.query.type || this.$route.query.type === 'timeline') {
-      await vxm.comparisonGraphModule.adjustToPermanentLink(this.$route)
-      this.selectedTab = this.tabMapping.indexOf('timeline')
+    if (!this.$route.query.type || this.$route.query.type === "timeline") {
+      await vxm.comparisonGraphModule.adjustToPermanentLink(this.$route);
+      this.selectedTab = this.tabMapping.indexOf("timeline");
     } else {
-      await vxm.statusComparisonModule.adjustToPermanentLink(this.$route)
-      this.selectedTab = this.tabMapping.indexOf('status')
+      await vxm.statusComparisonModule.adjustToPermanentLink(this.$route);
+      this.selectedTab = this.tabMapping.indexOf("status");
     }
   }
 }

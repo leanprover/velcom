@@ -46,19 +46,19 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import RepoBaseInformation from '@/components/repodetail/RepoBaseInformation.vue'
-import { vxm } from '@/store'
-import RepoGraph from '@/components/graphs/detail/RepoGraph.vue'
-import GraphDimensionSelector from '@/components/repodetail/GraphDimensionSelector.vue'
-import GraphTimespanControls from '@/components/graphs/helper/GraphTimespanControls.vue'
-import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
-import GraphSettings from '@/components/graphs/helper/GraphSettings.vue'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { availableGraphComponents } from '@/util/GraphVariantSelection'
-import ExpandableDimensionSelection from '@/components/graphs/helper/ExpandableDimensionSelection.vue'
-import { Dimension } from '@/store/types'
+import Vue from "vue";
+import Component from "vue-class-component";
+import RepoBaseInformation from "@/components/repodetail/RepoBaseInformation.vue";
+import { vxm } from "@/store";
+import RepoGraph from "@/components/graphs/detail/RepoGraph.vue";
+import GraphDimensionSelector from "@/components/repodetail/GraphDimensionSelector.vue";
+import GraphTimespanControls from "@/components/graphs/helper/GraphTimespanControls.vue";
+import ShareGraphLinkDialog from "@/components/graphs/helper/ShareGraphLinkDialog.vue";
+import GraphSettings from "@/components/graphs/helper/GraphSettings.vue";
+import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
+import { availableGraphComponents } from "@/util/GraphVariantSelection";
+import ExpandableDimensionSelection from "@/components/graphs/helper/ExpandableDimensionSelection.vue";
+import { Dimension } from "@/store/types";
 
 @Component({
   components: {
@@ -68,127 +68,124 @@ import { Dimension } from '@/store/types'
     ShareGraphLinkDialog,
     GraphTimespanControls,
     RepoGraph,
-    RepoBaseInformation
-  }
+    RepoBaseInformation,
+  },
 })
 export default class RepoGraphView extends Vue {
-  private reloadGraphDataCounter = 0
-  private graphComponent: typeof Vue | null =
-    availableGraphComponents[0].component
+  private reloadGraphDataCounter = 0;
+  private graphComponent: typeof Vue | null = availableGraphComponents[0].component;
 
   // <!--<editor-fold desc="Dimension selection">-->
   private get allDimensions() {
-    return this.repo
-      ? this.repo.dimensions.filter(d => !d.benchmark.startsWith('~'))
-      : []
+    return this.repo ? this.repo.dimensions.filter((d) => !d.benchmark.startsWith("~")) : [];
   }
 
   private get selectedDimensions() {
-    return vxm.detailGraphModule.selectedDimensions
+    return vxm.detailGraphModule.selectedDimensions;
   }
 
   private set selectedDimensions(dimensions: Dimension[]) {
-    vxm.detailGraphModule.selectedDimensions = dimensions
+    vxm.detailGraphModule.selectedDimensions = dimensions;
   }
 
   private get selectorType() {
-    return vxm.detailGraphModule.selectedDimensionSelector
+    return vxm.detailGraphModule.selectedDimensionSelector;
   }
 
-  private set selectorType(selector: 'tree' | 'matrix') {
-    vxm.detailGraphModule.selectedDimensionSelector = selector
+  private set selectorType(selector: "tree" | "matrix") {
+    vxm.detailGraphModule.selectedDimensionSelector = selector;
   }
   // <!--</editor-fold>-->
 
   private get endTime(): Date {
-    return vxm.detailGraphModule.endTime
+    return vxm.detailGraphModule.endTime;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set endTime(date: Date) {
-    vxm.detailGraphModule.endTime = date
+    vxm.detailGraphModule.endTime = date;
   }
 
   private get startTime(): Date {
-    return vxm.detailGraphModule.startTime
+    return vxm.detailGraphModule.startTime;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set startTime(date: Date) {
-    vxm.detailGraphModule.startTime = date
+    vxm.detailGraphModule.startTime = date;
   }
 
   private get repoId() {
-    return vxm.detailGraphModule.selectedRepoId
+    return vxm.detailGraphModule.selectedRepoId;
   }
 
   private get repo() {
-    return vxm.repoModule.repoById(this.repoId)
+    return vxm.repoModule.repoById(this.repoId);
   }
 
   private get beginYAtZero() {
-    return vxm.detailGraphModule.beginYScaleAtZero
+    return vxm.detailGraphModule.beginYScaleAtZero;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set beginYAtZero(beginYAtZero: boolean) {
-    vxm.detailGraphModule.beginYScaleAtZero = beginYAtZero
+    vxm.detailGraphModule.beginYScaleAtZero = beginYAtZero;
   }
 
   private get stacked() {
-    return vxm.detailGraphModule.stacked
+    return vxm.detailGraphModule.stacked;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set stacked(stacked: boolean) {
-    vxm.detailGraphModule.stacked = stacked
+    vxm.detailGraphModule.stacked = stacked;
   }
 
   private get normalized() {
-    return vxm.detailGraphModule.normalized
+    return vxm.detailGraphModule.normalized;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set normalized(normalized: boolean) {
-    vxm.detailGraphModule.normalized = normalized
+    vxm.detailGraphModule.normalized = normalized;
   }
 
   private getShareLink(options: PermanentLinkOptions) {
-    return vxm.detailGraphModule.permanentLink(options)
+    return vxm.detailGraphModule.permanentLink(options);
   }
 
   private get shareOptions() {
     return [
       {
-        label: 'Use X-axis zoom instead of start/end date',
+        label: "Use X-axis zoom instead of start/end date",
         selectable: true,
-        unselectableMessage: 'That you see this is a bug. Please report it :)',
-        key: 'includeXZoom'
+        unselectableMessage: "That you see this is a bug. Please report it :)",
+        key: "includeXZoom",
       },
       {
-        label: 'Include Y-axis zoom',
+        label: "Include Y-axis zoom",
         selectable:
           vxm.detailGraphModule.zoomYStartValue !== null ||
           vxm.detailGraphModule.zoomYEndValue !== null,
         unselectableMessage: "You haven't zoomed the Y axis",
-        key: 'includeYZoom'
+        key: "includeYZoom",
       },
       {
-        label: 'Include dimensions',
+        label: "Include dimensions",
         selectable: vxm.detailGraphModule.selectedDimensions.length > 0,
         unselectableMessage: "You haven't selected any dimensions",
-        key: 'includeDataRestrictions'
-      }
-    ]
+        key: "includeDataRestrictions",
+      },
+    ];
   }
 
   private get dayEquidistantGraphSelected() {
-    return vxm.detailGraphModule.dayEquidistantGraph
+    return vxm.detailGraphModule.dayEquidistantGraph;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set dayEquidistantGraphSelected(selected: boolean) {
-    vxm.detailGraphModule.dayEquidistantGraph = selected
+    vxm.detailGraphModule.dayEquidistantGraph = selected;
   }
 }
 </script>

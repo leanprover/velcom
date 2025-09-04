@@ -5,8 +5,8 @@ import {
   RepoId,
   ComparisonDataPoint,
   Dimension,
-  SeriesId
-} from '@/store/types'
+  SeriesId,
+} from "@/store/types";
 
 /**
  * Parses a data point json to a DataPoint object.
@@ -20,14 +20,14 @@ import {
 export function detailDataPointFromJson(
   json: any,
   seriesIds: SeriesId[],
-  repoId: RepoId
+  repoId: RepoId,
 ): DetailDataPoint {
-  const map: Map<SeriesId, GraphDataPointValue> = new Map()
+  const map: Map<SeriesId, GraphDataPointValue> = new Map();
   for (let i = 0; i < seriesIds.length; i++) {
-    map.set(seriesIds[i], graphDataPointValueFromJson(json.values[i]))
+    map.set(seriesIds[i], graphDataPointValueFromJson(json.values[i]));
   }
 
-  const committerDate = new Date(json.committer_date * 1000)
+  const committerDate = new Date(json.committer_date * 1000);
   return new DetailDataPoint(
     repoId,
     json.hash,
@@ -36,38 +36,36 @@ export function detailDataPointFromJson(
     committerDate,
     committerDate,
     json.summary,
-    map
-  )
+    map,
+  );
 }
 
-function graphDataPointValueFromJson(
-  jsonValue: string | number
-): GraphDataPointValue {
-  if (typeof jsonValue === 'number') {
-    return jsonValue
+function graphDataPointValueFromJson(jsonValue: string | number): GraphDataPointValue {
+  if (typeof jsonValue === "number") {
+    return jsonValue;
   }
   switch (jsonValue) {
-    case 'N':
-      return 'NO_RUN'
-    case 'O':
-      return 'NO_MEASUREMENT'
-    case 'R':
-      return 'RUN_FAILED'
-    case 'M':
-      return 'MEASUREMENT_FAILED'
+    case "N":
+      return "NO_RUN";
+    case "O":
+      return "NO_MEASUREMENT";
+    case "R":
+      return "RUN_FAILED";
+    case "M":
+      return "MEASUREMENT_FAILED";
   }
-  throw new Error(`Illegal type received: ${jsonValue}`)
+  throw new Error(`Illegal type received: ${jsonValue}`);
 }
 
 export function comparisonDatapointFromJson(
   dimension: Dimension,
-  repoJson: any
+  repoJson: any,
 ): ComparisonDataPoint[] {
-  const repoId: RepoId = repoJson.repo_id
+  const repoId: RepoId = repoJson.repo_id;
 
   return repoJson.commits.map((commit: any) => {
-    const valueMap = new Map()
-    valueMap.set(repoId, graphDataPointValueFromJson(commit.value))
+    const valueMap = new Map();
+    valueMap.set(repoId, graphDataPointValueFromJson(commit.value));
     return new ComparisonDataPoint(
       new Date(commit.committer_date * 1000),
       new Date(commit.committer_date * 1000),
@@ -76,7 +74,7 @@ export function comparisonDatapointFromJson(
       valueMap,
       commit.parents.map((hash: string) => repoId + hash),
       commit.summary,
-      commit.author
-    )
-  })
+      commit.author,
+    );
+  });
 }

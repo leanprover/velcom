@@ -1,50 +1,46 @@
-import { action, createModule } from 'vuex-class-component'
-import {
-  Dimension,
-  dimensionIdToString,
-  StatusComparisonPoint
-} from '@/store/types'
-import axios from 'axios'
-import { statusComparisonPointFromJson } from '@/util/json/StatusComparisonJsonHelper'
-import { formatDimensions, formatRepos } from '@/util/Texts'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import router from '@/router'
-import { respectOptions } from '@/util/LinkUtils'
-import { Route } from 'vue-router'
-import { vxm } from '@/store'
+import { action, createModule } from "vuex-class-component";
+import { Dimension, dimensionIdToString, StatusComparisonPoint } from "@/store/types";
+import axios from "axios";
+import { statusComparisonPointFromJson } from "@/util/json/StatusComparisonJsonHelper";
+import { formatDimensions, formatRepos } from "@/util/Texts";
+import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
+import router from "@/router";
+import { respectOptions } from "@/util/LinkUtils";
+import { Route } from "vue-router";
+import { vxm } from "@/store";
 
 const VxModule = createModule({
-  namespaced: 'statusComparisonModule',
-  strict: false
-})
+  namespaced: "statusComparisonModule",
+  strict: false,
+});
 
 export class StatusComparisonStore extends VxModule {
-  graph: StatusComparisonPoint[] = []
-  baselineRepoId: string | null = null
-  selectedDimensions: Dimension[] = []
-  selectedDimensionSelector: 'tree' | 'matrix' = 'matrix'
+  graph: StatusComparisonPoint[] = [];
+  baselineRepoId: string | null = null;
+  selectedDimensions: Dimension[] = [];
+  selectedDimensionSelector: "tree" | "matrix" = "matrix";
 
-  selectedTab: 'timeline' | 'status' = 'timeline'
+  selectedTab: "timeline" | "status" = "timeline";
 
   @action
   async fetch(): Promise<StatusComparisonPoint[]> {
-    const repos = vxm.comparisonGraphModule.selectedBranches
+    const repos = vxm.comparisonGraphModule.selectedBranches;
 
     // Nothing selected
     if (repos.size === 0) {
-      this.graph = []
-      return []
+      this.graph = [];
+      return [];
     }
 
-    const response = await axios.get('/graph/status-comparison', {
+    const response = await axios.get("/graph/status-comparison", {
       params: {
-        repos: formatRepos(repos)
-      }
-    })
+        repos: formatRepos(repos),
+      },
+    });
 
-    this.graph = response.data.runs.map(statusComparisonPointFromJson)
+    this.graph = response.data.runs.map(statusComparisonPointFromJson);
 
-    return this.graph
+    return this.graph;
   }
 
   /**
@@ -54,40 +50,40 @@ export class StatusComparisonStore extends VxModule {
    */
   @action
   async adjustToPermanentLink(link: Route): Promise<void> {
-    if (link.query.dimensions && typeof link.query.dimensions === 'string') {
+    if (link.query.dimensions && typeof link.query.dimensions === "string") {
       const dimensionMap = new Map(
         vxm.repoModule
-          .occuringDimensions(vxm.repoModule.allRepos.map(it => it.id))
-          .map(dimension => [dimension.toString(), dimension])
-      )
+          .occuringDimensions(vxm.repoModule.allRepos.map((it) => it.id))
+          .map((dimension) => [dimension.toString(), dimension]),
+      );
 
-      const dimensionParts = link.query.dimensions.split('::')
+      const dimensionParts = link.query.dimensions.split("::");
       this.selectedDimensions = dimensionParts
-        .flatMap(dimensionPart => {
-          const [benchmark, ...metrics] = dimensionPart.split(':')
+        .flatMap((dimensionPart) => {
+          const [benchmark, ...metrics] = dimensionPart.split(":");
 
-          return metrics.map(metric =>
-            dimensionMap.get(dimensionIdToString({ metric, benchmark }))
-          )
+          return metrics.map((metric) =>
+            dimensionMap.get(dimensionIdToString({ metric, benchmark })),
+          );
         })
-        .filter(it => it)
-        .map(it => it!)
+        .filter((it) => it)
+        .map((it) => it!);
     }
 
-    if (link.query.repos && typeof link.query.repos === 'string') {
-      const fullString = link.query.repos
-      const repoParts = fullString.split('::')
-      repoParts.forEach(repoPart => {
-        const [repoId, ...branches] = repoPart.split(':')
+    if (link.query.repos && typeof link.query.repos === "string") {
+      const fullString = link.query.repos;
+      const repoParts = fullString.split("::");
+      repoParts.forEach((repoPart) => {
+        const [repoId, ...branches] = repoPart.split(":");
         vxm.comparisonGraphModule.setSelectedBranchesForRepo({
           repoId,
-          branches
-        })
-      })
+          branches,
+        });
+      });
     }
 
-    if (link.query.baseline && typeof link.query.baseline === 'string') {
-      this.baselineRepoId = link.query.baseline
+    if (link.query.baseline && typeof link.query.baseline === "string") {
+      this.baselineRepoId = link.query.baseline;
     }
   }
 
@@ -95,31 +91,31 @@ export class StatusComparisonStore extends VxModule {
    * Returns a permanent link to the current status comparison graph state
    */
   get permanentLink(): (options?: PermanentLinkOptions) => string {
-    return options => {
+    return (options) => {
       const route = router.resolve({
-        name: 'repo-comparison',
+        name: "repo-comparison",
         query: {
-          type: 'status',
+          type: "status",
           repos: respectOptions(
             options,
-            'includeDataRestrictions',
-            formatRepos(vxm.comparisonGraphModule.selectedBranches)
+            "includeDataRestrictions",
+            formatRepos(vxm.comparisonGraphModule.selectedBranches),
           ),
           baseline: respectOptions(
             options,
-            'includeDataRestrictions',
-            this.baselineRepoId || undefined
+            "includeDataRestrictions",
+            this.baselineRepoId || undefined,
           ),
           dimensions: respectOptions(
             options,
-            'includeDataRestrictions',
-            formatDimensions(this.selectedDimensions)
-          )
-        }
-      })
+            "includeDataRestrictions",
+            formatDimensions(this.selectedDimensions),
+          ),
+        },
+      });
 
-      return location.origin + route.href
-    }
+      return location.origin + route.href;
+    };
   }
 
   /**
@@ -132,7 +128,7 @@ export class StatusComparisonStore extends VxModule {
       baselineRepoId: store.baselineRepoId,
       selectedDimensions: store.selectedDimensions,
       selectedDimensionSelector: store.selectedDimensionSelector,
-      selectedTab: store.selectedTab
-    }
+      selectedTab: store.selectedTab,
+    };
   }
 }

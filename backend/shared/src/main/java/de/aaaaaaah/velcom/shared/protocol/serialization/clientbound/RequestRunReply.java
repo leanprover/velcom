@@ -14,85 +14,80 @@ import javax.annotation.Nullable;
  */
 public class RequestRunReply implements ClientBound {
 
-	private final boolean bench;
-	@Nullable
-	private final String benchHash;
-	private final boolean run;
-	@Nullable
-	private final UUID runId;
+  private final boolean bench;
+  @Nullable private final String benchHash;
+  private final boolean run;
+  @Nullable private final UUID runId;
 
-	@JsonCreator
-	public RequestRunReply(
-		@JsonProperty(required = true) boolean bench,
-		@Nullable String benchHash,
-		@JsonProperty(required = true) boolean run,
-		@Nullable UUID runId
-	) {
-		if (bench && benchHash == null) {
-			throw new IllegalArgumentException("if bench is true, bench_hash must not be null");
-		} else if (!bench && benchHash != null) {
-			throw new IllegalArgumentException("if bench is false, bench_hash must be null");
-		} else if (run && runId == null) {
-			throw new IllegalArgumentException("if run is true, run_id must not be null");
-		} else if (!run && runId != null) {
-			throw new IllegalArgumentException("if run is false, run_id must be null");
-		}
+  @JsonCreator
+  public RequestRunReply(
+      @JsonProperty(required = true) boolean bench,
+      @Nullable String benchHash,
+      @JsonProperty(required = true) boolean run,
+      @Nullable UUID runId) {
+    if (bench && benchHash == null) {
+      throw new IllegalArgumentException("if bench is true, bench_hash must not be null");
+    } else if (!bench && benchHash != null) {
+      throw new IllegalArgumentException("if bench is false, bench_hash must be null");
+    } else if (run && runId == null) {
+      throw new IllegalArgumentException("if run is true, run_id must not be null");
+    } else if (!run && runId != null) {
+      throw new IllegalArgumentException("if run is false, run_id must be null");
+    }
 
-		this.bench = bench;
-		this.benchHash = benchHash;
-		this.run = run;
-		this.runId = runId;
-	}
+    this.bench = bench;
+    this.benchHash = benchHash;
+    this.run = run;
+    this.runId = runId;
+  }
 
-	/**
-	 * @return whether the backend will send a new benchmark repo
-	 */
-	@JsonProperty("bench")
-	public boolean hasBench() {
-		return bench;
-	}
+  /**
+   * @return whether the backend will send a new benchmark repo
+   */
+  @JsonProperty("bench")
+  public boolean hasBench() {
+    return bench;
+  }
 
-	public Optional<String> getBenchHash() {
-		return Optional.ofNullable(benchHash);
-	}
+  public Optional<String> getBenchHash() {
+    return Optional.ofNullable(benchHash);
+  }
 
-	/**
-	 * @return whether the backend will send a new repo for the runner to benchmark
-	 */
-	@JsonProperty("run")
-	public boolean hasRun() {
-		return run;
-	}
+  /**
+   * @return whether the backend will send a new repo for the runner to benchmark
+   */
+  @JsonProperty("run")
+  public boolean hasRun() {
+    return run;
+  }
 
-	public Optional<UUID> getRunId() {
-		return Optional.ofNullable(runId);
-	}
+  public Optional<UUID> getRunId() {
+    return Optional.ofNullable(runId);
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		RequestRunReply that = (RequestRunReply) o;
-		return bench == that.bench &&
-			run == that.run &&
-			Objects.equals(benchHash, that.benchHash) &&
-			Objects.equals(runId, that.runId);
-	}
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RequestRunReply that = (RequestRunReply) o;
+    return bench == that.bench
+        && run == that.run
+        && Objects.equals(benchHash, that.benchHash)
+        && Objects.equals(runId, that.runId);
+  }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(bench, benchHash, run, runId);
-	}
+  @Override
+  public int hashCode() {
+    return Objects.hash(bench, benchHash, run, runId);
+  }
 
-	@Override
-	public ClientBoundPacket asPacket(Serializer serializer) {
-		return new ClientBoundPacket(
-			ClientBoundPacketType.REQUEST_RUN_REPLY,
-			serializer.serializeTree(this)
-		);
-	}
+  @Override
+  public ClientBoundPacket asPacket(Serializer serializer) {
+    return new ClientBoundPacket(
+        ClientBoundPacketType.REQUEST_RUN_REPLY, serializer.serializeTree(this));
+  }
 }

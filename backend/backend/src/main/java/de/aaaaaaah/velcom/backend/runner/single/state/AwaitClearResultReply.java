@@ -8,42 +8,47 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.serverbound.ServerBoundP
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A state waiting for a reply to the GetResult message.
- */
+/** A state waiting for a reply to the GetResult message. */
 public class AwaitClearResultReply extends TimeoutState {
 
-	private final CompletableFuture<Void> replyFuture;
+  private final CompletableFuture<Void> replyFuture;
 
-	public AwaitClearResultReply(TeleRunner runner, RunnerConnection connection) {
-		super(runner, connection);
+  public AwaitClearResultReply(TeleRunner runner, RunnerConnection connection) {
+    super(runner, connection);
 
-		this.replyFuture = new CompletableFuture<>();
-	}
+    this.replyFuture = new CompletableFuture<>();
+  }
 
-	public CompletableFuture<Void> getReplyFuture() {
-		return replyFuture;
-	}
+  public CompletableFuture<Void> getReplyFuture() {
+    return replyFuture;
+  }
 
-	@Override
-	public void onExit() {
-		super.onExit();
+  @Override
+  public void onExit() {
+    super.onExit();
 
-		if (!replyFuture.isDone()) {
-			replyFuture.cancel(true);
-		}
-	}
+    if (!replyFuture.isDone()) {
+      replyFuture.cancel(true);
+    }
+  }
 
-	@Override
-	protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
-		return super.onPacket(packet).or(() -> Optional.of(packet)
-			.filter(it -> it.getType() == ServerBoundPacketType.CLEAR_RESULT_REPLY)
-			.flatMap(it -> connection.getSerializer().deserialize(it.getData(), ClearResultReply.class))
-			.map(reply -> {
-				replyFuture.complete(null);
+  @Override
+  protected Optional<TeleRunnerState> onPacket(ServerBoundPacket packet) {
+    return super.onPacket(packet)
+        .or(
+            () ->
+                Optional.of(packet)
+                    .filter(it -> it.getType() == ServerBoundPacketType.CLEAR_RESULT_REPLY)
+                    .flatMap(
+                        it ->
+                            connection
+                                .getSerializer()
+                                .deserialize(it.getData(), ClearResultReply.class))
+                    .map(
+                        reply -> {
+                          replyFuture.complete(null);
 
-				return new IdleState(runner, connection);
-			})
-		);
-	}
+                          return new IdleState(runner, connection);
+                        }));
+  }
 }

@@ -10,70 +10,89 @@ import org.junit.jupiter.api.Test;
 
 class RepoTest {
 
-	@Test
-	void testIllegalConstructorArguments() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Repo(
-			new RepoId(),
-			"velcom",
-			new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
-			null,
-			Instant.now()
-		));
+  @Test
+  void testIllegalConstructorArguments() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new Repo(
+                new RepoId(),
+                "velcom",
+                new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
+                null,
+                Instant.now()));
 
-		Assertions.assertThrows(IllegalArgumentException.class, () -> new Repo(
-			new RepoId(),
-			"velcom",
-			new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
-			"bla",
-			null
-		));
-	}
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new Repo(
+                new RepoId(),
+                "velcom",
+                new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
+                "bla",
+                null));
+  }
 
-	@Test
-	void testGhRepoName() {
-		Repo repo = new Repo(new RepoId(), "velcom via https",
-			new RemoteUrl("https://github.com/IPDSnelting/velcom.git"), null, null);
-		assertThat(repo.getGithubRepoName()).isEqualTo(Optional.of("IPDSnelting/velcom"));
+  @Test
+  void testGhRepoName() {
+    Repo repo =
+        new Repo(
+            new RepoId(),
+            "velcom via https",
+            new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
+            null,
+            null);
+    assertThat(repo.getGithubRepoName()).isEqualTo(Optional.of("IPDSnelting/velcom"));
 
-		repo = new Repo(new RepoId(), "velcom via ssh",
-			new RemoteUrl("git@github.com:IPDSnelting/velcom.git"), null, null);
-		assertThat(repo.getGithubRepoName()).isEqualTo(Optional.of("IPDSnelting/velcom"));
+    repo =
+        new Repo(
+            new RepoId(),
+            "velcom via ssh",
+            new RemoteUrl("git@github.com:IPDSnelting/velcom.git"),
+            null,
+            null);
+    assertThat(repo.getGithubRepoName()).isEqualTo(Optional.of("IPDSnelting/velcom"));
 
-		repo = new Repo(new RepoId(), "velcom via gitlab(!?)",
-			new RemoteUrl("https://gitlab.com/IPDSnelting/velcom.git"), null, null);
-		assertThat(repo.getGithubRepoName()).isEmpty();
-	}
+    repo =
+        new Repo(
+            new RepoId(),
+            "velcom via gitlab(!?)",
+            new RemoteUrl("https://gitlab.com/IPDSnelting/velcom.git"),
+            null,
+            null);
+    assertThat(repo.getGithubRepoName()).isEmpty();
+  }
 
-	@Test
-	void testGhInfo() {
-		Instant now = Instant.now();
+  @Test
+  void testGhInfo() {
+    Instant now = Instant.now();
 
-		Repo repo = new Repo(
-			new RepoId(),
-			"velcom",
-			new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
-			null,
-			null
-		);
-		assertThat(repo.getGithubInfo()).isEmpty();
+    Repo repo =
+        new Repo(
+            new RepoId(),
+            "velcom",
+            new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
+            null,
+            null);
+    assertThat(repo.getGithubInfo()).isEmpty();
 
-		repo = new Repo(
-			new RepoId(),
-			"velcom",
-			new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
-			"token",
-			now
-		);
-		assertThat(repo.getGithubInfo())
-			.isEqualTo(Optional.of(new GithubInfo("IPDSnelting/velcom", "token", now)));
+    repo =
+        new Repo(
+            new RepoId(),
+            "velcom",
+            new RemoteUrl("https://github.com/IPDSnelting/velcom.git"),
+            "token",
+            now);
+    assertThat(repo.getGithubInfo())
+        .isEqualTo(Optional.of(new GithubInfo("IPDSnelting/velcom", "token", now)));
 
-		repo = new Repo(
-			new RepoId(),
-			"velcom via https",
-			new RemoteUrl("https://gitlab.com/IPDSnelting/velcom.git"),
-			"token",
-			now
-		);
-		assertThat(repo.getGithubInfo()).isEmpty();
-	}
+    repo =
+        new Repo(
+            new RepoId(),
+            "velcom via https",
+            new RemoteUrl("https://gitlab.com/IPDSnelting/velcom.git"),
+            "token",
+            now);
+    assertThat(repo.getGithubInfo()).isEmpty();
+  }
 }

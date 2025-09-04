@@ -25,42 +25,42 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Model, Prop } from 'vue-property-decorator'
-import { Repo } from '@/store/types'
-import { mdiSourceBranch } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Model, Prop } from "vue-property-decorator";
+import { Repo } from "@/store/types";
+import { mdiSourceBranch } from "@mdi/js";
 
 @Component
 export default class RepoSelectionComponent extends Vue {
-  @Model('value', { type: String })
-  private readonly repoId!: string
+  @Model("value", { type: String })
+  private readonly repoId!: string;
 
   @Prop({ default: () => [] })
-  private readonly rules!: [(input: string) => string | boolean]
+  private readonly rules!: [(input: string) => string | boolean];
 
   @Prop({ default: () => [] })
-  private readonly repos!: [Repo]
+  private readonly repos!: [Repo];
 
   @Prop({ default: false })
-  private readonly disabled!: boolean
+  private readonly disabled!: boolean;
 
-  @Prop({ default: 'Repository name' })
-  private readonly label!: string
+  @Prop({ default: "Repository name" })
+  private readonly label!: string;
 
   @Prop({ default: false })
-  private readonly clearable!: boolean
+  private readonly clearable!: boolean;
 
   private setRepoId(newValue: string) {
-    this.$emit('value', newValue)
+    this.$emit("value", newValue);
   }
 
   private get sortedRepos() {
-    return this.repos.slice().sort((a, b) => a.name.localeCompare(b.name))
+    return this.repos.slice().sort((a, b) => a.name.localeCompare(b.name));
   }
 
   // ============== ICONS ==============
-  private readonly repoIcon = mdiSourceBranch
+  private readonly repoIcon = mdiSourceBranch;
   // ==============       ==============
 }
 </script>

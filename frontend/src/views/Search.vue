@@ -18,10 +18,7 @@
       <v-col cols="auto">
         <v-row no-gutters align="center">
           <v-col cols="auto" class="mr-4">
-            <v-checkbox
-              v-model="constrainToRepo"
-              label="Limit searches to"
-            ></v-checkbox>
+            <v-checkbox v-model="constrainToRepo" label="Limit searches to"></v-checkbox>
           </v-col>
           <v-col cols="auto">
             <repo-selection-component
@@ -101,138 +98,138 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import SearchResultList from '@/components/search/SearchResultList.vue'
-import { vxm } from '@/store'
+import Vue from "vue";
+import Component from "vue-class-component";
+import SearchResultList from "@/components/search/SearchResultList.vue";
+import { vxm } from "@/store";
 import {
   RepoId,
   SearchItem,
   SearchItemBranch,
   SearchItemCommit,
-  SearchItemRun
-} from '@/store/types'
-import { Watch } from 'vue-property-decorator'
-import { debounce } from '@/util/Debouncer'
-import { mdiSwapHorizontalBold } from '@mdi/js'
-import { RawLocation } from 'vue-router'
-import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
+  SearchItemRun,
+} from "@/store/types";
+import { Watch } from "vue-property-decorator";
+import { debounce } from "@/util/Debouncer";
+import { mdiSwapHorizontalBold } from "@mdi/js";
+import { RawLocation } from "vue-router";
+import RepoSelectionComponent from "@/components/misc/RepoSelectionComponent.vue";
 
 @Component({
-  components: { RepoSelectionComponent, SearchResultList }
+  components: { RepoSelectionComponent, SearchResultList },
 })
 export default class Search extends Vue {
-  private searchQuery = ''
-  private items: SearchItem[] = []
-  private debouncedLookup = debounce(this.executeSearch, 300)
-  private compareFirst: SearchItem | null = null
-  private compareSecond: SearchItem | null = null
-  private repoId: RepoId | null = null
-  private constrainToRepo = false
+  private searchQuery = "";
+  private items: SearchItem[] = [];
+  private debouncedLookup = debounce(this.executeSearch, 300);
+  private compareFirst: SearchItem | null = null;
+  private compareSecond: SearchItem | null = null;
+  private repoId: RepoId | null = null;
+  private constrainToRepo = false;
 
-  @Watch('searchQuery')
+  @Watch("searchQuery")
   private onQueryChange() {
-    this.debouncedLookup()
+    this.debouncedLookup();
   }
 
   private get runInUrl() {
-    return this.$route.params['runId']
+    return this.$route.params["runId"];
   }
 
   private get repoIdInUrl() {
-    return this.$route.query['repoId']
+    return this.$route.query["repoId"];
   }
 
-  @Watch('runInUrl')
-  @Watch('repoIdInUrl')
+  @Watch("runInUrl")
+  @Watch("repoIdInUrl")
   private async adjustToUrl() {
     if (this.repoIdInUrl) {
-      this.repoId = this.repoIdInUrl as string
-      this.constrainToRepo = true
+      this.repoId = this.repoIdInUrl as string;
+      this.constrainToRepo = true;
     }
 
     if (this.runInUrl) {
       const result = await vxm.runSearchModule.searchRun({
         query: this.runInUrl,
-        repoId: this.repoId || undefined
-      })
+        repoId: this.repoId || undefined,
+      });
       if (!result) {
-        return
+        return;
       }
-      this.compareFirst = result[0]
+      this.compareFirst = result[0];
     }
   }
 
   private get allRepos() {
-    return vxm.repoModule.allRepos
+    return vxm.repoModule.allRepos;
   }
 
   private markCommitForCompare(item: SearchItem) {
     if (!this.compareFirst) {
-      this.compareFirst = item
-      return
+      this.compareFirst = item;
+      return;
     }
-    this.compareSecond = item
+    this.compareSecond = item;
   }
 
   private swapOrder() {
-    const tmp = this.compareFirst
-    this.compareFirst = this.compareSecond
-    this.compareSecond = tmp
+    const tmp = this.compareFirst;
+    this.compareFirst = this.compareSecond;
+    this.compareSecond = tmp;
   }
 
   private summaryForItem(item: SearchItem) {
     if (item instanceof SearchItemCommit) {
-      return item.summary
+      return item.summary;
     }
     if (item instanceof SearchItemBranch) {
-      return item.name
+      return item.name;
     }
-    return item.tarDescription || item.commitSummary || item.id
+    return item.tarDescription || item.commitSummary || item.id;
   }
 
   private get compareLink(): RawLocation | null {
     if (!this.compareFirst || !this.compareSecond) {
-      return null
+      return null;
     }
-    const params: { first: string; second: string } = { first: '', second: '' }
-    const query: { hash1?: string; hash2?: string } = {}
+    const params: { first: string; second: string } = { first: "", second: "" };
+    const query: { hash1?: string; hash2?: string } = {};
 
     if (this.compareFirst instanceof SearchItemRun) {
-      params.first = this.compareFirst.id
+      params.first = this.compareFirst.id;
     } else {
-      params.first = this.compareFirst.repoId
-      query.hash1 = this.compareFirst.hash
+      params.first = this.compareFirst.repoId;
+      query.hash1 = this.compareFirst.hash;
     }
     if (this.compareSecond instanceof SearchItemRun) {
-      params.second = this.compareSecond.id
+      params.second = this.compareSecond.id;
     } else {
-      params.second = this.compareSecond.repoId
-      query.hash2 = this.compareSecond.hash
+      params.second = this.compareSecond.repoId;
+      query.hash2 = this.compareSecond.hash;
     }
 
     return {
-      name: 'run-comparison',
+      name: "run-comparison",
       params,
-      query
-    }
+      query,
+    };
   }
 
   private async executeSearch() {
     if (this.searchQuery.length === 0) {
-      this.items = []
-      return
+      this.items = [];
+      return;
     }
     this.items = await vxm.runSearchModule.searchRun({
       query: this.searchQuery,
-      repoId: this.constrainToRepo ? this.repoId || undefined : undefined
-    })
+      repoId: this.constrainToRepo ? this.repoId || undefined : undefined,
+    });
   }
 
   private mounted() {
-    this.adjustToUrl()
+    this.adjustToUrl();
   }
 
-  private readonly swapIcon = mdiSwapHorizontalBold
+  private readonly swapIcon = mdiSwapHorizontalBold;
 }
 </script>

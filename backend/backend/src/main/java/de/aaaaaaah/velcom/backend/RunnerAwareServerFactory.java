@@ -24,141 +24,139 @@ import org.slf4j.LoggerFactory;
  */
 public class RunnerAwareServerFactory implements ServerFactory {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerAwareServerFactory.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RunnerAwareServerFactory.class);
 
-	private static final RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
+  private static final RunnerAwareServerFactory instance = new RunnerAwareServerFactory();
 
-	private ServerFactory underlying;
-	private GlobalConfig config;
-	private Dispatcher dispatcher;
-	private BenchRepo benchRepo;
-	private final Serializer serializer;
+  private ServerFactory underlying;
+  private GlobalConfig config;
+  private Dispatcher dispatcher;
+  private BenchRepo benchRepo;
+  private final Serializer serializer;
 
-	private RunnerAwareServerFactory() {
-		this.serializer = new Serializer();
-	}
+  private RunnerAwareServerFactory() {
+    this.serializer = new Serializer();
+  }
 
-	@Override
-	public Server build(Environment environment) {
-		ensureIsInitialized();
+  @Override
+  public Server build(Environment environment) {
+    ensureIsInitialized();
 
-		Server server = underlying.build(environment);
+    Server server = underlying.build(environment);
 
-		HttpConnectorFactory connectorFactory = new HttpConnectorFactory();
-		connectorFactory.setPort(config.getRunnerPort());
-		Connector connector = connectorFactory
-			.build(server, environment.metrics(), "Runner", new ExecutorThreadPool(32));
-		server.addConnector(
-			connector
-		);
-		Map<Connector, Handler> handlerMap = new HashMap<>();
+    HttpConnectorFactory connectorFactory = new HttpConnectorFactory();
+    connectorFactory.setPort(config.getRunnerPort());
+    Connector connector =
+        connectorFactory.build(server, environment.metrics(), "Runner", new ExecutorThreadPool(32));
+    server.addConnector(connector);
+    Map<Connector, Handler> handlerMap = new HashMap<>();
 
-		for (Connector serverConnector : server.getConnectors()) {
-			handlerMap.put(serverConnector, server.getHandler());
-		}
+    for (Connector serverConnector : server.getConnectors()) {
+      handlerMap.put(serverConnector, server.getHandler());
+    }
 
-		MutableServletContextHandler handler = new MutableServletContextHandler();
-		handler.getServletContext().addServlet(
-			"Runner Websocket servlet",
-			new ServerMasterWebsocketServlet(dispatcher, serializer, config.getRunnerToken(), benchRepo)
-		)
-			.addMapping("/runner-connector");
-		handlerMap.put(connector, handler);
+    MutableServletContextHandler handler = new MutableServletContextHandler();
+    handler
+        .getServletContext()
+        .addServlet(
+            "Runner Websocket servlet",
+            new ServerMasterWebsocketServlet(
+                dispatcher, serializer, config.getRunnerToken(), benchRepo))
+        .addMapping("/runner-connector");
+    handlerMap.put(connector, handler);
 
-		server.setHandler(new RoutingHandler(handlerMap));
+    server.setHandler(new RoutingHandler(handlerMap));
 
-		LOGGER.debug("Registered the websocket servlet");
+    LOGGER.debug("Registered the websocket servlet");
 
-		return server;
-	}
+    return server;
+  }
 
-	@Override
-	public void configure(Environment environment) {
-		underlying.configure(environment);
-	}
+  @Override
+  public void configure(Environment environment) {
+    underlying.configure(environment);
+  }
 
+  /**
+   * Sets the config to use.
+   *
+   * @param config the config to use
+   * @throws IllegalStateException if a config has already been set
+   */
+  public void setConfig(GlobalConfig config) {
+    if (this.config != null) {
+      throw new IllegalStateException("I already have a config!");
+    }
+    this.config = config;
+  }
 
-	/**
-	 * Sets the config to use.
-	 *
-	 * @param config the config to use
-	 * @throws IllegalStateException if a config has already been set
-	 */
-	public void setConfig(GlobalConfig config) {
-		if (this.config != null) {
-			throw new IllegalStateException("I already have a config!");
-		}
-		this.config = config;
-	}
+  /**
+   * Sets the server factory to delegate to.
+   *
+   * @param underlying the underlying server factory
+   * @throws IllegalStateException if a server factory has already been set
+   */
+  public void setServerFactory(ServerFactory underlying) {
+    if (this.underlying != null) {
+      throw new IllegalStateException("I already have a server factory!");
+    }
 
-	/**
-	 * Sets the server factory to delegate to.
-	 *
-	 * @param underlying the underlying server factory
-	 * @throws IllegalStateException if a server factory has already been set
-	 */
-	public void setServerFactory(ServerFactory underlying) {
-		if (this.underlying != null) {
-			throw new IllegalStateException("I already have a server factory!");
-		}
+    this.underlying = underlying;
+  }
 
-		this.underlying = underlying;
-	}
+  /**
+   * Sets the dispatcher to use.
+   *
+   * @param dispatcher the dispatcher
+   * @throws IllegalStateException if a dispatcher has already been set
+   */
+  public void setDispatcher(Dispatcher dispatcher) {
+    if (this.dispatcher != null) {
+      throw new IllegalStateException("I already have a dispatcher!");
+    }
+    this.dispatcher = dispatcher;
+  }
 
-	/**
-	 * Sets the dispatcher to use.
-	 *
-	 * @param dispatcher the dispatcher
-	 * @throws IllegalStateException if a dispatcher has already been set
-	 */
-	public void setDispatcher(Dispatcher dispatcher) {
-		if (this.dispatcher != null) {
-			throw new IllegalStateException("I already have a dispatcher!");
-		}
-		this.dispatcher = dispatcher;
-	}
+  /**
+   * Sets the bench reo to use.
+   *
+   * @param benchRepo the bench repo
+   * @throws IllegalStateException if a bench repo has already been set
+   */
+  public void setBenchRepo(BenchRepo benchRepo) {
+    if (this.benchRepo != null) {
+      throw new IllegalStateException("I already have a bench repo!");
+    }
+    this.benchRepo = benchRepo;
+  }
 
-	/**
-	 * Sets the bench reo to use.
-	 *
-	 * @param benchRepo the bench repo
-	 * @throws IllegalStateException if a bench repo has already been set
-	 */
-	public void setBenchRepo(BenchRepo benchRepo) {
-		if (this.benchRepo != null) {
-			throw new IllegalStateException("I already have a bench repo!");
-		}
-		this.benchRepo = benchRepo;
-	}
+  /**
+   * Returns whether the factory lacks an underlying server factory.
+   *
+   * @return true if no underlying server factory is available
+   */
+  public boolean lacksFactory() {
+    return underlying == null;
+  }
 
-	/**
-	 * Returns whether the factory lacks an underlying server factory.
-	 *
-	 * @return true if no underlying server factory is available
-	 */
-	public boolean lacksFactory() {
-		return underlying == null;
-	}
+  private void ensureIsInitialized() {
+    if (config == null) {
+      throw new IllegalStateException("Config not initialized");
+    }
+    if (underlying == null) {
+      throw new IllegalStateException("Server factory not initialized");
+    }
+    if (dispatcher == null) {
+      throw new IllegalStateException("Dispatcher not initialized");
+    }
+  }
 
-	private void ensureIsInitialized() {
-		if (config == null) {
-			throw new IllegalStateException("Config not initialized");
-		}
-		if (underlying == null) {
-			throw new IllegalStateException("Server factory not initialized");
-		}
-		if (dispatcher == null) {
-			throw new IllegalStateException("Dispatcher not initialized");
-		}
-	}
-
-
-	/**
-	 * Returns the instance of the {@link RunnerAwareServerFactory}.
-	 *
-	 * @return the instance
-	 */
-	public static RunnerAwareServerFactory getInstance() {
-		return instance;
-	}
+  /**
+   * Returns the instance of the {@link RunnerAwareServerFactory}.
+   *
+   * @return the instance
+   */
+  public static RunnerAwareServerFactory getInstance() {
+    return instance;
+  }
 }

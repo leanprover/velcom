@@ -8,26 +8,26 @@ import java.util.List;
  */
 public class LinesWithOffset {
 
-	private final int firstLineOffset;
-	private final List<String> lines;
+  private final int firstLineOffset;
+  private final List<String> lines;
 
-	/**
-	 * If there are three lines and the last two are included in this object, the firstLineOffset will
-	 * be one (totalLength - includedLength).
-	 *
-	 * @param firstLineOffset the offset of the first line. 0 based.
-	 * @param lines the lines
-	 */
-	public LinesWithOffset(int firstLineOffset, List<String> lines) {
-		this.firstLineOffset = firstLineOffset;
-		this.lines = lines;
-	}
+  /**
+   * If there are three lines and the last two are included in this object, the firstLineOffset will
+   * be one (totalLength - includedLength).
+   *
+   * @param firstLineOffset the offset of the first line. 0 based.
+   * @param lines the lines
+   */
+  public LinesWithOffset(int firstLineOffset, List<String> lines) {
+    this.firstLineOffset = firstLineOffset;
+    this.lines = lines;
+  }
 
-	public int getFirstLineOffset() {
-		return firstLineOffset;
-	}
+  public int getFirstLineOffset() {
+    return firstLineOffset;
+  }
 
-	public List<String> getLines() {
-		return lines;
-	}
+  public List<String> getLines() {
+    return lines;
+  }
 }

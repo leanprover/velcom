@@ -12,17 +12,16 @@ import java.nio.charset.StandardCharsets;
 
 public class JsonBodyHandler implements BodyHandler<JsonNode> {
 
-	@Override
-	public BodySubscriber<JsonNode> apply(ResponseInfo responseInfo) {
-		return HttpResponse.BodySubscribers.mapping(
-			HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
-			s -> {
-				try {
-					return Jackson.newObjectMapper().readTree(s);
-				} catch (IOException e) {
-					throw new UncheckedIOException(e);
-				}
-			}
-		);
-	}
+  @Override
+  public BodySubscriber<JsonNode> apply(ResponseInfo responseInfo) {
+    return HttpResponse.BodySubscribers.mapping(
+        HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
+        s -> {
+          try {
+            return Jackson.newObjectMapper().readTree(s);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
+  }
 }

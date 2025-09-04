@@ -11,17 +11,17 @@ import org.kohsuke.MetaInfServices;
 @JsonTypeName("metrics-endpoint")
 public class MetricsEndpointFilter implements FilterFactory<IAccessEvent> {
 
-	@Override
-	public Filter<IAccessEvent> build() {
-		return new Filter<>() {
-			@Override
-			public FilterReply decide(IAccessEvent event) {
-				if (event.getRequestURI().equals("/prometheusMetrics")) {
-					return FilterReply.DENY;
-				} else {
-					return FilterReply.NEUTRAL;
-				}
-			}
-		};
-	}
+  @Override
+  public Filter<IAccessEvent> build() {
+    return new Filter<>() {
+      @Override
+      public FilterReply decide(IAccessEvent event) {
+        if (event.getRequestURI().equals("/prometheusMetrics")) {
+          return FilterReply.DENY;
+        } else {
+          return FilterReply.NEUTRAL;
+        }
+      }
+    };
+  }
 }

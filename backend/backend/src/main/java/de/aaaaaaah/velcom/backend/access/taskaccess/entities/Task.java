@@ -10,117 +10,130 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * A task is an item in the queue. When it is benchmarked by a runner, it turns into a run.
- */
+/** A task is an item in the queue. When it is benchmarked by a runner, it turns into a run. */
 public class Task {
 
-	private final TaskId id;
-	private final String author;
-	private final TaskPriority priority;
-	private final Instant insertTime;
-	private final Instant updateTime;
-	private final Either<CommitSource, TarSource> source;
-	private final boolean inProgress;
-	// TODO: 07.11.20 Rename "in_process" to "in_progress" in db
+  private final TaskId id;
+  private final String author;
+  private final TaskPriority priority;
+  private final Instant insertTime;
+  private final Instant updateTime;
+  private final Either<CommitSource, TarSource> source;
+  private final boolean inProgress;
 
-	public Task(TaskId id, String author, TaskPriority priority, Instant insertTime,
-		Instant updateTime, Either<CommitSource, TarSource> source, boolean inProgress) {
+  // TODO: 07.11.20 Rename "in_process" to "in_progress" in db
 
-		this.id = id;
-		this.author = author;
-		this.priority = priority;
-		this.insertTime = insertTime;
-		this.updateTime = updateTime;
-		this.source = source;
-		this.inProgress = inProgress;
-	}
+  public Task(
+      TaskId id,
+      String author,
+      TaskPriority priority,
+      Instant insertTime,
+      Instant updateTime,
+      Either<CommitSource, TarSource> source,
+      boolean inProgress) {
 
-	public Task(String author, TaskPriority priority, Either<CommitSource, TarSource> source) {
-		this.id = new TaskId();
-		this.author = author;
-		this.priority = priority;
-		this.insertTime = Instant.now();
-		this.updateTime = this.insertTime;
-		this.source = source;
-		this.inProgress = false;
-	}
+    this.id = id;
+    this.author = author;
+    this.priority = priority;
+    this.insertTime = insertTime;
+    this.updateTime = updateTime;
+    this.source = source;
+    this.inProgress = inProgress;
+  }
 
-	public TaskId getId() {
-		return id;
-	}
+  public Task(String author, TaskPriority priority, Either<CommitSource, TarSource> source) {
+    this.id = new TaskId();
+    this.author = author;
+    this.priority = priority;
+    this.insertTime = Instant.now();
+    this.updateTime = this.insertTime;
+    this.source = source;
+    this.inProgress = false;
+  }
 
-	public UUID getIdAsUuid() {
-		return id.getId();
-	}
+  public TaskId getId() {
+    return id;
+  }
 
-	public String getIdAsString() {
-		return id.getIdAsString();
-	}
+  public UUID getIdAsUuid() {
+    return id.getId();
+  }
 
-	public String getAuthor() {
-		return author;
-	}
+  public String getIdAsString() {
+    return id.getIdAsString();
+  }
 
-	public TaskPriority getPriority() {
-		return priority;
-	}
+  public String getAuthor() {
+    return author;
+  }
 
-	public Instant getInsertTime() {
-		return insertTime;
-	}
+  public TaskPriority getPriority() {
+    return priority;
+  }
 
-	public Instant getUpdateTime() {
-		return updateTime;
-	}
+  public Instant getInsertTime() {
+    return insertTime;
+  }
 
-	public Either<CommitSource, TarSource> getSource() {
-		return source;
-	}
+  public Instant getUpdateTime() {
+    return updateTime;
+  }
 
-	public Optional<RepoId> getRepoId() {
-		return source.consume(it -> Optional.of(it.getRepoId()), TarSource::getRepoId);
-	}
+  public Either<CommitSource, TarSource> getSource() {
+    return source;
+  }
 
-	public Optional<CommitHash> getCommitHash() {
-		return source.consume(it -> Optional.of(it.getHash()), it -> Optional.empty());
-	}
+  public Optional<RepoId> getRepoId() {
+    return source.consume(it -> Optional.of(it.getRepoId()), TarSource::getRepoId);
+  }
 
-	public Optional<String> getTarDescription() {
-		return source.consume(it -> Optional.empty(), it -> Optional.of(it.getDescription()));
-	}
+  public Optional<CommitHash> getCommitHash() {
+    return source.consume(it -> Optional.of(it.getHash()), it -> Optional.empty());
+  }
 
-	public boolean isInProgress() {
-		return inProgress;
-	}
+  public Optional<String> getTarDescription() {
+    return source.consume(it -> Optional.empty(), it -> Optional.of(it.getDescription()));
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		Task task = (Task) o;
-		return Objects.equals(id, task.id);
-	}
+  public boolean isInProgress() {
+    return inProgress;
+  }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Task task = (Task) o;
+    return Objects.equals(id, task.id);
+  }
 
-	@Override
-	public String toString() {
-		return "Task{" +
-			"id=" + id +
-			", author='" + author + '\'' +
-			", priority=" + priority +
-			", insertTime=" + insertTime +
-			", updateTime=" + updateTime +
-			", source=" + source +
-			", inProgress=" + inProgress +
-			'}';
-	}
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
+
+  @Override
+  public String toString() {
+    return "Task{"
+        + "id="
+        + id
+        + ", author='"
+        + author
+        + '\''
+        + ", priority="
+        + priority
+        + ", insertTime="
+        + insertTime
+        + ", updateTime="
+        + updateTime
+        + ", source="
+        + source
+        + ", inProgress="
+        + inProgress
+        + '}';
+  }
 }

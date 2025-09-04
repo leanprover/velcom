@@ -9,12 +9,7 @@
     >
       <template v-slot:default="{ items, pagination: { itemsPerPage, page } }">
         <v-row>
-          <v-col
-            cols="12"
-            class="my-1 py-0"
-            v-for="(task, index) in items"
-            :key="task.id"
-          >
+          <v-col cols="12" class="my-1 py-0" v-for="(task, index) in items" :key="task.id">
             <component
               :is="task.source.type"
               :commit="task.source.commitDescription"
@@ -40,11 +35,7 @@
                     <span style="flex: 0 0" class="pt-3">
                       <v-chip v-on="on" outlined label>
                         Running on » {{ getWorkerUnsafe(task).name }} « for
-                        {{
-                          workerFormattedSinceDurations[
-                            getWorkerUnsafe(task).name
-                          ]
-                        }}
+                        {{ workerFormattedSinceDurations[getWorkerUnsafe(task).name] }}
                       </v-chip>
                     </span>
                   </template>
@@ -60,8 +51,7 @@
                       <v-icon class="rocket">{{ liftToFrontIcon }}</v-icon>
                     </v-btn>
                   </template>
-                  Lifts this task to the top of the queue, so it is executed
-                  next
+                  Lifts this task to the top of the queue, so it is executed next
                 </v-tooltip>
                 <v-progress-circular
                   indeterminate
@@ -82,115 +72,115 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { vxm } from '@/store'
-import { Task, Worker } from '@/store/types'
-import { mdiDelete, mdiRocket } from '@mdi/js'
-import CommitOverviewBase from '../overviews/CommitOverviewBase.vue'
-import TarTaskOverview from '../overviews/TarTaskOverview.vue'
-import { formatDurationHuman } from '@/util/Times'
-import { RawLocation } from 'vue-router'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { vxm } from "@/store";
+import { Task, Worker } from "@/store/types";
+import { mdiDelete, mdiRocket } from "@mdi/js";
+import CommitOverviewBase from "../overviews/CommitOverviewBase.vue";
+import TarTaskOverview from "../overviews/TarTaskOverview.vue";
+import { formatDurationHuman } from "@/util/Times";
+import { RawLocation } from "vue-router";
 
 @Component({
   components: {
     COMMIT: CommitOverviewBase,
-    UPLOADED_TAR: TarTaskOverview
-  }
+    UPLOADED_TAR: TarTaskOverview,
+  },
 })
 export default class QueueOverview extends Vue {
-  private timerIds: number[] = []
+  private timerIds: number[] = [];
   // noinspection JSMismatchedCollectionQueryUpdate
-  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1]
-  private defaultItemsPerPage: number = 20
-  private liftsInProgress: Set<string> = new Set()
+  private itemsPerPageOptions: number[] = [10, 20, 50, 100, 200, -1];
+  private defaultItemsPerPage: number = 20;
+  private liftsInProgress: Set<string> = new Set();
   // Reactivity can be a bit annoying. We need to store this explicitly
-  private workerFormattedSinceDurations: { [workerName: string]: string } = {}
+  private workerFormattedSinceDurations: { [workerName: string]: string } = {};
 
   private get queueItems(): Task[] {
-    return vxm.queueModule.openTasks.slice()
+    return vxm.queueModule.openTasks.slice();
   }
 
   private inProgress(task: Task): boolean {
-    return this.getWorker(task) !== undefined
+    return this.getWorker(task) !== undefined;
   }
 
   private get isAdmin() {
-    return vxm.userModule.isAdmin
+    return vxm.userModule.isAdmin;
   }
 
   private taskLinkLocation(task: Task): RawLocation {
     return {
-      name: 'task-detail',
-      params: { taskId: task.id }
-    }
+      name: "task-detail",
+      params: { taskId: task.id },
+    };
   }
 
   private liftToFront(task: Task, event: Event) {
     if (this.liftsInProgress.has(task.id)) {
-      return
+      return;
     }
-    this.liftsInProgress.add(task.id)
+    this.liftsInProgress.add(task.id);
 
-    let srcElement: HTMLElement = event.target as HTMLElement
+    let srcElement: HTMLElement = event.target as HTMLElement;
 
     // No animation possible
     if (!srcElement) {
-      vxm.queueModule.dispatchPrioritizeOpenTask(task.id)
-      return
+      vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
+      return;
     }
 
-    while (!srcElement.classList.contains('v-icon')) {
-      srcElement = srcElement.parentElement!
+    while (!srcElement.classList.contains("v-icon")) {
+      srcElement = srcElement.parentElement!;
 
       // found no parent :/
       if (!srcElement) {
-        vxm.queueModule.dispatchPrioritizeOpenTask(task.id)
-        return
+        vxm.queueModule.dispatchPrioritizeOpenTask(task.id);
+        return;
       }
     }
 
-    const offsetTop = srcElement.getBoundingClientRect().top
-    const offsetLeft = srcElement.getBoundingClientRect().left
-    const parent = srcElement.parentElement!
+    const offsetTop = srcElement.getBoundingClientRect().top;
+    const offsetLeft = srcElement.getBoundingClientRect().left;
+    const parent = srcElement.parentElement!;
 
-    const startAngle = Math.random() * 2 * Math.PI
-    srcElement.style.rotate = startAngle + 'rad'
+    const startAngle = Math.random() * 2 * Math.PI;
+    srcElement.style.rotate = startAngle + "rad";
 
-    const clonedElement = srcElement.cloneNode(true) as HTMLElement
+    const clonedElement = srcElement.cloneNode(true) as HTMLElement;
 
     vxm.queueModule
       .dispatchPrioritizeOpenTask(task.id)
       .then(() => {
-        parent.appendChild(clonedElement)
+        parent.appendChild(clonedElement);
 
-        clonedElement.style.top = Math.round(offsetTop) + 'px'
-        clonedElement.style.left = Math.round(offsetLeft) + 'px'
-        clonedElement.classList.add('shoot-off')
+        clonedElement.style.top = Math.round(offsetTop) + "px";
+        clonedElement.style.left = Math.round(offsetLeft) + "px";
+        clonedElement.classList.add("shoot-off");
 
-        this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop)
+        this.flyRocket(clonedElement, startAngle, offsetLeft, offsetTop);
       })
       .finally(() => {
-        srcElement.style.rotate = '0deg'
-        this.liftsInProgress.delete(task.id)
-      })
+        srcElement.style.rotate = "0deg";
+        this.liftsInProgress.delete(task.id);
+      });
   }
 
   private flyRocket(
     clonedElement: HTMLElement,
     startAngle: number,
     rawTargetX: number,
-    rawTargetY: number
+    rawTargetY: number,
   ) {
     setTimeout(() => {
-      let alpha = (Math.random() * Math.PI) / 4
+      let alpha = (Math.random() * Math.PI) / 4;
       if (Math.random() < 0.5) {
-        alpha *= -1
+        alpha *= -1;
       }
-      const rocketTilt = Math.PI / 4
-      alpha += -startAngle + rocketTilt
+      const rocketTilt = Math.PI / 4;
+      alpha += -startAngle + rocketTilt;
 
-      const direction = [Math.cos(alpha), Math.sin(alpha)]
+      const direction = [Math.cos(alpha), Math.sin(alpha)];
 
       while (
         rawTargetY > 0 &&
@@ -198,66 +188,60 @@ export default class QueueOverview extends Vue {
         rawTargetX > 0 &&
         rawTargetX < window.innerWidth
       ) {
-        rawTargetX += direction[0]
-        rawTargetY -= direction[1]
+        rawTargetX += direction[0];
+        rawTargetY -= direction[1];
       }
 
-      clonedElement.style.top = rawTargetY + 'px'
-      clonedElement.style.left = rawTargetX + 'px'
-      clonedElement.style.rotate = -alpha + Math.PI / 4 + 'rad'
+      clonedElement.style.top = rawTargetY + "px";
+      clonedElement.style.left = rawTargetX + "px";
+      clonedElement.style.rotate = -alpha + Math.PI / 4 + "rad";
 
-      const animationDuration = 6000
-      setTimeout(() => clonedElement.remove(), animationDuration)
-    }, 1)
+      const animationDuration = 6000;
+      setTimeout(() => clonedElement.remove(), animationDuration);
+    }, 1);
   }
 
   private deleteTask(task: Task) {
-    vxm.queueModule.dispatchDeleteOpenTask({ id: task.id })
+    vxm.queueModule.dispatchDeleteOpenTask({ id: task.id });
   }
 
   private getWorker(task: Task): Worker | undefined {
-    return vxm.queueModule.workers.find(it => it.workingOn === task.id)
+    return vxm.queueModule.workers.find((it) => it.workingOn === task.id);
   }
 
   // VTI inference is too bad to realize that never changes
   private getWorkerUnsafe(task: Task): Worker {
-    return this.getWorker(task)!
+    return this.getWorker(task)!;
   }
 
   private formatWorkingSince(worker: Worker) {
     if (!worker || !worker.workingSince) {
-      return ''
+      return "";
     }
-    return formatDurationHuman(worker.workingSince, new Date())
+    return formatDurationHuman(worker.workingSince, new Date());
   }
 
   private updateWorkerTimes() {
-    vxm.queueModule.workers.forEach(it =>
-      Vue.set(
-        this.workerFormattedSinceDurations,
-        it.name,
-        this.formatWorkingSince(it)
-      )
-    )
+    vxm.queueModule.workers.forEach((it) =>
+      Vue.set(this.workerFormattedSinceDurations, it.name, this.formatWorkingSince(it)),
+    );
   }
 
   created(): void {
-    vxm.queueModule.fetchQueue()
-    this.timerIds.push(
-      setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000)
-    )
-    this.updateWorkerTimes()
-    this.timerIds.push(setInterval(this.updateWorkerTimes, 1000))
+    vxm.queueModule.fetchQueue();
+    this.timerIds.push(setInterval(() => vxm.queueModule.fetchQueue(), 10 * 1000));
+    this.updateWorkerTimes();
+    this.timerIds.push(setInterval(this.updateWorkerTimes, 1000));
   }
 
   // noinspection JSUnusedGlobalSymbols
   beforeDestroy(): void {
-    this.timerIds.forEach(clearInterval)
+    this.timerIds.forEach(clearInterval);
   }
 
   // ============== ICONS ==============
-  private liftToFrontIcon = mdiRocket
-  private deleteIcon = mdiDelete
+  private liftToFrontIcon = mdiRocket;
+  private deleteIcon = mdiDelete;
   // ==============       ==============
 }
 </script>
@@ -277,7 +261,9 @@ export default class QueueOverview extends Vue {
 
 /*noinspection CssUnusedSymbol*/
 .shoot-off {
-  transition: top 1s ease-in, left 1s ease-in;
+  transition:
+    top 1s ease-in,
+    left 1s ease-in;
   position: fixed;
   z-index: 200;
   animation: shake 1s linear;

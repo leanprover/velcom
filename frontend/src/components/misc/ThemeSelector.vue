@@ -4,45 +4,40 @@
       <v-spacer></v-spacer>
       <v-btn text @click="toggleDarkTheme">
         <v-icon left>{{ darkThemeIcon }}</v-icon>
-        Use {{ isDarkTheme ? 'light' : 'dark' }} theme
+        Use {{ isDarkTheme ? "light" : "dark" }} theme
       </v-btn>
     </v-toolbar>
     <v-tooltip left>
       <template #activator="{ on }">
-        <v-btn
-          v-on="on"
-          icon
-          @click="toggleDarkTheme"
-          class="hidden-sm-and-down floater"
-        >
+        <v-btn v-on="on" icon @click="toggleDarkTheme" class="hidden-sm-and-down floater">
           <v-icon :class="{ icon: true, 'light-icon': !isDarkTheme }">
             {{ darkThemeIcon }}
           </v-icon>
         </v-btn>
       </template>
-      Use {{ isDarkTheme ? 'light' : 'dark' }} theme
+      Use {{ isDarkTheme ? "light" : "dark" }} theme
     </v-tooltip>
   </footer>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { mdiInvertColors } from '@mdi/js'
-import { vxm } from '@/store'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { mdiInvertColors } from "@mdi/js";
+import { vxm } from "@/store";
 
 @Component
 export default class ThemeSelector extends Vue {
   private toggleDarkTheme() {
-    this.$emit('use-dark-theme', !this.isDarkTheme)
+    this.$emit("use-dark-theme", !this.isDarkTheme);
   }
 
   private get isDarkTheme(): boolean {
-    return vxm.userModule.darkThemeSelected
+    return vxm.userModule.darkThemeSelected;
   }
 
   // ICONS
-  private darkThemeIcon = mdiInvertColors
+  private darkThemeIcon = mdiInvertColors;
 }
 </script>
 

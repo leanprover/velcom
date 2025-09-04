@@ -10,15 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class RequestRunTest extends SerializerBasedTest {
 
-	@Test
-	void serializeToEmptyObject() {
-		JsonNode tree = serializer.serializeTree(new RequestRun());
-		assertEquals(objectMapper.createObjectNode(), tree);
-	}
+  @Test
+  void serializeToEmptyObject() {
+    JsonNode tree = serializer.serializeTree(new RequestRun());
+    assertEquals(objectMapper.createObjectNode(), tree);
+  }
 
-	@Test
-	void deserializeFromEmptyObject() {
-		Optional<RequestRun> result = serializer.deserialize("{}", RequestRun.class);
-		assertTrue(result.isPresent());
-	}
+  @Test
+  void deserializeFromEmptyObject() {
+    Optional<RequestRun> result = serializer.deserialize("{}", RequestRun.class);
+    assertTrue(result.isPresent());
+  }
 }

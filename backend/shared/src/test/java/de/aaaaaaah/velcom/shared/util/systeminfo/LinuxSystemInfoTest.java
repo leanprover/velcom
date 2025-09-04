@@ -9,32 +9,31 @@ import org.junit.jupiter.api.Test;
 
 class LinuxSystemInfoTest {
 
-	private LinuxSystemInfo systemInfo;
+  private LinuxSystemInfo systemInfo;
 
-	@BeforeEach
-	void setUp() {
-		systemInfo = LinuxSystemInfo.getCurrent();
-	}
+  @BeforeEach
+  void setUp() {
+    systemInfo = LinuxSystemInfo.getCurrent();
+  }
 
-	@Test
-	void hasPlausibleCpuInfo() {
-		assumeFalse(OSCheck.isStupidWindows());
+  @Test
+  void hasPlausibleCpuInfo() {
+    assumeFalse(OSCheck.isStupidWindows());
 
-		assertThat(systemInfo.getCpuInfo().cpuCount()).isGreaterThan(0);
-		assertThat(systemInfo.getCpuInfo().physicalCoreCount()).isGreaterThan(0);
-		assertThat(systemInfo.getCpuInfo().coreModels()).hasSizeGreaterThanOrEqualTo(1);
+    assertThat(systemInfo.getCpuInfo().cpuCount()).isGreaterThan(0);
+    assertThat(systemInfo.getCpuInfo().physicalCoreCount()).isGreaterThan(0);
+    assertThat(systemInfo.getCpuInfo().coreModels()).hasSizeGreaterThanOrEqualTo(1);
 
-		assertThat(systemInfo.getCpuInfo().virtualCoreCount())
-			.isGreaterThanOrEqualTo(Runtime.getRuntime().availableProcessors());
+    assertThat(systemInfo.getCpuInfo().virtualCoreCount())
+        .isGreaterThanOrEqualTo(Runtime.getRuntime().availableProcessors());
+  }
 
-	}
+  @Test
+  void hasPlausibleMemoryInfo() {
+    assumeFalse(OSCheck.isStupidWindows());
 
-	@Test
-	void hasPlausibleMemoryInfo() {
-		assumeFalse(OSCheck.isStupidWindows());
-
-		assertThat(systemInfo.getMemoryInfo().freeMemoryKiB()).isGreaterThanOrEqualTo(0);
-		assertThat(systemInfo.getMemoryInfo().totalMemoryKib())
-			.isGreaterThanOrEqualTo(Runtime.getRuntime().maxMemory() / 1024);
-	}
+    assertThat(systemInfo.getMemoryInfo().freeMemoryKiB()).isGreaterThanOrEqualTo(0);
+    assertThat(systemInfo.getMemoryInfo().totalMemoryKib())
+        .isGreaterThanOrEqualTo(Runtime.getRuntime().maxMemory() / 1024);
+  }
 }

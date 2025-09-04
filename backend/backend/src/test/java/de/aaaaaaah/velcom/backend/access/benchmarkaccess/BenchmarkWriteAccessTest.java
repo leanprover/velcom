@@ -41,234 +41,295 @@ import org.junit.jupiter.api.io.TempDir;
 
 class BenchmarkWriteAccessTest {
 
-	private static final RepoId REPO_ID = new RepoId();
-	private static final CommitHash COMMIT_HASH =
-		new CommitHash("4fe01fb5246edddd5b1454b96ecf597bad006666");
-	private static final Dimension DIM1 = new Dimension("test", "ing");
-	private static final Dimension DIM2 = new Dimension("hello", "world");
+  private static final RepoId REPO_ID = new RepoId();
+  private static final CommitHash COMMIT_HASH =
+      new CommitHash("4fe01fb5246edddd5b1454b96ecf597bad006666");
+  private static final Dimension DIM1 = new Dimension("test", "ing");
+  private static final Dimension DIM2 = new Dimension("hello", "world");
 
-	private DatabaseStorage databaseStorage;
-	private AvailableDimensionsCache availableDimensionsCache;
-	private LatestRunCache latestRunCache;
-	private BenchmarkWriteAccess access;
+  private DatabaseStorage databaseStorage;
+  private AvailableDimensionsCache availableDimensionsCache;
+  private LatestRunCache latestRunCache;
+  private BenchmarkWriteAccess access;
 
-	@BeforeEach
-	void setUp(@TempDir Path tempDir) {
-		TestDb testDb = new TestDb(tempDir);
+  @BeforeEach
+  void setUp(@TempDir Path tempDir) {
+    TestDb testDb = new TestDb(tempDir);
 
-		testDb.addRepo(REPO_ID);
-		testDb.addCommit(REPO_ID, COMMIT_HASH);
-		testDb.addDimension(DIM1);
-		testDb.addDimension(DIM2);
+    testDb.addRepo(REPO_ID);
+    testDb.addCommit(REPO_ID, COMMIT_HASH);
+    testDb.addDimension(DIM1);
+    testDb.addDimension(DIM2);
 
-		databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
-		availableDimensionsCache = mock(AvailableDimensionsCache.class);
-		latestRunCache = mock(LatestRunCache.class);
-		access = new BenchmarkWriteAccess(databaseStorage, availableDimensionsCache, latestRunCache);
-	}
+    databaseStorage = new DatabaseStorage(testDb.closeAndGetJdbcUrl());
+    availableDimensionsCache = mock(AvailableDimensionsCache.class);
+    latestRunCache = mock(LatestRunCache.class);
+    access = new BenchmarkWriteAccess(databaseStorage, availableDimensionsCache, latestRunCache);
+  }
 
-	@Test
-	void insertTarRun() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertTarRun() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofRight(new TarSource("description", null)),
-			new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofRight(new TarSource("description", null)),
+            new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		Run run = access.getRun(runId);
-		assertThat(run.getId()).isEqualTo(runId);
-		assertThat(run.getAuthor()).isEqualTo("author");
-		assertThat(run.getRunnerName()).isEqualTo("runnerName");
-		assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
-		assertThat(run.getStartTime()).isEqualTo(startTime);
-		assertThat(run.getStopTime()).isEqualTo(stopTime);
-		assertThat(run.getSource()).isEqualTo(Either.ofRight(new TarSource("description", null)));
-		assertThat(run.getRepoId()).isEqualTo(Optional.empty());
-		assertThat(run.getResult())
-			.isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
-	}
+    Run run = access.getRun(runId);
+    assertThat(run.getId()).isEqualTo(runId);
+    assertThat(run.getAuthor()).isEqualTo("author");
+    assertThat(run.getRunnerName()).isEqualTo("runnerName");
+    assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
+    assertThat(run.getStartTime()).isEqualTo(startTime);
+    assertThat(run.getStopTime()).isEqualTo(stopTime);
+    assertThat(run.getSource()).isEqualTo(Either.ofRight(new TarSource("description", null)));
+    assertThat(run.getRepoId()).isEqualTo(Optional.empty());
+    assertThat(run.getResult())
+        .isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
+  }
 
-	@Test
-	void insertTarRunAttachedToRepo() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertTarRunAttachedToRepo() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofRight(new TarSource("description", REPO_ID)),
-			new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofRight(new TarSource("description", REPO_ID)),
+            new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		Run run = access.getRun(runId);
-		assertThat(run.getId()).isEqualTo(runId);
-		assertThat(run.getAuthor()).isEqualTo("author");
-		assertThat(run.getRunnerName()).isEqualTo("runnerName");
-		assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
-		assertThat(run.getStartTime()).isEqualTo(startTime);
-		assertThat(run.getStopTime()).isEqualTo(stopTime);
-		assertThat(run.getSource()).isEqualTo(Either.ofRight(new TarSource("description", REPO_ID)));
-		assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
-		assertThat(run.getResult())
-			.isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
-	}
+    Run run = access.getRun(runId);
+    assertThat(run.getId()).isEqualTo(runId);
+    assertThat(run.getAuthor()).isEqualTo("author");
+    assertThat(run.getRunnerName()).isEqualTo("runnerName");
+    assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
+    assertThat(run.getStartTime()).isEqualTo(startTime);
+    assertThat(run.getStopTime()).isEqualTo(stopTime);
+    assertThat(run.getSource()).isEqualTo(Either.ofRight(new TarSource("description", REPO_ID)));
+    assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
+    assertThat(run.getResult())
+        .isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
+  }
 
-	@Test
-	void insertCommitRun() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertCommitRun() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
-			new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
+            new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		Run run = access.getRun(runId);
-		assertThat(run.getId()).isEqualTo(runId);
-		assertThat(run.getAuthor()).isEqualTo("author");
-		assertThat(run.getRunnerName()).isEqualTo("runnerName");
-		assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
-		assertThat(run.getStartTime()).isEqualTo(startTime);
-		assertThat(run.getStopTime()).isEqualTo(stopTime);
-		assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
-		assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
-		assertThat(run.getResult())
-			.isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
-	}
+    Run run = access.getRun(runId);
+    assertThat(run.getId()).isEqualTo(runId);
+    assertThat(run.getAuthor()).isEqualTo("author");
+    assertThat(run.getRunnerName()).isEqualTo("runnerName");
+    assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
+    assertThat(run.getStartTime()).isEqualTo(startTime);
+    assertThat(run.getStopTime()).isEqualTo(stopTime);
+    assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
+    assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
+    assertThat(run.getResult())
+        .isEqualTo(Either.ofLeft(new RunError("errorMessage", RunErrorType.VELCOM_ERROR)));
+  }
 
-	@Test
-	void insertSuccessfulRun() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertSuccessfulRun() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)), List.of(
-			new NewMeasurement(runId, DIM1, null, null, new MeasurementValues(List.of(1d, 2d, 3d))),
-			new NewMeasurement(runId, DIM2, null, null, new MeasurementValues(List.of(4d)))
-		));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
+            List.of(
+                new NewMeasurement(
+                    runId, DIM1, null, null, new MeasurementValues(List.of(1d, 2d, 3d))),
+                new NewMeasurement(runId, DIM2, null, null, new MeasurementValues(List.of(4d)))));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		Run run = access.getRun(runId);
-		assertThat(run.getId()).isEqualTo(runId);
-		assertThat(run.getAuthor()).isEqualTo("author");
-		assertThat(run.getRunnerName()).isEqualTo("runnerName");
-		assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
-		assertThat(run.getStartTime()).isEqualTo(startTime);
-		assertThat(run.getStopTime()).isEqualTo(stopTime);
-		assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
-		assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
-		assertThat(run.getResult().getRight()).isPresent();
-		assertThat(run.getResult().getRight().get()).containsExactlyInAnyOrder(
-			new Measurement(runId, DIM1, Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d)))),
-			new Measurement(runId, DIM2, Either.ofRight(new MeasurementValues(List.of(4d))))
-		);
-	}
+    Run run = access.getRun(runId);
+    assertThat(run.getId()).isEqualTo(runId);
+    assertThat(run.getAuthor()).isEqualTo("author");
+    assertThat(run.getRunnerName()).isEqualTo("runnerName");
+    assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
+    assertThat(run.getStartTime()).isEqualTo(startTime);
+    assertThat(run.getStopTime()).isEqualTo(stopTime);
+    assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
+    assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
+    assertThat(run.getResult().getRight()).isPresent();
+    assertThat(run.getResult().getRight().get())
+        .containsExactlyInAnyOrder(
+            new Measurement(
+                runId, DIM1, Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d)))),
+            new Measurement(runId, DIM2, Either.ofRight(new MeasurementValues(List.of(4d)))));
+  }
 
-	@Test
-	void insertPartlySuccessfulRun() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertPartlySuccessfulRun() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)), List.of(
-			new NewMeasurement(runId, DIM1, null, null, new MeasurementValues(List.of(1d, 2d, 3d))),
-			new NewMeasurement(runId, DIM2, null, null, new MeasurementError("errorMessage"))
-		));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
+            List.of(
+                new NewMeasurement(
+                    runId, DIM1, null, null, new MeasurementValues(List.of(1d, 2d, 3d))),
+                new NewMeasurement(runId, DIM2, null, null, new MeasurementError("errorMessage"))));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		Run run = access.getRun(runId);
-		assertThat(run.getId()).isEqualTo(runId);
-		assertThat(run.getAuthor()).isEqualTo("author");
-		assertThat(run.getRunnerName()).isEqualTo("runnerName");
-		assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
-		assertThat(run.getStartTime()).isEqualTo(startTime);
-		assertThat(run.getStopTime()).isEqualTo(stopTime);
-		assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
-		assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
-		assertThat(run.getResult().getRight()).isPresent();
-		assertThat(run.getResult().getRight().get()).containsExactlyInAnyOrder(
-			new Measurement(runId, DIM1, Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d)))),
-			new Measurement(runId, DIM2, Either.ofLeft(new MeasurementError("errorMessage")))
-		);
-	}
+    Run run = access.getRun(runId);
+    assertThat(run.getId()).isEqualTo(runId);
+    assertThat(run.getAuthor()).isEqualTo("author");
+    assertThat(run.getRunnerName()).isEqualTo("runnerName");
+    assertThat(run.getRunnerInfo()).isEqualTo("runnerInfo");
+    assertThat(run.getStartTime()).isEqualTo(startTime);
+    assertThat(run.getStopTime()).isEqualTo(stopTime);
+    assertThat(run.getSource()).isEqualTo(Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)));
+    assertThat(run.getRepoId()).isEqualTo(Optional.of(REPO_ID));
+    assertThat(run.getResult().getRight()).isPresent();
+    assertThat(run.getResult().getRight().get())
+        .containsExactlyInAnyOrder(
+            new Measurement(
+                runId, DIM1, Either.ofRight(new MeasurementValues(List.of(1d, 2d, 3d)))),
+            new Measurement(runId, DIM2, Either.ofLeft(new MeasurementError("errorMessage"))));
+  }
 
-	@Test
-	void insertingRunUpdatesDimensions() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
-		Dimension dim3 = new Dimension("a", "b");
-		Dimension dim4 = new Dimension("c", "d");
+  @Test
+  void insertingRunUpdatesDimensions() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
+    Dimension dim3 = new Dimension("a", "b");
+    Dimension dim4 = new Dimension("c", "d");
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)), List.of(
-			new NewMeasurement(runId, DIM1, new Unit("asdf"), null,
-				new MeasurementValues(List.of(1d, 2d, 3d))),
-			new NewMeasurement(runId, DIM2, null, Interpretation.MORE_IS_BETTER,
-				new MeasurementError("errorMessage")),
-			new NewMeasurement(runId, dim3, null, null, new MeasurementValues(List.of(4d))),
-			new NewMeasurement(runId, dim4, new Unit("foo"), Interpretation.LESS_IS_BETTER,
-				new MeasurementValues(List.of(5d)))
-		));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
+            List.of(
+                new NewMeasurement(
+                    runId,
+                    DIM1,
+                    new Unit("asdf"),
+                    null,
+                    new MeasurementValues(List.of(1d, 2d, 3d))),
+                new NewMeasurement(
+                    runId,
+                    DIM2,
+                    null,
+                    Interpretation.MORE_IS_BETTER,
+                    new MeasurementError("errorMessage")),
+                new NewMeasurement(runId, dim3, null, null, new MeasurementValues(List.of(4d))),
+                new NewMeasurement(
+                    runId,
+                    dim4,
+                    new Unit("foo"),
+                    Interpretation.LESS_IS_BETTER,
+                    new MeasurementValues(List.of(5d)))));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
-			Map<Dimension, DimensionRecord> dimMap = db.dsl()
-				.selectFrom(DIMENSION)
-				.stream()
-				.collect(toMap(
-					it -> new Dimension(it.getBenchmark(), it.getMetric()),
-					it -> it
-				));
+    try (DBReadAccess db = databaseStorage.acquireReadAccess()) {
+      Map<Dimension, DimensionRecord> dimMap =
+          db.dsl().selectFrom(DIMENSION).stream()
+              .collect(toMap(it -> new Dimension(it.getBenchmark(), it.getMetric()), it -> it));
 
-			assertThat(dimMap).containsOnlyKeys(DIM1, DIM2, dim3, dim4);
+      assertThat(dimMap).containsOnlyKeys(DIM1, DIM2, dim3, dim4);
 
-			DimensionRecord dim1Record = dimMap.get(DIM1);
-			assertThat(dim1Record.getUnit()).isEqualTo(new Unit("asdf").getName());
-			assertThat(dim1Record.getInterpretation())
-				.isEqualTo(Interpretation.DEFAULT.getTextualRepresentation());
+      DimensionRecord dim1Record = dimMap.get(DIM1);
+      assertThat(dim1Record.getUnit()).isEqualTo(new Unit("asdf").getName());
+      assertThat(dim1Record.getInterpretation())
+          .isEqualTo(Interpretation.DEFAULT.getTextualRepresentation());
 
-			DimensionRecord dim2Record = dimMap.get(DIM2);
-			assertThat(dim2Record.getUnit()).isEqualTo(Unit.DEFAULT.getName());
-			assertThat(dim2Record.getInterpretation())
-				.isEqualTo(Interpretation.MORE_IS_BETTER.getTextualRepresentation());
+      DimensionRecord dim2Record = dimMap.get(DIM2);
+      assertThat(dim2Record.getUnit()).isEqualTo(Unit.DEFAULT.getName());
+      assertThat(dim2Record.getInterpretation())
+          .isEqualTo(Interpretation.MORE_IS_BETTER.getTextualRepresentation());
 
-			DimensionRecord dim3Record = dimMap.get(dim3);
-			assertThat(dim3Record.getUnit()).isEqualTo(Unit.DEFAULT.getName());
-			assertThat(dim3Record.getInterpretation())
-				.isEqualTo(Interpretation.DEFAULT.getTextualRepresentation());
+      DimensionRecord dim3Record = dimMap.get(dim3);
+      assertThat(dim3Record.getUnit()).isEqualTo(Unit.DEFAULT.getName());
+      assertThat(dim3Record.getInterpretation())
+          .isEqualTo(Interpretation.DEFAULT.getTextualRepresentation());
 
-			DimensionRecord dim4Record = dimMap.get(dim4);
-			assertThat(dim4Record.getUnit()).isEqualTo(new Unit("foo").getName());
-			assertThat(dim4Record.getInterpretation())
-				.isEqualTo(Interpretation.LESS_IS_BETTER.getTextualRepresentation());
-		}
-	}
+      DimensionRecord dim4Record = dimMap.get(dim4);
+      assertThat(dim4Record.getUnit()).isEqualTo(new Unit("foo").getName());
+      assertThat(dim4Record.getInterpretation())
+          .isEqualTo(Interpretation.LESS_IS_BETTER.getTextualRepresentation());
+    }
+  }
 
-	@Test
-	void insertingRunInvalidatesCaches() {
-		RunId runId = new RunId();
-		Instant startTime = Instant.ofEpochSecond(1600010001);
-		Instant stopTime = Instant.ofEpochSecond(1600010006);
+  @Test
+  void insertingRunInvalidatesCaches() {
+    RunId runId = new RunId();
+    Instant startTime = Instant.ofEpochSecond(1600010001);
+    Instant stopTime = Instant.ofEpochSecond(1600010006);
 
-		NewRun newRun = new NewRun(runId, "author", "runnerName", "runnerInfo", startTime, stopTime,
-			Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
-			new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
+    NewRun newRun =
+        new NewRun(
+            runId,
+            "author",
+            "runnerName",
+            "runnerInfo",
+            startTime,
+            stopTime,
+            Either.ofLeft(new CommitSource(REPO_ID, COMMIT_HASH)),
+            new RunError("errorMessage", RunErrorType.VELCOM_ERROR));
 
-		access.insertRun(newRun);
+    access.insertRun(newRun);
 
-		verify(availableDimensionsCache, atLeastOnce()).invalidate(REPO_ID);
-		verify(latestRunCache, atLeastOnce()).invalidate(REPO_ID, COMMIT_HASH);
-	}
+    verify(availableDimensionsCache, atLeastOnce()).invalidate(REPO_ID);
+    verify(latestRunCache, atLeastOnce()).invalidate(REPO_ID, COMMIT_HASH);
+  }
 }

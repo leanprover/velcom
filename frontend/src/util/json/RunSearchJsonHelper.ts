@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {
-  SearchItem,
-  SearchItemBranch,
-  SearchItemCommit,
-  SearchItemRun
-} from '@/store/types'
+import { SearchItem, SearchItemBranch, SearchItemCommit, SearchItemRun } from "@/store/types";
 
 function searchItemCommitFromJson(json: any): SearchItemCommit {
   return new SearchItemCommit(
@@ -15,8 +10,8 @@ function searchItemCommitFromJson(json: any): SearchItemCommit {
     json.committer,
     new Date(json.committer_date * 1000),
     json.summary,
-    json.has_run
-  )
+    json.has_run,
+  );
 }
 
 function searchItemRunFromJson(json: any): SearchItemRun {
@@ -27,8 +22,8 @@ function searchItemRunFromJson(json: any): SearchItemRun {
     json.commit_summary,
     json.tar_description,
     new Date(json.start_time * 1000),
-    new Date(json.stop_time * 1000)
-  )
+    new Date(json.stop_time * 1000),
+  );
 }
 
 function searchItemBranchFromJson(json: any): SearchItemBranch {
@@ -37,8 +32,8 @@ function searchItemBranchFromJson(json: any): SearchItemBranch {
     json.name,
     json.commit_hash,
     json.commit_summary,
-    json.has_run
-  )
+    json.has_run,
+  );
 }
 
 /**
@@ -50,5 +45,5 @@ export function searchItemsFromJson(json: any): SearchItem[] {
   return json.branches
     .map(searchItemBranchFromJson)
     .concat(json.commits.map(searchItemCommitFromJson))
-    .concat(json.runs.map(searchItemRunFromJson))
+    .concat(json.runs.map(searchItemRunFromJson));
 }

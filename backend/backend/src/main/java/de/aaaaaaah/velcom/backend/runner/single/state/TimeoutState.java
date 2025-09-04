@@ -6,27 +6,25 @@ import de.aaaaaaah.velcom.backend.runner.single.TeleRunner;
 import de.aaaaaaah.velcom.shared.protocol.StatusCode;
 import de.aaaaaaah.velcom.shared.util.Timeout;
 
-/**
- * A state that waits for a given timeout before closing the connection.
- */
+/** A state that waits for a given timeout before closing the connection. */
 public abstract class TimeoutState extends TeleRunnerState {
 
-	private final Timeout timeout;
+  private final Timeout timeout;
 
-	public TimeoutState(TeleRunner runner, RunnerConnection connection) {
-		super(runner, connection);
+  public TimeoutState(TeleRunner runner, RunnerConnection connection) {
+    super(runner, connection);
 
-		timeout = Timeout.after(Delays.AWAIT_COMMAND_REPLY);
-		timeout.getCompletionStage().thenRun(() -> connection.close(StatusCode.COMMAND_TIMEOUT));
-	}
+    timeout = Timeout.after(Delays.AWAIT_COMMAND_REPLY);
+    timeout.getCompletionStage().thenRun(() -> connection.close(StatusCode.COMMAND_TIMEOUT));
+  }
 
-	@Override
-	public void onEnter() {
-		timeout.start();
-	}
+  @Override
+  public void onEnter() {
+    timeout.start();
+  }
 
-	@Override
-	public void onExit() {
-		timeout.cancel();
-	}
+  @Override
+  public void onExit() {
+    timeout.cancel();
+  }
 }

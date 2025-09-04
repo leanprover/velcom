@@ -8,20 +8,13 @@
     </template>
     <v-card>
       <v-card-title>
-        <v-toolbar color="toolbarColor" dark>
-          Share a permanent link to this graph
-        </v-toolbar>
+        <v-toolbar color="toolbarColor" dark> Share a permanent link to this graph </v-toolbar>
       </v-card-title>
       <v-card-text>
         <v-container fluid>
           <v-row no-gutters v-if="shareOptions.length > 0">
             <v-col
-              v-for="{
-                label,
-                selectable,
-                unselectableMessage,
-                key
-              } in shareOptions"
+              v-for="{ label, selectable, unselectableMessage, key } in shareOptions"
               :key="key"
             >
               <v-tooltip top :disabled="selectable">
@@ -43,22 +36,10 @@
           </v-row>
           <v-row>
             <v-col>
-              <v-text-field
-                id="url-field"
-                readonly
-                autofocus
-                :value="permanentLinkUrl"
-              >
+              <v-text-field id="url-field" readonly autofocus :value="permanentLinkUrl">
                 <template #append>
                   <div class="pb-2 pl-2">
-                    <v-btn
-                      outlined
-                      text
-                      color="primary"
-                      @click="copyPermanentLink"
-                    >
-                      Copy
-                    </v-btn>
+                    <v-btn outlined text color="primary" @click="copyPermanentLink"> Copy </v-btn>
                   </div>
                 </template>
               </v-text-field>
@@ -70,55 +51,55 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { mdiLinkVariantPlus } from '@mdi/js'
-import { copyToClipboard } from '@/util/Clipboards'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import { Prop, Watch } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { mdiLinkVariantPlus } from "@mdi/js";
+import { copyToClipboard } from "@/util/Clipboards";
+import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
+import { Prop, Watch } from "vue-property-decorator";
 
 export type Option = {
-  label: string
-  selectable: boolean
-  unselectableMessage: string
-  key: keyof PermanentLinkOptions
-}
+  label: string;
+  selectable: boolean;
+  unselectableMessage: string;
+  key: keyof PermanentLinkOptions;
+};
 
 @Component
 export default class ShareGraphLinkDialog extends Vue {
-  private dialogOpen: boolean = false
+  private dialogOpen: boolean = false;
   private options: PermanentLinkOptions = {
     includeYZoom: true,
     includeXZoom: true,
-    includeDataRestrictions: true
-  }
+    includeDataRestrictions: true,
+  };
 
   @Prop()
-  private readonly linkGenerator!: (options: PermanentLinkOptions) => string
+  private readonly linkGenerator!: (options: PermanentLinkOptions) => string;
 
   @Prop()
-  private readonly shareOptions!: Option[]
+  private readonly shareOptions!: Option[];
 
   private get permanentLinkUrl() {
-    return this.linkGenerator(this.options)
+    return this.linkGenerator(this.options);
   }
 
   private copyPermanentLink() {
-    copyToClipboard(this.permanentLinkUrl, this.$globalSnackbar)
+    copyToClipboard(this.permanentLinkUrl, this.$globalSnackbar);
   }
 
-  @Watch('dialogOpen')
+  @Watch("dialogOpen")
   private onDialogVisibilityChange() {
     if (this.dialogOpen) {
       this.options = {
         includeDataRestrictions: true,
         includeXZoom: true,
-        includeYZoom: true
-      }
+        includeYZoom: true,
+      };
     }
   }
 
   // ICONS
-  private permanentLinkIcon = mdiLinkVariantPlus
+  private permanentLinkIcon = mdiLinkVariantPlus;
 }
 </script>

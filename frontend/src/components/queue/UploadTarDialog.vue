@@ -21,7 +21,7 @@
                 :color="assignToRepo ? 'warning' : 'primary'"
                 @click="assignToRepo = !assignToRepo"
               >
-                {{ assignToRepo ? 'Make stand-alone' : 'Assign to repo' }}
+                {{ assignToRepo ? "Make stand-alone" : "Assign to repo" }}
               </v-btn>
             </v-col>
             <v-col cols="auto">
@@ -41,12 +41,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          :disabled="!formValid"
-          color="primary"
-          class="mr-5"
-          @click="uploadTar"
-        >
+        <v-btn :disabled="!formValid" color="primary" class="mr-5" @click="uploadTar">
           Upload tar
         </v-btn>
         <v-btn color="error" text @click="$emit('input', false)">Close</v-btn>
@@ -56,57 +51,57 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Model, Watch } from 'vue-property-decorator'
-import RepoSelectionComponent from '@/components/misc/RepoSelectionComponent.vue'
-import { vxm } from '@/store'
-import FileSelectComponent from '@/components/misc/FileSelectComponent.vue'
+import Vue from "vue";
+import { Component, Model, Watch } from "vue-property-decorator";
+import RepoSelectionComponent from "@/components/misc/RepoSelectionComponent.vue";
+import { vxm } from "@/store";
+import FileSelectComponent from "@/components/misc/FileSelectComponent.vue";
 
 @Component({
-  components: { FileSelectComponent, RepoSelectionComponent }
+  components: { FileSelectComponent, RepoSelectionComponent },
 })
 export default class UploadTarDialog extends Vue {
-  private vueFormValid: boolean = false
-  private tarDescription: string = ''
-  private repoId: string | null = null
-  private tarFile: File | null = null
-  private assignToRepo: boolean = false
+  private vueFormValid: boolean = false;
+  private tarDescription: string = "";
+  private repoId: string | null = null;
+  private tarFile: File | null = null;
+  private assignToRepo: boolean = false;
 
-  @Model('input', { type: Boolean })
-  private open!: boolean
+  @Model("input", { type: Boolean })
+  private open!: boolean;
 
   private get allRepos() {
-    return vxm.repoModule.allRepos
+    return vxm.repoModule.allRepos;
   }
 
-  @Watch('open')
+  @Watch("open")
   private onOpen() {
     if (this.open) {
-      this.tarDescription = ''
-      this.tarFile = null
-      this.repoId = null
+      this.tarDescription = "";
+      this.tarFile = null;
+      this.repoId = null;
     }
   }
 
   private get formValid(): boolean {
-    return this.vueFormValid && this.tarFile !== null
+    return this.vueFormValid && this.tarFile !== null;
   }
 
   private async uploadTar() {
     if (!this.formValid) {
-      return
+      return;
     }
     await vxm.queueModule.uploadTar({
       repoId: this.repoId,
       description: this.tarDescription,
-      file: this.tarFile!
-    })
-    await vxm.queueModule.fetchQueue()
-    this.$emit('input', false)
+      file: this.tarFile!,
+    });
+    await vxm.queueModule.fetchQueue();
+    this.$emit("input", false);
   }
 
   private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : 'This field must not be empty!'
+    return input.trim().length > 0 ? true : "This field must not be empty!";
   }
 }
 </script>

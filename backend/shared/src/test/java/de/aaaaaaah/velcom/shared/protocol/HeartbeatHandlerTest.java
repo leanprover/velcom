@@ -13,43 +13,42 @@ import org.junit.jupiter.api.Test;
 
 class HeartbeatHandlerTest {
 
-	private HeartbeatHandler heartbeatHandler;
-	private HeartbeatWebsocket heartbeatWebsocket;
+  private HeartbeatHandler heartbeatHandler;
+  private HeartbeatWebsocket heartbeatWebsocket;
 
-	@BeforeEach
-	void setUp() {
-		heartbeatWebsocket = mock(HeartbeatWebsocket.class);
-		heartbeatHandler = new HeartbeatHandler(heartbeatWebsocket, 100);
+  @BeforeEach
+  void setUp() {
+    heartbeatWebsocket = mock(HeartbeatWebsocket.class);
+    heartbeatHandler = new HeartbeatHandler(heartbeatWebsocket, 100);
 
-		when(heartbeatWebsocket.sendPing()).thenReturn(true);
-	}
+    when(heartbeatWebsocket.sendPing()).thenReturn(true);
+  }
 
-	@AfterEach
-	void tearDown() {
-		heartbeatHandler.shutdown();
-	}
+  @AfterEach
+  void tearDown() {
+    heartbeatHandler.shutdown();
+  }
 
+  @Test
+  void testSendsPing() {
+    verify(heartbeatWebsocket, timeout(200).atLeastOnce()).onTimeoutDetected();
+  }
 
-	@Test
-	void testSendsPing() {
-		verify(heartbeatWebsocket, timeout(200).atLeastOnce()).onTimeoutDetected();
-	}
+  @Test
+  void onPongDelaysReaping() throws InterruptedException {
+    for (int i = 0; i < 20; i++) {
+      Thread.sleep(20);
+      heartbeatHandler.onPong();
+    }
 
-	@Test
-	void onPongDelaysReaping() throws InterruptedException {
-		for (int i = 0; i < 20; i++) {
-			Thread.sleep(20);
-			heartbeatHandler.onPong();
-		}
+    verify(heartbeatWebsocket, never()).onTimeoutDetected();
+  }
 
-		verify(heartbeatWebsocket, never()).onTimeoutDetected();
-	}
+  @Test
+  void doesNotReapIfPingFails() throws InterruptedException {
+    when(heartbeatWebsocket.sendPing()).thenReturn(false);
+    Thread.sleep(200);
 
-	@Test
-	void doesNotReapIfPingFails() throws InterruptedException {
-		when(heartbeatWebsocket.sendPing()).thenReturn(false);
-		Thread.sleep(200);
-
-		verify(heartbeatWebsocket, never()).onTimeoutDetected();
-	}
+    verify(heartbeatWebsocket, never()).onTimeoutDetected();
+  }
 }

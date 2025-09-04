@@ -5,13 +5,7 @@
       <v-card-text>
         <v-row v-if="allowSelectAsReference" dense>
           <v-col>
-            <v-btn
-              width="100%"
-              color="primary"
-              text
-              outlined
-              @click="setAsReference"
-            >
+            <v-btn width="100%" color="primary" text outlined @click="setAsReference">
               Use datapoint as reference
             </v-btn>
           </v-col>
@@ -32,13 +26,7 @@
         </v-row>
         <v-row v-if="allowSelectCompare" class="mt-4" dense>
           <v-col>
-            <v-btn
-              width="100%"
-              color="primary"
-              text
-              outlined
-              @click="setAsCompare"
-            >
+            <v-btn width="100%" color="primary" text outlined @click="setAsCompare">
               Select this commit to compare
             </v-btn>
           </v-col>
@@ -85,59 +73,54 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import {
-  AttributedDatapoint,
-  CommitDescription,
-  GraphDataPoint,
-  SeriesId
-} from '@/store/types'
-import CommitBenchmarkActions from '@/components/runs/CommitBenchmarkActions.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { AttributedDatapoint, CommitDescription, GraphDataPoint, SeriesId } from "@/store/types";
+import CommitBenchmarkActions from "@/components/runs/CommitBenchmarkActions.vue";
 
 @Component({
   components: {
-    'benchmark-actions': CommitBenchmarkActions
-  }
+    "benchmark-actions": CommitBenchmarkActions,
+  },
 })
 export default class GraphDatapointDialog extends Vue {
   @Prop({ default: false })
-  private readonly dialogOpen!: boolean
+  private readonly dialogOpen!: boolean;
 
   @Prop()
-  private readonly selectedDatapoint!: GraphDataPoint
+  private readonly selectedDatapoint!: GraphDataPoint;
 
   @Prop()
-  private readonly seriesId!: SeriesId
+  private readonly seriesId!: SeriesId;
 
   @Prop({ default: null })
-  private readonly commitToCompare!: AttributedDatapoint | null
+  private readonly commitToCompare!: AttributedDatapoint | null;
 
   @Prop({ default: null })
-  private readonly referenceDatapoint!: AttributedDatapoint | null
+  private readonly referenceDatapoint!: AttributedDatapoint | null;
 
   @Prop({ default: false })
-  private readonly noCompare!: boolean
+  private readonly noCompare!: boolean;
 
   private get commitHasValue() {
-    return this.selectedDatapoint.successful(this.seriesId)
+    return this.selectedDatapoint.successful(this.seriesId);
   }
 
   private get commitHasRun() {
-    return !this.selectedDatapoint.unbenchmarked(this.seriesId)
+    return !this.selectedDatapoint.unbenchmarked(this.seriesId);
   }
 
   private get allowSelectAsReference(): boolean {
-    return this.commitHasValue
+    return this.commitHasValue;
   }
 
   private get allowSelectCompare(): boolean {
-    return !this.noCompare && this.commitHasValue
+    return !this.noCompare && this.commitHasValue;
   }
 
   private get hasReferenceLine() {
-    return this.referenceDatapoint !== null
+    return this.referenceDatapoint !== null;
   }
 
   private get selectedDatapointAsCommitDescription() {
@@ -146,64 +129,64 @@ export default class GraphDatapointDialog extends Vue {
       this.selectedDatapoint.hash,
       this.selectedDatapoint.author,
       this.selectedDatapoint.committerTime,
-      this.selectedDatapoint.summary
-    )
+      this.selectedDatapoint.summary,
+    );
   }
 
   private get compareLabel(): string {
     return this.commitToCompare
-      ? 'Compare this commit to commit ' + this.commitToCompare.datapoint.hash
-      : ''
+      ? "Compare this commit to commit " + this.commitToCompare.datapoint.hash
+      : "";
   }
 
   private setAsReference() {
-    this.$emit('update:referenceDatapoint', {
+    this.$emit("update:referenceDatapoint", {
       datapoint: this.selectedDatapoint,
-      seriesId: this.seriesId
-    } as AttributedDatapoint)
-    this.$emit('close')
+      seriesId: this.seriesId,
+    } as AttributedDatapoint);
+    this.$emit("close");
   }
 
   private removeReferenceLine() {
-    this.$emit('update:referenceDatapoint', null)
-    this.$emit('close')
+    this.$emit("update:referenceDatapoint", null);
+    this.$emit("close");
   }
 
   private setAsCompare() {
-    this.$emit('update:commitToCompare', {
+    this.$emit("update:commitToCompare", {
       datapoint: this.selectedDatapoint,
-      seriesId: this.seriesId
-    } as AttributedDatapoint)
-    this.$emit('close')
+      seriesId: this.seriesId,
+    } as AttributedDatapoint);
+    this.$emit("close");
   }
 
   private removeCompare() {
-    this.$emit('update:commitToCompare', null)
-    this.$emit('close')
+    this.$emit("update:commitToCompare", null);
+    this.$emit("close");
   }
 
   private compareCommits() {
-    this.pointDialogExecuteCompare()
-    this.$emit('close')
+    this.pointDialogExecuteCompare();
+    this.$emit("close");
   }
 
   private pointDialogExecuteCompare() {
     if (!this.commitToCompare || !this.selectedDatapoint) {
-      return
+      return;
     }
-    const repoId = this.commitToCompare.datapoint.repoId
-    const hashFrom = this.commitToCompare.datapoint.hash
-    const hashTo = this.selectedDatapoint.hash
+    const repoId = this.commitToCompare.datapoint.repoId;
+    const hashFrom = this.commitToCompare.datapoint.hash;
+    const hashTo = this.selectedDatapoint.hash;
 
     this.$router.push({
-      name: 'run-comparison',
+      name: "run-comparison",
       params: { first: repoId, second: repoId },
-      query: { hash1: hashFrom, hash2: hashTo }
-    })
+      query: { hash1: hashFrom, hash2: hashTo },
+    });
   }
 
   private onClose() {
-    this.$emit('close')
+    this.$emit("close");
   }
 }
 </script>

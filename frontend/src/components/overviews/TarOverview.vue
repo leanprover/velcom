@@ -18,46 +18,44 @@
     </v-card-title>
     <v-card-subtitle v-if="tarSource.repoId">
       Attached to
-      <inline-minimal-repo-display
-        :repo-id="tarSource.repoId"
-      ></inline-minimal-repo-display>
+      <inline-minimal-repo-display :repo-id="tarSource.repoId"></inline-minimal-repo-display>
     </v-card-subtitle>
   </v-card>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { RunId, TarTaskSource } from '@/store/types'
-import InlineMinimalRepoNameDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
-import { mdiScaleBalance } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { RunId, TarTaskSource } from "@/store/types";
+import InlineMinimalRepoNameDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
+import { mdiScaleBalance } from "@mdi/js";
 
 @Component({
   components: {
-    'inline-minimal-repo-display': InlineMinimalRepoNameDisplay
-  }
+    "inline-minimal-repo-display": InlineMinimalRepoNameDisplay,
+  },
 })
 export default class TarOverview extends Vue {
   @Prop()
-  private readonly tarSource!: TarTaskSource
+  private readonly tarSource!: TarTaskSource;
 
   @Prop({ default: null })
-  private readonly runId!: RunId | null
+  private readonly runId!: RunId | null;
 
   private get compareRunLocation() {
     if (!this.runId) {
-      return null
+      return null;
     }
     return {
-      name: 'search',
+      name: "search",
       params: {
-        runId: this.runId
-      }
-    }
+        runId: this.runId,
+      },
+    };
   }
 
   // ICONS
-  private compareIcon = mdiScaleBalance
+  private compareIcon = mdiScaleBalance;
 }
 </script>

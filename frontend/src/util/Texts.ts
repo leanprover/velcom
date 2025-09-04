@@ -1,8 +1,8 @@
-import AnsiUp from 'ansi_up'
-import { DimensionId, RepoId } from '@/store/types'
+import AnsiUp from "ansi_up";
+import { DimensionId, RepoId } from "@/store/types";
 
-const converter = new AnsiUp()
-converter.use_classes = true
+const converter = new AnsiUp();
+converter.use_classes = true;
 
 /**
  * Escapes all HTML in a given string.
@@ -10,9 +10,9 @@ converter.use_classes = true
  * @param input the input string to escape
  */
 export function escapeHtml(input: string): string {
-  const p = document.createElement('p')
-  p.appendChild(document.createTextNode(input))
-  return p.innerHTML
+  const p = document.createElement("p");
+  p.appendChild(document.createTextNode(input));
+  return p.innerHTML;
 }
 
 /**
@@ -23,7 +23,7 @@ export function escapeHtml(input: string): string {
 export function safeConvertAnsi(input: string): string {
   // The conversion function of ansi_up 5+ sanitizes input by itself, so
   // just converting it is safe
-  return converter.ansi_to_html(input)
+  return converter.ansi_to_html(input);
 }
 
 /**
@@ -36,9 +36,9 @@ export function formatRepos(repos: Map<RepoId, string[]>): string {
   return Array.from(repos.entries())
     .filter(([, branches]) => branches.length > 0)
     .map(([repoId, branches]) => {
-      return repoId + ':' + branches.join(':')
+      return repoId + ":" + branches.join(":");
     })
-    .join('::')
+    .join("::");
 }
 
 /**
@@ -46,18 +46,18 @@ export function formatRepos(repos: Map<RepoId, string[]>): string {
  * 'bench1:metric1.1:metric1.2::bench2:metric2.1' etc.
  */
 export function formatDimensions(dimensions: DimensionId[]): string {
-  const byBenchmark = new Map<string, string[]>()
+  const byBenchmark = new Map<string, string[]>();
 
-  dimensions.forEach(dimension => {
+  dimensions.forEach((dimension) => {
     if (!byBenchmark.has(dimension.benchmark)) {
-      byBenchmark.set(dimension.benchmark, [])
+      byBenchmark.set(dimension.benchmark, []);
     }
-    byBenchmark.get(dimension.benchmark)!.push(dimension.metric)
-  })
+    byBenchmark.get(dimension.benchmark)!.push(dimension.metric);
+  });
 
   return Array.from(byBenchmark.entries())
     .map(([benchmark, metrics]) => {
-      return benchmark + ':' + metrics.join(':')
+      return benchmark + ":" + metrics.join(":");
     })
-    .join('::')
+    .join("::");
 }

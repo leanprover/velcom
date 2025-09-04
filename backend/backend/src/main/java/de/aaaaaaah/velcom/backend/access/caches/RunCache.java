@@ -21,46 +21,37 @@ import java.util.Objects;
  */
 public class RunCache {
 
-	private static final int MAXIMUM_SIZE = 10000;
+  private static final int MAXIMUM_SIZE = 10000;
 
-	private final Cache<RunId, Run> cache;
+  private final Cache<RunId, Run> cache;
 
-	public RunCache() {
-		cache = Caffeine.newBuilder()
-			.maximumSize(MAXIMUM_SIZE)
-			.build();
-	}
+  public RunCache() {
+    cache = Caffeine.newBuilder().maximumSize(MAXIMUM_SIZE).build();
+  }
 
-	public Run getRun(BenchmarkReadAccess benchmarkAccess, RunId runId) throws NoSuchRunException {
-		return cache.get(runId, benchmarkAccess::getRun);
-	}
+  public Run getRun(BenchmarkReadAccess benchmarkAccess, RunId runId) throws NoSuchRunException {
+    return cache.get(runId, benchmarkAccess::getRun);
+  }
 
-	public Map<RunId, Run> getRuns(BenchmarkReadAccess benchmarkAccess, Collection<RunId> runIds) {
-		return cache.getAll(
-			runIds,
-			missingIdIter -> {
-				List<RunId> missingIds = new ArrayList<>();
-				missingIdIter.forEach(missingIds::add);
-				return benchmarkAccess.getRuns(missingIds).stream()
-					.collect(toMap(Run::getId, it -> it));
-			}
-		);
-	}
+  public Map<RunId, Run> getRuns(BenchmarkReadAccess benchmarkAccess, Collection<RunId> runIds) {
+    return cache.getAll(
+        runIds,
+        missingIdIter -> {
+          List<RunId> missingIds = new ArrayList<>();
+          missingIdIter.forEach(missingIds::add);
+          return benchmarkAccess.getRuns(missingIds).stream().collect(toMap(Run::getId, it -> it));
+        });
+  }
 
-	public List<Run> getRunsInOrder(BenchmarkReadAccess benchmarkReadAccess,
-		Collection<RunId> runIds) {
+  public List<Run> getRunsInOrder(
+      BenchmarkReadAccess benchmarkReadAccess, Collection<RunId> runIds) {
 
-		Map<RunId, Run> runs = getRuns(benchmarkReadAccess, runIds);
-		return runIds.stream()
-			.map(runs::get)
-			.filter(Objects::nonNull)
-			.collect(toList());
-	}
+    Map<RunId, Run> runs = getRuns(benchmarkReadAccess, runIds);
+    return runIds.stream().map(runs::get).filter(Objects::nonNull).collect(toList());
+  }
 
-	/**
-	 * Invalidate all entries.
-	 */
-	public void invalidateAll() {
-		cache.invalidateAll();
-	}
+  /** Invalidate all entries. */
+  public void invalidateAll() {
+    cache.invalidateAll();
+  }
 }

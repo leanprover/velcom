@@ -4,60 +4,64 @@ import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
 import java.time.Instant;
 import java.util.Set;
 
-/**
- * Wrapper class for commits from a jgit repository.
- */
+/** Wrapper class for commits from a jgit repository. */
 public class JgitCommit {
 
-	private final CommitHash hash;
-	private final Set<CommitHash> parentHashes;
-	private final String author;
-	private final Instant authorDate;
-	private final String committer;
-	private final Instant committerDate;
-	private final String message;
+  private final CommitHash hash;
+  private final Set<CommitHash> parentHashes;
+  private final String author;
+  private final Instant authorDate;
+  private final String committer;
+  private final Instant committerDate;
+  private final String message;
 
-	public JgitCommit(CommitHash hash, Set<CommitHash> parentHashes, String author,
-		Instant authorDate, String committer, Instant committerDate, String message) {
+  public JgitCommit(
+      CommitHash hash,
+      Set<CommitHash> parentHashes,
+      String author,
+      Instant authorDate,
+      String committer,
+      Instant committerDate,
+      String message) {
 
-		this.hash = hash;
-		this.parentHashes = parentHashes;
-		this.author = author;
-		this.authorDate = authorDate;
-		this.committer = committer;
-		this.committerDate = committerDate;
-		this.message = message;
-	}
+    this.hash = hash;
+    this.parentHashes = parentHashes;
+    this.author = author;
+    this.authorDate = authorDate;
+    this.committer = committer;
+    this.committerDate = committerDate;
+    this.message = message;
+  }
 
-	public CommitHash getHash() {
-		return hash;
-	}
+  public CommitHash getHash() {
+    return hash;
+  }
 
-	public String getHashAsString() {
-		return hash.getHash();
-	}
+  public String getHashAsString() {
+    return hash.getHash();
+  }
 
-	public Set<CommitHash> getParentHashes() {
-		return parentHashes;
-	}
+  public Set<CommitHash> getParentHashes() {
+    return parentHashes;
+  }
 
-	public String getAuthor() {
-		return author;
-	}
+  public String getAuthor() {
+    return author;
+  }
 
-	public Instant getAuthorDate() {
-		return authorDate;
-	}
+  public Instant getAuthorDate() {
+    return authorDate;
+  }
 
-	public String getCommitter() {
-		return committer;
-	}
+  public String getCommitter() {
+    return committer;
+  }
 
-	public Instant getCommitterDate() {
-		return committerDate;
-	}
+  public Instant getCommitterDate() {
+    return committerDate;
+  }
 
-	public String getMessage() {
-		return message;
-	}
+  public String getMessage() {
+    return message;
+  }
 }

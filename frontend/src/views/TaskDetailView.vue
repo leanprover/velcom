@@ -8,16 +8,10 @@
     <v-row no-gutters v-if="nudgeToRunDetail">
       <v-col>
         <v-snackbar timeout="-1" multi-line :value="true" shaped color="info">
-          This task no longer exists, but it looks like a run exists for it!
-          Click "to the run" on the right to navigate there.
+          This task no longer exists, but it looks like a run exists for it! Click "to the run" on
+          the right to navigate there.
           <template v-slot:action="{ attrs }">
-            <v-btn
-              color="ping"
-              text
-              dark
-              v-bind="attrs"
-              @click="navigateToRespectiveRun"
-            >
+            <v-btn color="ping" text dark v-bind="attrs" @click="navigateToRespectiveRun">
               To the run
             </v-btn>
           </template>
@@ -36,21 +30,12 @@
     </v-row>
     <v-row v-if="taskInfo" no-gutters>
       <v-col>
-        <task-runner-output
-          :task-id="taskId"
-          @loading-failed="loadingOutputFailed"
-        >
+        <task-runner-output :task-id="taskId" @loading-failed="loadingOutputFailed">
           <template #toolbar-right v-if="taskInfo">
             <v-spacer></v-spacer>
-            <v-container
-              fluid
-              class="ma-0 pa-0"
-              style="flex: 0 0 0; flex-basis: content"
-            >
+            <v-container fluid class="ma-0 pa-0" style="flex: 0 0 0; flex-basis: content">
               <v-row no-gutters justify="end">
-                <v-col class="ma-0 pa-0" cols="auto">
-                  #{{ taskInfo.position + 1 }}
-                </v-col>
+                <v-col class="ma-0 pa-0" cols="auto"> #{{ taskInfo.position + 1 }} </v-col>
               </v-row>
               <v-row no-gutters justify="end">
                 <v-col class="ma-0 pa-0" cols="auto">
@@ -74,135 +59,128 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import NotFound404 from '@/views/NotFound404.vue'
-import {
-  Commit,
-  CommitTaskSource,
-  TarTaskSource,
-  TaskSource
-} from '@/store/types'
-import { Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
-import CommitDetail from '@/components/rundetail/CommitDetail.vue'
-import TaskRunnerOutput from '@/components/queue/TaskRunnerOutput.vue'
-import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
-import { TaskInfo } from '@/store/modules/queueStore'
-import { formatDurationShort } from '@/util/Times'
-import TarOverview from '@/components/overviews/TarOverview.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import NotFound404 from "@/views/NotFound404.vue";
+import { Commit, CommitTaskSource, TarTaskSource, TaskSource } from "@/store/types";
+import { Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
+import CommitDetail from "@/components/rundetail/CommitDetail.vue";
+import TaskRunnerOutput from "@/components/queue/TaskRunnerOutput.vue";
+import InlineMinimalRepoDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
+import { TaskInfo } from "@/store/modules/queueStore";
+import { formatDurationShort } from "@/util/Times";
+import TarOverview from "@/components/overviews/TarOverview.vue";
 
 @Component({
   components: {
-    'tar-overview': TarOverview,
-    'inline-minimal-repo-display': InlineMinimalRepoDisplay,
-    'task-runner-output': TaskRunnerOutput,
-    'page-404': NotFound404,
-    'commit-detail': CommitDetail
-  }
+    "tar-overview": TarOverview,
+    "inline-minimal-repo-display": InlineMinimalRepoDisplay,
+    "task-runner-output": TaskRunnerOutput,
+    "page-404": NotFound404,
+    "commit-detail": CommitDetail,
+  },
 })
 export default class TaskDetailView extends Vue {
-  private show404: boolean = false
+  private show404: boolean = false;
 
-  private taskInfo: TaskInfo | null = null
-  private commit: Commit | null = null
-  private nudgeToRunDetail: boolean = false
+  private taskInfo: TaskInfo | null = null;
+  private commit: Commit | null = null;
+  private nudgeToRunDetail: boolean = false;
 
-  private timerIds: number[] = []
-  private queuedSinceText: string | null = null
+  private timerIds: number[] = [];
+  private queuedSinceText: string | null = null;
 
   private get taskId() {
-    return this.$route.params.taskId
+    return this.$route.params.taskId;
   }
 
   private get tarSource() {
     if (!this.taskInfo || !this.taskInfo.task) {
-      return null
+      return null;
     }
     if (this.taskInfo.task.source instanceof TarTaskSource) {
-      return this.taskInfo.task.source
+      return this.taskInfo.task.source;
     }
-    return null
+    return null;
   }
 
-  @Watch('taskId')
+  @Watch("taskId")
   private async update() {
-    this.show404 = false
+    this.show404 = false;
 
-    const newInfo = await vxm.queueModule.fetchTaskInfo(this.taskId)
+    const newInfo = await vxm.queueModule.fetchTaskInfo(this.taskId);
 
     if (!newInfo) {
-      await this.handleTaskNotFound()
-      return
+      await this.handleTaskNotFound();
+      return;
     }
 
-    this.taskInfo = newInfo
-    await this.handleSource(this.taskInfo.task.source)
+    this.taskInfo = newInfo;
+    await this.handleSource(this.taskInfo.task.source);
   }
 
   private async handleSource(source: TaskSource) {
     if (source instanceof CommitTaskSource) {
       this.commit = await vxm.commitDetailComparisonModule.fetchCommit({
         repoId: source.commitDescription.repoId,
-        commitHash: source.commitDescription.hash
-      })
+        commitHash: source.commitDescription.hash,
+      });
     }
   }
 
   private async handleTaskNotFound() {
     try {
-      const run = await vxm.commitDetailComparisonModule.fetchRun(this.taskId)
-      this.nudgeToRunDetail = true
-      await this.handleSource(run.run.source)
+      const run = await vxm.commitDetailComparisonModule.fetchRun(this.taskId);
+      this.nudgeToRunDetail = true;
+      await this.handleSource(run.run.source);
     } catch (e) {
-      this.show404 = true
+      this.show404 = true;
     }
   }
 
   private loadingOutputFailed() {
     if (this.taskInfo === null) {
-      this.handleTaskNotFound()
+      this.handleTaskNotFound();
     }
   }
 
   private updateDuration() {
     if (!this.taskInfo) {
-      this.queuedSinceText = null
-      return
+      this.queuedSinceText = null;
+      return;
     }
 
     if (this.taskInfo.runningSince) {
       this.queuedSinceText =
-        'running for ' +
-        formatDurationShort(this.taskInfo.runningSince, new Date())
+        "running for " + formatDurationShort(this.taskInfo.runningSince, new Date());
     } else {
       this.queuedSinceText =
-        'queued for  ' +
-        formatDurationShort(this.taskInfo.task.since, new Date())
+        "queued for  " + formatDurationShort(this.taskInfo.task.since, new Date());
     }
   }
 
   private navigateToRespectiveRun() {
     this.$router.push({
-      name: 'run-detail',
+      name: "run-detail",
       params: {
-        first: this.taskId
-      }
-    })
+        first: this.taskId,
+      },
+    });
   }
 
   private mounted() {
     const updateTaskTimer = setInterval(() => {
-      this.update()
-    }, 10_000)
-    const updateDurationTimer = setInterval(() => this.updateDuration(), 1000)
+      this.update();
+    }, 10_000);
+    const updateDurationTimer = setInterval(() => this.updateDuration(), 1000);
 
-    this.timerIds = [updateTaskTimer, updateDurationTimer]
-    this.update()
+    this.timerIds = [updateTaskTimer, updateDurationTimer];
+    this.update();
   }
 
   private destroyed() {
-    this.timerIds.forEach(clearInterval)
+    this.timerIds.forEach(clearInterval);
   }
 }
 </script>

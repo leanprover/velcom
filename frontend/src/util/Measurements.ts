@@ -7,13 +7,12 @@
  * @param element the element to get the size for
  */
 export function getInnerHeight(element: Element): number {
-  const style = getComputedStyle(element)
-  let height: number = element.clientHeight
+  const style = getComputedStyle(element);
+  let height: number = element.clientHeight;
 
-  height -= parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
-  height -= parseFloat(style.marginTop) + parseFloat(style.marginBottom)
-  height -=
-    parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)
+  height -= parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  height -= parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+  height -= parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
 
-  return height
+  return height;
 }
