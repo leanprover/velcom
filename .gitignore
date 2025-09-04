@@ -1,4 +1,4 @@
-.idea/
-*.iml
-.docker
-/tmp/
+/.idea/*
+!/.idea/codeStyles/
+!/.idea/codeStyles/*
+!/.idea/google-java-format.xml
