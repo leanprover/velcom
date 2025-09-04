@@ -40,6 +40,7 @@ export default defineComponent({
   props: {
     workers: {
       type: Array as PropType<Worker[]>,
+      required: true,
     },
   },
 });

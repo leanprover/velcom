@@ -173,11 +173,18 @@ export default defineComponent({
     },
   },
   props: {
-    hasExistingBenchmark: { default: true, type: Boolean },
+    hasExistingBenchmark: {
+      type: Boolean,
+      default: true,
+    },
     commitDescription: {
       type: Object as PropType<CommitDescription>,
+      required: true,
     },
-    runId: { default: null, type: Object as PropType<RunId | null> },
+    runId: {
+      type: Object as PropType<RunId | null>,
+      default: null,
+    },
   },
 });
 </script>

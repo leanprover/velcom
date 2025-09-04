@@ -96,7 +96,10 @@ export default defineComponent({
     },
   },
   props: {
-    items: { default: () => [], type: Array as PropType<SearchItem[]> },
+    items: {
+      type: Array as PropType<SearchItem[]>,
+      default: () => [],
+    },
   },
 });
 </script>

@@ -208,6 +208,7 @@ export default defineComponent({
   props: {
     repo: {
       type: Object as PropType<Repo>,
+      required: true,
     },
   },
 });

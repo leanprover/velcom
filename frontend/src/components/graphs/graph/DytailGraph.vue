@@ -423,7 +423,10 @@ export default defineComponent({
     },
   },
   props: {
-    beginYAtZero: { default: false, type: Boolean },
+    beginYAtZero: {
+      type: Boolean,
+      default: false,
+    },
     zoomXStartValue: {
       type: Object as PropType<number | null>,
     },
@@ -438,28 +441,36 @@ export default defineComponent({
     },
     dataRangeMin: {
       type: Object as PropType<Date>,
+      required: true,
     },
     dataRangeMax: {
       type: Object as PropType<Date>,
+      required: true,
     },
     datapoints: {
       type: Array as PropType<GraphDataPoint[]>,
+      required: true,
     },
     seriesInformation: {
       type: Array as PropType<SeriesInformation[]>,
+      required: true,
     },
     visiblePointCount: {
       type: Number,
+      required: true,
     },
     commitToCompare: {
-      default: null,
       type: Object as PropType<AttributedDatapoint | null>,
+      default: null,
     },
     referenceDatapoint: {
-      default: null,
       type: Object as PropType<AttributedDatapoint | null>,
+      default: null,
     },
-    refreshKey: { default: 0, type: Number },
+    refreshKey: {
+      type: Number,
+      default: 0,
+    },
   },
   watch: {
     datapoints: [

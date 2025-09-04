@@ -175,22 +175,30 @@ export default defineComponent({
     },
   },
   props: {
-    dialogOpen: { default: false, type: Boolean },
+    dialogOpen: {
+      type: Boolean,
+      default: false,
+    },
     selectedDatapoint: {
       type: Object as PropType<GraphDataPoint>,
+      required: true,
     },
     seriesId: {
       type: Object as PropType<SeriesId>,
+      required: true,
     },
     commitToCompare: {
-      default: null,
       type: Object as PropType<AttributedDatapoint | null>,
+      default: null,
     },
     referenceDatapoint: {
-      default: null,
       type: Object as PropType<AttributedDatapoint | null>,
+      default: null,
     },
-    noCompare: { default: false, type: Boolean },
+    noCompare: {
+      type: Boolean,
+      default: false,
+    },
   },
 });
 </script>

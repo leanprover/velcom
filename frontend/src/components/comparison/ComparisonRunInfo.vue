@@ -60,9 +60,11 @@ export default defineComponent({
   props: {
     run: {
       type: Object as PropType<Run>,
+      required: true,
     },
     title: {
       type: String,
+      required: true,
     },
   },
 });

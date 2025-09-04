@@ -89,6 +89,7 @@ export default defineComponent({
   props: {
     item: {
       type: Object as PropType<SearchItemCommit>,
+      required: true,
     },
   },
 });

@@ -91,9 +91,11 @@ export default defineComponent({
   props: {
     hasToken: {
       type: String,
+      required: true,
     },
     newToken: {
       type: String,
+      required: true,
     },
   },
 });

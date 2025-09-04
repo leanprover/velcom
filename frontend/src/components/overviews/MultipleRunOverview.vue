@@ -54,8 +54,12 @@ export default defineComponent({
       type: Object as PropType<
         RunDescription[] | RunDescriptionWithDifferences[]
       >,
+      required: true,
     },
-    numberOfChanges: { default: 3, type: Number },
+    numberOfChanges: {
+      type: Number,
+      default: 3,
+    },
   },
 });
 </script>

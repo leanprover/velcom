@@ -80,12 +80,15 @@ export default defineComponent({
   props: {
     source: {
       type: Object as PropType<TarTaskSource>,
+      required: true,
     },
     id: {
       type: Object as PropType<RunId | TaskId>,
+      required: true,
     },
     linkLocation: {
       type: Object as PropType<RawLocation>,
+      required: true,
     },
   },
 });

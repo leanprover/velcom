@@ -184,14 +184,20 @@ export default defineComponent({
   props: {
     comparisonDatapoints: {
       type: Array as PropType<ComparisonDataPoint[]>,
+      required: true,
     },
     graphComponent: {
       type: Object as PropType<typeof Vue>,
+      required: true,
     },
     beginYAtZero: {
       type: Boolean,
+      required: true,
     },
-    height: { default: "80vh", type: String },
+    height: {
+      type: String,
+      default: "80vh",
+    },
   },
 });
 </script>

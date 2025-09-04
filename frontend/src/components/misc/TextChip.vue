@@ -30,13 +30,19 @@ export default defineComponent({
   props: {
     text: {
       type: String,
+      required: true,
     },
-    copyOnClick: { default: true, type: Boolean },
+    copyOnClick: {
+      type: Boolean,
+      default: true,
+    },
     to: {
       type: Object as PropType<any>,
+      required: true,
     },
     on: {
       type: Object as PropType<any>,
+      required: true,
     },
   },
 });

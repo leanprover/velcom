@@ -237,13 +237,15 @@ export default defineComponent({
   props: {
     first: {
       type: Object as PropType<Run>,
+      required: true,
     },
     second: {
       type: Object as PropType<Run>,
+      required: true,
     },
     differences: {
-      default: () => [],
       type: Array as PropType<DimensionDifference[]>,
+      default: () => [],
     },
   },
 });

@@ -250,9 +250,11 @@ export default defineComponent({
   props: {
     reloadGraphDataCounter: {
       type: Number,
+      required: true,
     },
     selectedGraphComponent: {
       type: Object as PropType<typeof Vue>,
+      required: true,
     },
   },
   watch: {

@@ -100,9 +100,16 @@ export default defineComponent({
   props: {
     commit: {
       type: Object as PropType<CommitDescription>,
+      required: true,
     },
-    outlined: { default: false, type: Boolean },
-    linkLocation: { default: null, type: Object as PropType<RawLocation> },
+    outlined: {
+      type: Boolean,
+      default: false,
+    },
+    linkLocation: {
+      type: Object as PropType<RawLocation>,
+      default: null,
+    },
   },
 });
 </script>

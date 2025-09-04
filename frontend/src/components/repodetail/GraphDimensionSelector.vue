@@ -99,16 +99,21 @@ export default defineComponent({
     },
   },
   props: {
-    isFullscreen: { default: false, type: Boolean },
+    isFullscreen: {
+      type: Boolean,
+      default: false,
+    },
     allDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     selectedDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     selectorType: {
-      default: "matrix",
       type: Object as PropType<"tree" | "matrix">,
+      default: "matrix",
     },
   },
   watch: {

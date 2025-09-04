@@ -125,6 +125,7 @@ export default defineComponent({
   props: {
     selectedBranches: {
       type: Object as PropType<Map<RepoId, string[]>>,
+      required: true,
     },
   },
 });

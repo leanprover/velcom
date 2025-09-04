@@ -81,12 +81,15 @@ export default defineComponent({
   props: {
     possibleDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     errorMessage: {
       type: Object as PropType<string | null>,
+      required: true,
     },
     selectedDimension: {
       type: Object as PropType<Dimension>,
+      required: true,
     },
   },
   model: {

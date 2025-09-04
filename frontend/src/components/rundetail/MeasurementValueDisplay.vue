@@ -26,11 +26,16 @@ export default defineComponent({
   props: {
     value: {
       type: String,
+      required: true,
     },
     color: {
       type: String,
+      required: true,
     },
-    tooltipMessage: { default: "This value was not provided", type: String },
+    tooltipMessage: {
+      type: String,
+      default: "This value was not provided",
+    },
   },
 });
 </script>

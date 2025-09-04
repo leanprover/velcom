@@ -47,14 +47,29 @@ export default defineComponent({
   },
   props: {
     rules: {
-      default: () => [],
       type: Object as PropType<[(input: string) => string | boolean]>,
+      default: () => [],
     },
-    repos: { default: () => [], type: Object as PropType<[Repo]> },
-    disabled: { default: false, type: Boolean },
-    label: { default: "Repository name", type: String },
-    clearable: { default: false, type: Boolean },
-    repoId: { type: String },
+    repos: {
+      type: Object as PropType<[Repo]>,
+      default: () => [],
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    label: {
+      type: String,
+      default: "Repository name",
+    },
+    clearable: {
+      type: Boolean,
+      default: false,
+    },
+    repoId: {
+      type: String,
+      required: true,
+    },
   },
   model: {
     prop: "repoId",

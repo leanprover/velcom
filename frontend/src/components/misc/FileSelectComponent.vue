@@ -46,8 +46,14 @@ export default defineComponent({
     },
   },
   props: {
-    errorStyle: { default: false, type: Boolean },
-    file: { type: File, default: () => null },
+    errorStyle: {
+      type: Boolean,
+      default: false,
+    },
+    file: {
+      type: File,
+      default: () => null,
+    },
   },
   model: {
     prop: "file",

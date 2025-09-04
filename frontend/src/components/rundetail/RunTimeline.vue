@@ -89,8 +89,12 @@ export default defineComponent({
   props: {
     runs: {
       type: Array as PropType<RunDescription[]>,
+      required: true,
     },
-    selectedRunId: { default: null, type: Object as PropType<RunId | null> },
+    selectedRunId: {
+      type: Object as PropType<RunId | null>,
+      default: null,
+    },
   },
 });
 </script>

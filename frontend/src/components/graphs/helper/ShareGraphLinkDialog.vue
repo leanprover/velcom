@@ -118,9 +118,11 @@ export default defineComponent({
   props: {
     linkGenerator: {
       type: Function as PropType<(options: PermanentLinkOptions) => string>,
+      required: true,
     },
     shareOptions: {
       type: Array as PropType<Option[]>,
+      required: true,
     },
   },
   watch: {

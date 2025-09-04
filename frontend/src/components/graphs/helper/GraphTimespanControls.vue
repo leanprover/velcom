@@ -232,9 +232,11 @@ export default defineComponent({
   props: {
     endTime: {
       type: Object as PropType<Date>,
+      required: true,
     },
     startTime: {
       type: Object as PropType<Date>,
+      required: true,
     },
   },
 });

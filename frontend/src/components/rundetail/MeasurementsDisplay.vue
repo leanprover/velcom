@@ -348,9 +348,11 @@ export default defineComponent({
   props: {
     measurements: {
       type: Array as PropType<Measurement[]>,
+      required: true,
     },
     differences: {
       type: Array as PropType<DimensionDifference[]>,
+      required: true,
     },
   },
   watch: {

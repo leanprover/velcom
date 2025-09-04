@@ -115,7 +115,10 @@ export default defineComponent({
     event: "input",
   },
   props: {
-    open: { type: Boolean },
+    open: {
+      type: Boolean,
+      required: true,
+    },
   },
   watch: {
     open: [

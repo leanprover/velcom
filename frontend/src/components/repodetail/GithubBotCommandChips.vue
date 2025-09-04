@@ -89,9 +89,11 @@ export default defineComponent({
   props: {
     prs: {
       type: Array as PropType<GithubBotCommand[]>,
+      required: true,
     },
     repo: {
       type: Object as PropType<Repo>,
+      required: true,
     },
   },
 });

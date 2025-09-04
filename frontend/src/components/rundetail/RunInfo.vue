@@ -104,6 +104,7 @@ export default defineComponent({
   props: {
     run: {
       type: Object as PropType<Run>,
+      required: true,
     },
   },
 });

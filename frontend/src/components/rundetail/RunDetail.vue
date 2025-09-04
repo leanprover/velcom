@@ -113,6 +113,7 @@ export default defineComponent({
   props: {
     runWithDifferences: {
       type: Object as PropType<RunWithDifferences>,
+      required: true,
     },
   },
   watch: {

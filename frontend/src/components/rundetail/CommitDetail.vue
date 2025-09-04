@@ -188,8 +188,12 @@ export default defineComponent({
   props: {
     commit: {
       type: Object as PropType<Commit>,
+      required: true,
     },
-    selectedRun: { default: null, type: Object as PropType<RunId | null> },
+    selectedRun: {
+      type: Object as PropType<RunId | null>,
+      default: null,
+    },
   },
 });
 </script>

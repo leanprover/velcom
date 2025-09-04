@@ -56,8 +56,12 @@ export default defineComponent({
   props: {
     tarSource: {
       type: Object as PropType<TarTaskSource>,
+      required: true,
     },
-    runId: { default: null, type: Object as PropType<RunId | null> },
+    runId: {
+      type: Object as PropType<RunId | null>,
+      default: null,
+    },
   },
 });
 </script>

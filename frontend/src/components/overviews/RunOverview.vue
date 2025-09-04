@@ -98,6 +98,7 @@ export default defineComponent({
   props: {
     run: {
       type: Object as PropType<RunDescription>,
+      required: true,
     },
   },
 });

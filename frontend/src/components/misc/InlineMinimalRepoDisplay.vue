@@ -26,6 +26,7 @@ export default defineComponent({
   props: {
     repoId: {
       type: String,
+      required: true,
     },
   },
 });

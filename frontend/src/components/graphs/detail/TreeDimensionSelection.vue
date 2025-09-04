@@ -162,9 +162,11 @@ export default defineComponent({
   props: {
     allDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     selectedDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
   },
   watch: {

@@ -188,16 +188,24 @@ export default defineComponent({
   props: {
     differences: {
       type: Array as PropType<DimensionDifference[]>,
+      required: true,
     },
     runId: {
       type: Object as PropType<RunId>,
+      required: true,
     },
     failedSignificantDimensions: {
-      default: () => [],
       type: Array as PropType<Dimension[]>,
+      default: () => [],
     },
-    center: { default: false, type: Boolean },
-    noLinks: { default: false, type: Boolean },
+    center: {
+      type: Boolean,
+      default: false,
+    },
+    noLinks: {
+      type: Boolean,
+      default: false,
+    },
   },
 });
 </script>

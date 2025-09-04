@@ -83,6 +83,7 @@ export default defineComponent({
   props: {
     item: {
       type: Object as PropType<SearchItemRun>,
+      required: true,
     },
   },
 });

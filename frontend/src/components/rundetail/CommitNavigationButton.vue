@@ -44,9 +44,16 @@ export default defineComponent({
   props: {
     commitDescription: {
       type: Object as PropType<CommitDescription>,
+      required: true,
     },
-    type: { default: "PARENT", type: Object as PropType<"PARENT" | "CHILD"> },
-    tracked: { default: true, type: Boolean },
+    type: {
+      type: Object as PropType<"PARENT" | "CHILD">,
+      default: "PARENT",
+    },
+    tracked: {
+      type: Boolean,
+      default: true,
+    },
   },
 });
 </script>

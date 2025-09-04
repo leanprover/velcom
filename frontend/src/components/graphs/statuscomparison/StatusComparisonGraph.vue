@@ -583,15 +583,20 @@ export default defineComponent({
   props: {
     datapoints: {
       type: Array as PropType<StatusComparisonPoint[]>,
+      required: true,
     },
     baselineData: {
-      default: null,
       type: Object as PropType<MeasurementSuccess[] | null>,
+      default: null,
     },
     selectedDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
-    logScale: { default: false, type: Boolean },
+    logScale: {
+      type: Boolean,
+      default: false,
+    },
   },
   watch: {
     datapoints: [

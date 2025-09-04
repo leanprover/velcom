@@ -100,11 +100,24 @@ export default defineComponent({
   props: {
     graphComponent: {
       type: Object as PropType<typeof Vue>,
+      required: true,
     },
-    beginYAtZero: { default: true, type: Boolean },
-    stacked: { default: false, type: Boolean },
-    normalized: { default: false, type: Boolean },
-    dayEquidistantGraphSelected: { default: true, type: Boolean },
+    beginYAtZero: {
+      type: Boolean,
+      default: true,
+    },
+    stacked: {
+      type: Boolean,
+      default: false,
+    },
+    normalized: {
+      type: Boolean,
+      default: false,
+    },
+    dayEquidistantGraphSelected: {
+      type: Boolean,
+      default: true,
+    },
   },
 });
 </script>

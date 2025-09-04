@@ -57,13 +57,15 @@ export default defineComponent({
   props: {
     allDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     selectedDimensions: {
       type: Array as PropType<Dimension[]>,
+      required: true,
     },
     selectorType: {
-      default: "matrix",
       type: Object as PropType<"tree" | "matrix">,
+      default: "matrix",
     },
   },
 });

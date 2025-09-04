@@ -65,6 +65,7 @@ export default defineComponent({
   props: {
     item: {
       type: Object as PropType<SearchItemBranch>,
+      required: true,
     },
   },
 });
