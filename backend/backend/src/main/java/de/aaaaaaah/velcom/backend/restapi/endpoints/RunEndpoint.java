@@ -49,155 +49,159 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class RunEndpoint {
 
-	private final BenchmarkReadAccess benchmarkAccess;
-	private final CommitReadAccess commitAccess;
-	private final DimensionReadAccess dimensionAccess;
-	private final RunCache runCache;
-	private final LatestRunCache latestRunCache;
-	private final RunComparator comparer;
-	private final SignificanceFactors significanceFactors;
-	private final SignificantRunsCollector significantRunsCollector;
+  private final BenchmarkReadAccess benchmarkAccess;
+  private final CommitReadAccess commitAccess;
+  private final DimensionReadAccess dimensionAccess;
+  private final RunCache runCache;
+  private final LatestRunCache latestRunCache;
+  private final RunComparator comparer;
+  private final SignificanceFactors significanceFactors;
+  private final SignificantRunsCollector significantRunsCollector;
 
-	public RunEndpoint(BenchmarkReadAccess benchmarkAccess, CommitReadAccess commitAccess,
-		DimensionReadAccess dimensionAccess, RunCache runCache, LatestRunCache latestRunCache,
-		RunComparator comparer, SignificanceFactors significanceFactors,
-		SignificantRunsCollector significantRunsCollector) {
+  public RunEndpoint(
+      BenchmarkReadAccess benchmarkAccess,
+      CommitReadAccess commitAccess,
+      DimensionReadAccess dimensionAccess,
+      RunCache runCache,
+      LatestRunCache latestRunCache,
+      RunComparator comparer,
+      SignificanceFactors significanceFactors,
+      SignificantRunsCollector significantRunsCollector) {
 
-		this.benchmarkAccess = benchmarkAccess;
-		this.commitAccess = commitAccess;
-		this.dimensionAccess = dimensionAccess;
-		this.runCache = runCache;
-		this.latestRunCache = latestRunCache;
-		this.comparer = comparer;
-		this.significanceFactors = significanceFactors;
-		this.significantRunsCollector = significantRunsCollector;
-	}
+    this.benchmarkAccess = benchmarkAccess;
+    this.commitAccess = commitAccess;
+    this.dimensionAccess = dimensionAccess;
+    this.runCache = runCache;
+    this.latestRunCache = latestRunCache;
+    this.comparer = comparer;
+    this.significanceFactors = significanceFactors;
+    this.significantRunsCollector = significantRunsCollector;
+  }
 
-	private Optional<Run> getPrevRun(Run run) {
-		Optional<CommitSource> left = run.getSource().getLeft();
-		if (left.isEmpty()) {
-			return Optional.empty(); // Run doesn't come from a commit
-		}
-		CommitSource commitSource = left.get();
+  private Optional<Run> getPrevRun(Run run) {
+    Optional<CommitSource> left = run.getSource().getLeft();
+    if (left.isEmpty()) {
+      return Optional.empty(); // Run doesn't come from a commit
+    }
+    CommitSource commitSource = left.get();
 
-		Iterator<CommitHash> parentHashIt = commitAccess
-			.getParentHashes(commitSource.getRepoId(), commitSource.getHash())
-			.iterator();
-		if (parentHashIt.hasNext()) {
-			CommitHash parentHash = parentHashIt.next();
-			return latestRunCache
-				.getLatestRun(benchmarkAccess, runCache, commitSource.getRepoId(), parentHash);
-		} else {
-			return Optional.empty(); // No unambiguous previous commit
-		}
-	}
+    Iterator<CommitHash> parentHashIt =
+        commitAccess.getParentHashes(commitSource.getRepoId(), commitSource.getHash()).iterator();
+    if (parentHashIt.hasNext()) {
+      CommitHash parentHash = parentHashIt.next();
+      return latestRunCache.getLatestRun(
+          benchmarkAccess, runCache, commitSource.getRepoId(), parentHash);
+    } else {
+      return Optional.empty(); // No unambiguous previous commit
+    }
+  }
 
-	@GET
-	@Path("{runid}")
-	@Timed(histogram = true)
-	public GetReply get(
-		@PathParam("runid") UUID runUuid,
-		@QueryParam("all_values") @Nullable Boolean allValuesOptional,
-		@QueryParam("hash") @Nullable String hashString,
-		@QueryParam("diff_prev") @Nullable Boolean diffPrevOptional
-	) throws NoSuchRunException {
-		boolean allValues = (allValuesOptional != null) && allValuesOptional;
-		boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
+  @GET
+  @Path("{runid}")
+  @Timed(histogram = true)
+  public GetReply get(
+      @PathParam("runid") UUID runUuid,
+      @QueryParam("all_values") @Nullable Boolean allValuesOptional,
+      @QueryParam("hash") @Nullable String hashString,
+      @QueryParam("diff_prev") @Nullable Boolean diffPrevOptional)
+      throws NoSuchRunException {
+    boolean allValues = (allValuesOptional != null) && allValuesOptional;
+    boolean diffPrev = (diffPrevOptional != null) && diffPrevOptional;
 
-		Run run = EndpointUtils.getRun(benchmarkAccess, runCache, latestRunCache, runUuid, hashString);
+    Run run = EndpointUtils.getRun(benchmarkAccess, runCache, latestRunCache, runUuid, hashString);
 
-		// Obtain differences to previous run
-		final Optional<List<JsonDimensionDifference>> differences;
-		final Optional<List<JsonDimensionDifference>> significantDifferences;
-		final Optional<List<JsonDimension>> significantFailedDimensions;
-		if (diffPrev) {
-			Optional<List<DimensionDifference>> prevRunDiffs = getPrevRun(run)
-				.map(it -> comparer.compare(it, run))
-				.map(RunComparison::getDifferences);
+    // Obtain differences to previous run
+    final Optional<List<JsonDimensionDifference>> differences;
+    final Optional<List<JsonDimensionDifference>> significantDifferences;
+    final Optional<List<JsonDimension>> significantFailedDimensions;
+    if (diffPrev) {
+      Optional<List<DimensionDifference>> prevRunDiffs =
+          getPrevRun(run).map(it -> comparer.compare(it, run)).map(RunComparison::getDifferences);
 
-			Optional<SignificanceReasons> significanceReasons = significantRunsCollector
-				.getSignificantRun(run)
-				.map(SignificantRun::getReasons);
+      Optional<SignificanceReasons> significanceReasons =
+          significantRunsCollector.getSignificantRun(run).map(SignificantRun::getReasons);
 
-			Set<Dimension> dimensions = Stream.concat(
-				prevRunDiffs.stream()
-					.flatMap(Collection::stream)
-					.map(DimensionDifference::getDimension),
-				significanceReasons.stream()
-					.map(SignificanceReasons::getDimensions)
-					.flatMap(Collection::stream)
-			).collect(toSet());
+      Set<Dimension> dimensions =
+          Stream.concat(
+                  prevRunDiffs.stream()
+                      .flatMap(Collection::stream)
+                      .map(DimensionDifference::getDimension),
+                  significanceReasons.stream()
+                      .map(SignificanceReasons::getDimensions)
+                      .flatMap(Collection::stream))
+              .collect(toSet());
 
-			Map<Dimension, DimensionInfo> infos = dimensionAccess.getDimensionInfoMap(dimensions);
+      Map<Dimension, DimensionInfo> infos = dimensionAccess.getDimensionInfoMap(dimensions);
 
-			differences = prevRunDiffs
-				.map(diffs -> diffs.stream()
-					.map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, infos))
-					.collect(toList()));
+      differences =
+          prevRunDiffs.map(
+              diffs ->
+                  diffs.stream()
+                      .map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, infos))
+                      .collect(toList()));
 
-			significantDifferences = significanceReasons
-				.map(reasons -> reasons.getSignificantDifferences()
-					.stream()
-					.map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, infos))
-					.collect(toList()));
+      significantDifferences =
+          significanceReasons.map(
+              reasons ->
+                  reasons.getSignificantDifferences().stream()
+                      .map(diff -> JsonDimensionDifference.fromDimensionDifference(diff, infos))
+                      .collect(toList()));
 
-			significantFailedDimensions = significanceReasons
-				.map(reasons -> reasons.getSignificantFailedDimensions()
-					.stream()
-					.map(infos::get)
-					.map(JsonDimension::fromDimensionInfo)
-					.collect(toList()));
-		} else {
-			differences = Optional.empty();
-			significantDifferences = Optional.empty();
-			significantFailedDimensions = Optional.empty();
-		}
+      significantFailedDimensions =
+          significanceReasons.map(
+              reasons ->
+                  reasons.getSignificantFailedDimensions().stream()
+                      .map(infos::get)
+                      .map(JsonDimension::fromDimensionInfo)
+                      .collect(toList()));
+    } else {
+      differences = Optional.empty();
+      significantDifferences = Optional.empty();
+      significantFailedDimensions = Optional.empty();
+    }
 
-		return new GetReply(
-			EndpointUtils.fromRun(dimensionAccess, commitAccess, run, significanceFactors, allValues),
-			differences.orElse(null),
-			significantDifferences.orElse(null),
-			significantFailedDimensions.orElse(null)
-		);
-	}
+    return new GetReply(
+        EndpointUtils.fromRun(dimensionAccess, commitAccess, run, significanceFactors, allValues),
+        differences.orElse(null),
+        significantDifferences.orElse(null),
+        significantFailedDimensions.orElse(null));
+  }
 
-	private static class GetReply {
+  private static class GetReply {
 
-		public final JsonRun run;
-		@Nullable
-		public final List<JsonDimensionDifference> differences;
-		@Nullable
-		public final List<JsonDimensionDifference> significantDifferences;
-		@Nullable
-		public final List<JsonDimension> significantFailedDimensions;
+    public final JsonRun run;
+    @Nullable public final List<JsonDimensionDifference> differences;
+    @Nullable public final List<JsonDimensionDifference> significantDifferences;
+    @Nullable public final List<JsonDimension> significantFailedDimensions;
 
-		public GetReply(JsonRun run, @Nullable List<JsonDimensionDifference> differences,
-			@Nullable List<JsonDimensionDifference> significantDifferences,
-			@Nullable List<JsonDimension> significantFailedDimensions) {
+    public GetReply(
+        JsonRun run,
+        @Nullable List<JsonDimensionDifference> differences,
+        @Nullable List<JsonDimensionDifference> significantDifferences,
+        @Nullable List<JsonDimension> significantFailedDimensions) {
 
-			this.run = run;
-			this.differences = differences;
-			this.significantDifferences = significantDifferences;
-			this.significantFailedDimensions = significantFailedDimensions;
-		}
-	}
+      this.run = run;
+      this.differences = differences;
+      this.significantDifferences = significantDifferences;
+      this.significantFailedDimensions = significantFailedDimensions;
+    }
+  }
 
-	@GET
-	@Path("{runid}/short")
-	@Timed(histogram = true)
-	public GetShortReply getShort(@PathParam("runid") UUID runUuid) throws NoSuchRunException {
-		RunId runId = new RunId(runUuid);
-		ShortRunDescription run = benchmarkAccess.getShortRunDescription(runId);
-		return new GetShortReply(JsonShortRunDescription.fromShortRunDescription(run));
-	}
+  @GET
+  @Path("{runid}/short")
+  @Timed(histogram = true)
+  public GetShortReply getShort(@PathParam("runid") UUID runUuid) throws NoSuchRunException {
+    RunId runId = new RunId(runUuid);
+    ShortRunDescription run = benchmarkAccess.getShortRunDescription(runId);
+    return new GetShortReply(JsonShortRunDescription.fromShortRunDescription(run));
+  }
 
-	private static class GetShortReply {
+  private static class GetShortReply {
 
-		public final JsonShortRunDescription run;
+    public final JsonShortRunDescription run;
 
-		public GetShortReply(JsonShortRunDescription run) {
-			this.run = run;
-		}
-	}
+    public GetShortReply(JsonShortRunDescription run) {
+      this.run = run;
+    }
+  }
 }
-

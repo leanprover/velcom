@@ -60,21 +60,21 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import RepoBranchSelector from '@/components/graphs/comparison/RepoBranchSelector.vue'
-import { vxm } from '@/store'
-import GraphTimespanControls from '@/components/graphs/helper/GraphTimespanControls.vue'
-import ComparisonDimensionSelector from '@/components/graphs/comparison/ComparisonDimensionSelector.vue'
-import { ComparisonDataPoint, Dimension, Repo } from '@/store/types'
-import { Watch } from 'vue-property-decorator'
-import GraphSettings from '@/components/graphs/helper/GraphSettings.vue'
-import { groupBy, spaceDayEquidistant } from '@/util/DayEquidistantUtils'
-import { availableGraphComponents } from '@/util/GraphVariantSelection'
-import { debounce } from '@/util/Debouncer'
-import ShareGraphLinkDialog from '@/components/graphs/helper/ShareGraphLinkDialog.vue'
-import { PermanentLinkOptions } from '@/store/modules/detailGraphStore'
-import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import RepoBranchSelector from "@/components/graphs/comparison/RepoBranchSelector.vue";
+import { vxm } from "@/store";
+import GraphTimespanControls from "@/components/graphs/helper/GraphTimespanControls.vue";
+import ComparisonDimensionSelector from "@/components/graphs/comparison/ComparisonDimensionSelector.vue";
+import { ComparisonDataPoint, Dimension, Repo } from "@/store/types";
+import { Watch } from "vue-property-decorator";
+import GraphSettings from "@/components/graphs/helper/GraphSettings.vue";
+import { groupBy, spaceDayEquidistant } from "@/util/DayEquidistantUtils";
+import { availableGraphComponents } from "@/util/GraphVariantSelection";
+import { debounce } from "@/util/Debouncer";
+import ShareGraphLinkDialog from "@/components/graphs/helper/ShareGraphLinkDialog.vue";
+import { PermanentLinkOptions } from "@/store/modules/detailGraphStore";
+import ComparisonGraph from "@/components/graphs/comparison/ComparisonGraph.vue";
 
 @Component({
   components: {
@@ -83,97 +83,92 @@ import ComparisonGraph from '@/components/graphs/comparison/ComparisonGraph.vue'
     ComparisonGraph,
     ComparisonDimensionSelector,
     GraphTimespanControls,
-    RepoBranchSelector
-  }
+    RepoBranchSelector,
+  },
 })
 export default class RepoComparison extends Vue {
-  private comparisonDatapoints: ComparisonDataPoint[] = []
-  private graphComponent: typeof Vue | null =
-    availableGraphComponents[0].component
+  private comparisonDatapoints: ComparisonDataPoint[] = [];
+  private graphComponent: typeof Vue | null = availableGraphComponents[0].component;
 
-  private graphHeight: number = window.innerHeight
-  private debouncedUpdate: () => void = debounce(() => this.refetchData(), 100)
+  private graphHeight: number = window.innerHeight;
+  private debouncedUpdate: () => void = debounce(() => this.refetchData(), 100);
 
   private get startTime(): Date {
-    return vxm.comparisonGraphModule.startTime
+    return vxm.comparisonGraphModule.startTime;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set startTime(date: Date) {
-    vxm.comparisonGraphModule.startTime = date
+    vxm.comparisonGraphModule.startTime = date;
   }
 
   private get endTime(): Date {
-    return vxm.comparisonGraphModule.endTime
+    return vxm.comparisonGraphModule.endTime;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set endTime(date: Date) {
-    vxm.comparisonGraphModule.endTime = date
+    vxm.comparisonGraphModule.endTime = date;
   }
 
   private get selectedDimension() {
-    return vxm.comparisonGraphModule.selectedDimension
+    return vxm.comparisonGraphModule.selectedDimension;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set selectedDimension(dimension: Dimension | null) {
-    vxm.comparisonGraphModule.selectedDimension = dimension
+    vxm.comparisonGraphModule.selectedDimension = dimension;
   }
 
   private get dayEquidistantGraphSelected() {
-    return vxm.comparisonGraphModule.dayEquidistantGraphSelected
+    return vxm.comparisonGraphModule.dayEquidistantGraphSelected;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set dayEquidistantGraphSelected(selected: boolean) {
-    vxm.comparisonGraphModule.dayEquidistantGraphSelected = selected
+    vxm.comparisonGraphModule.dayEquidistantGraphSelected = selected;
   }
 
   private get beginYAtZero() {
-    return vxm.comparisonGraphModule.beginYAtZero
+    return vxm.comparisonGraphModule.beginYAtZero;
   }
 
   // noinspection JSUnusedLocalSymbols
   private set beginYAtZero(beginYAtZero: boolean) {
-    vxm.comparisonGraphModule.beginYAtZero = beginYAtZero
+    vxm.comparisonGraphModule.beginYAtZero = beginYAtZero;
   }
 
   private get selectedBranches() {
-    return vxm.comparisonGraphModule.selectedBranches
+    return vxm.comparisonGraphModule.selectedBranches;
   }
 
   private get possibleDimensions() {
-    const participatingRepos: Repo[] = this.selectedRepos
+    const participatingRepos: Repo[] = this.selectedRepos;
 
     if (participatingRepos.length === 0) {
-      return []
+      return [];
     }
 
-    let possibleDimensions: Dimension[] = participatingRepos
-      .pop()!
-      .dimensions.slice()
+    let possibleDimensions: Dimension[] = participatingRepos.pop()!.dimensions.slice();
 
-    participatingRepos.forEach(repo => {
-      const dimensionsInRepo = new Set(repo.dimensions.map(it => it.toString()))
-      possibleDimensions = possibleDimensions.filter(it =>
-        dimensionsInRepo.has(it.toString())
-      )
-    })
+    participatingRepos.forEach((repo) => {
+      const dimensionsInRepo = new Set(repo.dimensions.map((it) => it.toString()));
+      possibleDimensions = possibleDimensions.filter((it) => dimensionsInRepo.has(it.toString()));
+    });
 
-    possibleDimensions.sort((a, b) => a.toString().localeCompare(b.toString()))
+    possibleDimensions.sort((a, b) => a.toString().localeCompare(b.toString()));
 
-    return possibleDimensions
+    return possibleDimensions;
   }
 
   private get dimensionSelectorErrorMessage() {
     if (this.possibleDimensions.length > 0) {
-      return null
+      return null;
     }
     if (vxm.comparisonGraphModule.selectedBranches.size === 0) {
-      return 'No repo selected'
+      return "No repo selected";
     }
-    return 'No mutual dimensions'
+    return "No mutual dimensions";
   }
 
   private get selectedRepos(): Repo[] {
@@ -182,135 +177,133 @@ export default class RepoComparison extends Vue {
         .filter(([, value]) => value.length > 0)
         .map(([key]) => vxm.repoModule.repoById(key))
         // Repos might not exist anymore, as the selected branches are persisted
-        .filter(it => it !== undefined)
-        .map(it => it!)
-    )
+        .filter((it) => it !== undefined)
+        .map((it) => it!)
+    );
   }
 
   private toggleRepoBranch(payload: { repoId: string; branch: string }) {
-    vxm.comparisonGraphModule.toggleRepoBranch(payload)
+    vxm.comparisonGraphModule.toggleRepoBranch(payload);
   }
 
   private setRepoBranches(payload: { repoId: string; branches: string[] }) {
-    vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload)
+    vxm.comparisonGraphModule.setSelectedBranchesForRepo(payload);
   }
 
   private getShareLink(options: PermanentLinkOptions) {
-    return vxm.comparisonGraphModule.permanentLink(options)
+    return vxm.comparisonGraphModule.permanentLink(options);
   }
 
   private get shareOptions() {
     return [
       {
-        label: 'Use X-axis zoom instead of start/end date',
+        label: "Use X-axis zoom instead of start/end date",
         selectable: true,
-        unselectableMessage: 'That you see this is a bug. Please report it :)',
-        key: 'includeXZoom'
+        unselectableMessage: "That you see this is a bug. Please report it :)",
+        key: "includeXZoom",
       },
       {
-        label: 'Include Y-axis zoom',
+        label: "Include Y-axis zoom",
         selectable:
           vxm.comparisonGraphModule.zoomYStartValue !== null ||
           vxm.comparisonGraphModule.zoomYEndValue !== null,
         unselectableMessage: "You haven't zoomed the Y axis",
-        key: 'includeYZoom'
+        key: "includeYZoom",
       },
       {
-        label: 'Include repos and branches',
+        label: "Include repos and branches",
         selectable: vxm.comparisonGraphModule.selectedBranches.size > 0,
         unselectableMessage: "You haven't selected any branches or repos",
-        key: 'includeDataRestrictions'
-      }
-    ]
+        key: "includeDataRestrictions",
+      },
+    ];
   }
 
   private applyDatapointTransformations(datapoints: ComparisonDataPoint[]) {
     if (!this.dayEquidistantGraphSelected) {
-      return datapoints.map(it => it.positionedAt(it.committerTime))
+      return datapoints.map((it) => it.positionedAt(it.committerTime));
     }
 
-    const byRepo = groupBy(datapoints, it => it.repoId)
+    const byRepo = groupBy(datapoints, (it) => it.repoId);
     return Array.from(byRepo.entries())
       .map(([, points]) => spaceDayEquidistant(points))
-      .reduce((a, b) => a.concat(b))
+      .reduce((a, b) => a.concat(b));
   }
 
-  @Watch('selectedRepos')
+  @Watch("selectedRepos")
   private async onSelectedRepoChange() {
     if (this.selectedRepos.length > 0) {
-      await this.debouncedUpdate()
+      await this.debouncedUpdate();
     } else {
-      this.comparisonDatapoints = []
+      this.comparisonDatapoints = [];
     }
   }
 
-  @Watch('dayEquidistantGraphSelected')
+  @Watch("dayEquidistantGraphSelected")
   private onDayEquidistantChanged() {
-    this.comparisonDatapoints = this.applyDatapointTransformations(
-      this.comparisonDatapoints
-    )
+    this.comparisonDatapoints = this.applyDatapointTransformations(this.comparisonDatapoints);
   }
 
   private get shouldNotShowResults() {
     if (this.possibleDimensions.length === 0) {
-      return true
+      return true;
     }
-    const possibleDimension = this.possibleDimensions.find(dim =>
-      dim.equals(this.selectedDimension)
-    )
-    return possibleDimension === undefined
+    const possibleDimension = this.possibleDimensions.find((dim) =>
+      dim.equals(this.selectedDimension),
+    );
+    return possibleDimension === undefined;
   }
 
-  @Watch('selectedDimension')
-  @Watch('startTime')
-  @Watch('endTime')
+  @Watch("selectedDimension")
+  @Watch("startTime")
+  @Watch("endTime")
   private async onGraphInformationChanged() {
-    await this.debouncedUpdate()
+    await this.debouncedUpdate();
   }
 
   private async refetchData() {
     if (this.shouldNotShowResults) {
-      this.comparisonDatapoints = []
-      return
+      this.comparisonDatapoints = [];
+      return;
     }
     this.comparisonDatapoints = this.applyDatapointTransformations(
-      await vxm.comparisonGraphModule.fetchComparisonGraph()
-    )
+      await vxm.comparisonGraphModule.fetchComparisonGraph(),
+    );
   }
 
   private adjustGraphHeight() {
-    const graphColumn = this.$refs['graphColumn'] as HTMLElement
-    const app = document.querySelector('#app') as HTMLElement
+    const graphColumn = this.$refs["graphColumn"] as HTMLElement;
+    const app = document.querySelector("#app") as HTMLElement;
 
-    const hasScrollBar = app.scrollHeight > window.innerHeight
-    const causedByGraph = graphColumn.scrollHeight >= window.innerHeight
+    const hasScrollBar = app.scrollHeight > window.innerHeight;
+    const causedByGraph = graphColumn.scrollHeight >= window.innerHeight;
     if (hasScrollBar && causedByGraph) {
-      this.graphHeight -= app.scrollHeight - window.innerHeight
+      this.graphHeight -= app.scrollHeight - window.innerHeight;
     }
   }
 
   private onResized() {
     // Set the graph height to always cause a scroll bar. This simplifies the further calculations as we can assume we
     // need to shrink the graph, but never grow it.
-    this.graphHeight = window.innerHeight
+    this.graphHeight = window.innerHeight;
 
     // Wait for the browser to reflow the page after the above update, then shrink the graph
     window.requestAnimationFrame(() => {
-      this.adjustGraphHeight()
-    })
+      this.adjustGraphHeight();
+    });
   }
 
   // noinspection JSUnusedLocalSymbols
   private async mounted() {
-    this.onResized()
-    window.addEventListener('resize', this.onResized)
+    this.onResized();
+    window.addEventListener("resize", this.onResized);
 
-    await this.debouncedUpdate()
+    await this.debouncedUpdate();
   }
 
   // noinspection JSUnusedLocalSymbols
   private beforeDestroy() {
-    window.removeEventListener('resize', this.onResized)
+    window.removeEventListener("resize", this.onResized);
   }
 }
 </script>

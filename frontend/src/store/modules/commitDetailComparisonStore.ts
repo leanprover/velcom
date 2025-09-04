@@ -1,25 +1,25 @@
-import { createModule, action } from 'vuex-class-component'
+import { createModule, action } from "vuex-class-component";
 import {
   RunId,
   CommitHash,
   RepoId,
   Commit,
   RunComparison,
-  RunWithDifferences
-} from '@/store/types'
-import axios from 'axios'
+  RunWithDifferences,
+} from "@/store/types";
+import axios from "axios";
 import {
   commitFromJson,
   comparisonFromJson,
-  runWithDifferencesFromJson
-} from '@/util/json/CommitComparisonJsonHelper'
+  runWithDifferencesFromJson,
+} from "@/util/json/CommitComparisonJsonHelper";
 
 export class NotFoundError extends Error {}
 
 const VxModule = createModule({
-  namespaced: 'commitDetailComparisonModule',
-  strict: false
-})
+  namespaced: "commitDetailComparisonModule",
+  strict: false,
+});
 
 export class CommitDetailComparisonStore extends VxModule {
   /**
@@ -36,16 +36,16 @@ export class CommitDetailComparisonStore extends VxModule {
       const response = await axios.get(`/run/${runId}`, {
         params: {
           all_values: true,
-          diff_prev: true
-        }
-      })
+          diff_prev: true,
+        },
+      });
 
-      return runWithDifferencesFromJson(response.data)
+      return runWithDifferencesFromJson(response.data);
     } catch (e: any) {
       if (e.response && e.response.status === 404) {
-        throw new NotFoundError()
+        throw new NotFoundError();
       }
-      throw e
+      throw e;
     }
   }
 
@@ -61,21 +61,16 @@ export class CommitDetailComparisonStore extends VxModule {
    * @throws NotFoundError if the server returns a 404
    */
   @action
-  async fetchCommit(payload: {
-    repoId: RepoId
-    commitHash: CommitHash
-  }): Promise<Commit> {
+  async fetchCommit(payload: { repoId: RepoId; commitHash: CommitHash }): Promise<Commit> {
     try {
-      const response = await axios.get(
-        `/commit/${payload.repoId}/${payload.commitHash}`
-      )
+      const response = await axios.get(`/commit/${payload.repoId}/${payload.commitHash}`);
 
-      return commitFromJson(response.data.commit)
+      return commitFromJson(response.data.commit);
     } catch (e: any) {
       if (e.response && e.response.status === 404) {
-        throw new NotFoundError()
+        throw new NotFoundError();
       }
-      throw e
+      throw e;
     }
   }
 
@@ -94,29 +89,26 @@ export class CommitDetailComparisonStore extends VxModule {
    */
   @action
   async fetchComparison(payload: {
-    first: RepoId | RunId
-    second: RepoId | RunId
-    hash1: string | undefined
-    hash2: string | undefined
+    first: RepoId | RunId;
+    second: RepoId | RunId;
+    hash1: string | undefined;
+    hash2: string | undefined;
   }): Promise<RunComparison> {
     try {
-      const response = await axios.get(
-        `/compare/${payload.first}/to/${payload.second}`,
-        {
-          params: {
-            hash1: payload.hash1,
-            hash2: payload.hash2,
-            all_values: true
-          }
-        }
-      )
+      const response = await axios.get(`/compare/${payload.first}/to/${payload.second}`, {
+        params: {
+          hash1: payload.hash1,
+          hash2: payload.hash2,
+          all_values: true,
+        },
+      });
 
-      return comparisonFromJson(response.data)
+      return comparisonFromJson(response.data);
     } catch (e: any) {
       if (e.response && e.response.status === 404) {
-        throw new NotFoundError()
+        throw new NotFoundError();
       }
-      throw e
+      throw e;
     }
   }
 }

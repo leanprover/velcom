@@ -1,7 +1,7 @@
-import { ISnackbar } from './util/Snackbar'
+import { ISnackbar } from "./util/Snackbar";
 
-declare module 'vue/types/vue' {
+declare module "vue/types/vue" {
   interface Vue {
-    $globalSnackbar: ISnackbar
+    $globalSnackbar: ISnackbar;
   }
 }

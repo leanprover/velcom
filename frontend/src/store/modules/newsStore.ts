@@ -1,17 +1,17 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
-import axios from 'axios'
-import { runDescriptionFromJson } from '@/util/json/CommitComparisonJsonHelper'
-import { runDescriptionWithDifferencesFromJson } from '@/util/json/NewJsonHelper'
+import { createModule, mutation, action } from "vuex-class-component";
+import { RunDescriptionWithDifferences, RunDescription } from "@/store/types";
+import axios from "axios";
+import { runDescriptionFromJson } from "@/util/json/CommitComparisonJsonHelper";
+import { runDescriptionWithDifferencesFromJson } from "@/util/json/NewJsonHelper";
 
 const VxModule = createModule({
-  namespaced: 'newsModule',
-  strict: false
-})
+  namespaced: "newsModule",
+  strict: false,
+});
 
 export class NewsStore extends VxModule {
-  private _recentRuns: RunDescription[] = []
-  private _recentSignificantRuns: RunDescriptionWithDifferences[] = []
+  private _recentRuns: RunDescription[] = [];
+  private _recentSignificantRuns: RunDescriptionWithDifferences[] = [];
 
   /**
    * Fetches all recent runs from the server.
@@ -25,17 +25,17 @@ export class NewsStore extends VxModule {
   async fetchRecentRuns(amount: number): Promise<RunDescription[]> {
     const response = await axios.get(`/recent/runs`, {
       params: {
-        n: amount
-      }
-    })
+        n: amount,
+      },
+    });
 
     const runs: RunDescription[] = response.data.runs.map((it: any) =>
-      runDescriptionFromJson(it.run)
-    )
+      runDescriptionFromJson(it.run),
+    );
 
-    this.setRecentRuns(runs)
+    this.setRecentRuns(runs);
 
-    return runs
+    return runs;
   }
 
   /**
@@ -47,20 +47,18 @@ export class NewsStore extends VxModule {
    * @memberof NewsModuleStore
    */
   @action
-  async fetchRecentSignificantRuns(
-    amount: number
-  ): Promise<RunDescriptionWithDifferences[]> {
+  async fetchRecentSignificantRuns(amount: number): Promise<RunDescriptionWithDifferences[]> {
     const response = await axios.get(`/recent/runs`, {
       params: {
         n: amount,
-        significant: true
-      }
-    })
+        significant: true,
+      },
+    });
 
-    const runs = response.data.runs.map(runDescriptionWithDifferencesFromJson)
+    const runs = response.data.runs.map(runDescriptionWithDifferencesFromJson);
 
-    this.setRecentSignificantRuns(runs)
-    return runs
+    this.setRecentSignificantRuns(runs);
+    return runs;
   }
 
   /**
@@ -71,7 +69,7 @@ export class NewsStore extends VxModule {
    */
   @mutation
   setRecentRuns(recentRuns: RunDescription[]): void {
-    this._recentRuns = recentRuns.slice()
+    this._recentRuns = recentRuns.slice();
   }
 
   /**
@@ -81,10 +79,8 @@ export class NewsStore extends VxModule {
    * @memberof NewsModuleStore
    */
   @mutation
-  setRecentSignificantRuns(
-    recentSignificantRuns: RunDescriptionWithDifferences[]
-  ): void {
-    this._recentSignificantRuns = recentSignificantRuns.slice()
+  setRecentSignificantRuns(recentSignificantRuns: RunDescriptionWithDifferences[]): void {
+    this._recentSignificantRuns = recentSignificantRuns.slice();
   }
 
   /**
@@ -95,7 +91,7 @@ export class NewsStore extends VxModule {
    * @memberof NewsModuleStore
    */
   get recentRuns(): RunDescription[] {
-    return this._recentRuns
+    return this._recentRuns;
   }
 
   /**
@@ -106,6 +102,6 @@ export class NewsStore extends VxModule {
    * @memberof NewsModuleStore
    */
   get recentSignificantRuns(): RunDescriptionWithDifferences[] {
-    return this._recentSignificantRuns
+    return this._recentSignificantRuns;
   }
 }

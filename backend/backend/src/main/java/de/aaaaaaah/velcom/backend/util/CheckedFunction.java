@@ -11,13 +11,12 @@ package de.aaaaaaah.velcom.backend.util;
 @FunctionalInterface
 public interface CheckedFunction<T, R, E extends Throwable> {
 
-	/**
-	 * Performs this operation on the given argument.
-	 *
-	 * @param t the input argument
-	 * @return R on successful evaulation
-	 * @throws E an exception if any occurs during the execution of the operation
-	 */
-	R accept(T t) throws E;
-
+  /**
+   * Performs this operation on the given argument.
+   *
+   * @param t the input argument
+   * @return R on successful evaulation
+   * @throws E an exception if any occurs during the execution of the operation
+   */
+  R accept(T t) throws E;
 }

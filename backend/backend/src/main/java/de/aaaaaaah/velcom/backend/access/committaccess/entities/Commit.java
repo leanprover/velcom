@@ -5,124 +5,121 @@ import de.aaaaaaah.velcom.shared.util.Pair;
 import java.time.Instant;
 import java.util.Optional;
 
-/**
- * A git commit. For a version that includes parent and child hashes, see {@link FullCommit}.
- */
+/** A git commit. For a version that includes parent and child hashes, see {@link FullCommit}. */
 public class Commit {
 
-	private final RepoId repoId;
-	private final CommitHash hash;
-	private final boolean reachable;
-	private final boolean tracked;
-	private final String author;
-	private final Instant authorDate;
-	private final String committer;
-	private final Instant committerDate;
-	private final String message;
+  private final RepoId repoId;
+  private final CommitHash hash;
+  private final boolean reachable;
+  private final boolean tracked;
+  private final String author;
+  private final Instant authorDate;
+  private final String committer;
+  private final Instant committerDate;
+  private final String message;
 
-	public Commit(RepoId repoId, CommitHash hash, boolean reachable, boolean tracked, String author,
-		Instant authorDate, String committer, Instant committerDate, String message) {
+  public Commit(
+      RepoId repoId,
+      CommitHash hash,
+      boolean reachable,
+      boolean tracked,
+      String author,
+      Instant authorDate,
+      String committer,
+      Instant committerDate,
+      String message) {
 
-		this.repoId = repoId;
-		this.hash = hash;
-		this.reachable = reachable;
-		this.tracked = tracked;
-		this.author = author;
-		this.authorDate = authorDate;
-		this.committer = committer;
-		this.committerDate = committerDate;
-		this.message = message;
-	}
+    this.repoId = repoId;
+    this.hash = hash;
+    this.reachable = reachable;
+    this.tracked = tracked;
+    this.author = author;
+    this.authorDate = authorDate;
+    this.committer = committer;
+    this.committerDate = committerDate;
+    this.message = message;
+  }
 
-	/**
-	 * Returns a placeholder commit to be used in situations where you absolutely need a {@link
-	 * Commit} but don't have any available.
-	 *
-	 * @param repoId the commit's repo id
-	 * @param hash the commit's hash
-	 * @return a placeholder commit with the specified repo id and hash and placeholder values in all
-	 * 	other fields.
-	 */
-	public static Commit placeholder(RepoId repoId, CommitHash hash) {
-		return new Commit(
-			repoId,
-			hash,
-			false,
-			false,
-			"N/A",
-			Instant.EPOCH,
-			"N/A",
-			Instant.EPOCH,
-			"N/A"
-		);
-	}
+  /**
+   * Returns a placeholder commit to be used in situations where you absolutely need a {@link
+   * Commit} but don't have any available.
+   *
+   * @param repoId the commit's repo id
+   * @param hash the commit's hash
+   * @return a placeholder commit with the specified repo id and hash and placeholder values in all
+   *     other fields.
+   */
+  public static Commit placeholder(RepoId repoId, CommitHash hash) {
+    return new Commit(
+        repoId, hash, false, false, "N/A", Instant.EPOCH, "N/A", Instant.EPOCH, "N/A");
+  }
 
-	public RepoId getRepoId() {
-		return repoId;
-	}
+  public RepoId getRepoId() {
+    return repoId;
+  }
 
-	public CommitHash getHash() {
-		return hash;
-	}
+  public CommitHash getHash() {
+    return hash;
+  }
 
-	public String getHashAsString() {
-		return hash.getHash();
-	}
+  public String getHashAsString() {
+    return hash.getHash();
+  }
 
-	/**
-	 * @return whether this commit can be reached from any branch.
-	 */
-	public boolean isReachable() {
-		return reachable;
-	}
+  /**
+   * @return whether this commit can be reached from any branch.
+   */
+  public boolean isReachable() {
+    return reachable;
+  }
 
-	/**
-	 * A commit is tracked if it is reachable from any tracked branch.
-	 *
-	 * @return whether this commit is tracked
-	 */
-	public boolean isTracked() {
-		return tracked;
-	}
+  /**
+   * A commit is tracked if it is reachable from any tracked branch.
+   *
+   * @return whether this commit is tracked
+   */
+  public boolean isTracked() {
+    return tracked;
+  }
 
-	public String getAuthor() {
-		return author;
-	}
+  public String getAuthor() {
+    return author;
+  }
 
-	public Instant getAuthorDate() {
-		return authorDate;
-	}
+  public Instant getAuthorDate() {
+    return authorDate;
+  }
 
-	public String getCommitter() {
-		return committer;
-	}
+  public String getCommitter() {
+    return committer;
+  }
 
-	public Instant getCommitterDate() {
-		return committerDate;
-	}
+  public Instant getCommitterDate() {
+    return committerDate;
+  }
 
-	public String getMessage() {
-		return message;
-	}
+  public String getMessage() {
+    return message;
+  }
 
-	public static Pair<String, Optional<String>> splitMessageIntoSections(String message) {
-		String[] split = message.split("\n\n", 2);
-		if (split.length == 2) {
-			return new Pair<>(split[0] + "\n", Optional.of(split[1]));
-		} else {
-			return new Pair<>(message, Optional.empty());
-		}
-	}
+  public static Pair<String, Optional<String>> splitMessageIntoSections(String message) {
+    String[] split = message.split("\n\n", 2);
+    if (split.length == 2) {
+      return new Pair<>(split[0] + "\n", Optional.of(split[1]));
+    } else {
+      return new Pair<>(message, Optional.empty());
+    }
+  }
 
-	public Pair<String, Optional<String>> getSections() {
-		return splitMessageIntoSections(message);
-	}
+  public Pair<String, Optional<String>> getSections() {
+    return splitMessageIntoSections(message);
+  }
 
-	public String getSummary() {
-		return getSections().getFirst();
-	}
+  public String getSummary() {
+    return getSections().getFirst();
+  }
 
-	public Optional<String> getMessageWithoutSummary() {
-		return getSections().getSecond();
-	}
+  public Optional<String> getMessageWithoutSummary() {
+    return getSections().getSecond();
+  }
 }

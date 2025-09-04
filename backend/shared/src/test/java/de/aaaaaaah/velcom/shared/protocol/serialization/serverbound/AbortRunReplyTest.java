@@ -10,16 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class AbortRunReplyTest extends SerializerBasedTest {
 
-	@Test
-	void serializeToEmptyObject() {
-		JsonNode tree = serializer.serializeTree(new AbortRunReply());
-		assertEquals(objectMapper.createObjectNode(), tree);
-	}
+  @Test
+  void serializeToEmptyObject() {
+    JsonNode tree = serializer.serializeTree(new AbortRunReply());
+    assertEquals(objectMapper.createObjectNode(), tree);
+  }
 
-	@Test
-	void deserializeFromEmptyObject() {
-		Optional<AbortRunReply> result = serializer.deserialize("{}", AbortRunReply.class);
-		assertTrue(result.isPresent());
-	}
-
+  @Test
+  void deserializeFromEmptyObject() {
+    Optional<AbortRunReply> result = serializer.deserialize("{}", AbortRunReply.class);
+    assertTrue(result.isPresent());
+  }
 }

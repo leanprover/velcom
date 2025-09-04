@@ -10,27 +10,24 @@ import de.aaaaaaah.velcom.backend.data.significance.SignificanceReasons;
  */
 public class SignificantRun {
 
-	private final Run run;
-	private final SignificanceReasons reasons;
+  private final Run run;
+  private final SignificanceReasons reasons;
 
-	public SignificantRun(Run run, SignificanceReasons reasons) {
-		this.run = run;
-		this.reasons = reasons;
-	}
+  public SignificantRun(Run run, SignificanceReasons reasons) {
+    this.run = run;
+    this.reasons = reasons;
+  }
 
-	public Run getRun() {
-		return run;
-	}
+  public Run getRun() {
+    return run;
+  }
 
-	public SignificanceReasons getReasons() {
-		return reasons;
-	}
+  public SignificanceReasons getReasons() {
+    return reasons;
+  }
 
-	@Override
-	public String toString() {
-		return "SignificantRun{" +
-			"run=" + run +
-			", reasons=" + reasons +
-			'}';
-	}
+  @Override
+  public String toString() {
+    return "SignificantRun{" + "run=" + run + ", reasons=" + reasons + '}';
+  }
 }

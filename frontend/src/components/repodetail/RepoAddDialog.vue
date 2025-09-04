@@ -42,43 +42,43 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
+import Vue from "vue";
+import { Component, Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
 
 @Component
 export default class RepoAddDialog extends Vue {
-  private remoteUrl: string = ''
-  private repoName: string = ''
+  private remoteUrl: string = "";
+  private repoName: string = "";
 
-  private formValid: boolean = false
-  private dialogOpen: boolean = false
-  private addInProgress: boolean = false
+  private formValid: boolean = false;
+  private dialogOpen: boolean = false;
+  private addInProgress: boolean = false;
 
   private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : 'This field must not be empty!'
+    return input.trim().length > 0 ? true : "This field must not be empty!";
   }
 
-  @Watch('dialogOpen')
+  @Watch("dialogOpen")
   clearDialogOnOpen(opened: boolean): void {
     if (opened) {
-      this.remoteUrl = ''
-      this.repoName = ''
+      this.remoteUrl = "";
+      this.repoName = "";
     }
   }
 
   private addRepository() {
-    this.addInProgress = true
+    this.addInProgress = true;
     vxm.repoModule
       .addRepo({
         repoName: this.repoName,
-        remoteUrl: this.remoteUrl
+        remoteUrl: this.remoteUrl,
       })
-      .then(it => {
-        this.$emit('value', it)
-        this.dialogOpen = false
+      .then((it) => {
+        this.$emit("value", it);
+        this.dialogOpen = false;
       })
-      .finally(() => (this.addInProgress = false))
+      .finally(() => (this.addInProgress = false));
   }
 }
 </script>

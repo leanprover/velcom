@@ -1,8 +1,8 @@
 // Needed for our types to refer to the real ones
 // eslint-disable-next-line
-import axios from 'axios'
+import axios from "axios";
 
-declare module 'axios' {
+declare module "axios" {
   export interface AxiosRequestConfig {
     /**
      * Whether to hide the whole request from all snackbar messages.
@@ -10,7 +10,7 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    hideFromSnackbar?: boolean
+    hideFromSnackbar?: boolean;
 
     /**
      * Whether to hide the "please stand by" lading snackbar messages.
@@ -18,7 +18,7 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    hideLoadingSnackbar?: boolean
+    hideLoadingSnackbar?: boolean;
 
     /**
      * Whether to hide the success snackbar messages.
@@ -26,7 +26,7 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    showSuccessSnackbar?: boolean
+    showSuccessSnackbar?: boolean;
 
     /**
      * Whether to hide the error snackbar messages.
@@ -34,7 +34,7 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    hideErrorFromSnackbar?: boolean
+    hideErrorFromSnackbar?: boolean;
 
     /**
      * The tag to append/prepend to messages for this request.
@@ -42,14 +42,14 @@ declare module 'axios' {
      * @type {boolean}
      * @memberof AxiosRequestConfig
      */
-    snackbarTag?: string
+    snackbarTag?: string;
 
     /**
      * The priority of this message. Higher priority
      * (i.e. the snackbarPriority is larger) messages prevent lower ones from
      * showing up.
      */
-    snackbarPriority?: number
+    snackbarPriority?: number;
 
     /**
      * A number uniquely identifying this request.
@@ -57,6 +57,6 @@ declare module 'axios' {
      * @type {number}
      * @memberof AxiosRequestConfig
      */
-    randomTag?: number
+    randomTag?: number;
   }
 }

@@ -10,19 +10,20 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class SerializingTest {
 
-	protected ObjectMapper objectMapper;
+  protected ObjectMapper objectMapper;
 
-	@BeforeEach
-	void setUp() {
-		// This mapper should be configured the same as the one in ServerMain.java
-		objectMapper = new ObjectMapper()
-			.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-			.setSerializationInclusion(Include.NON_NULL);
-	}
+  @BeforeEach
+  void setUp() {
+    // This mapper should be configured the same as the one in ServerMain.java
+    objectMapper =
+        new ObjectMapper()
+            .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+            .setSerializationInclusion(Include.NON_NULL);
+  }
 
-	protected void serializedEquals(Object object, String json) throws JsonProcessingException {
-		JsonNode objectTree = objectMapper.readTree(objectMapper.writeValueAsString(object));
-		JsonNode jsonTree = objectMapper.readTree(json);
-		Assertions.assertThat(objectTree).isEqualTo(jsonTree);
-	}
+  protected void serializedEquals(Object object, String json) throws JsonProcessingException {
+    JsonNode objectTree = objectMapper.readTree(objectMapper.writeValueAsString(object));
+    JsonNode jsonTree = objectMapper.readTree(json);
+    Assertions.assertThat(objectTree).isEqualTo(jsonTree);
+  }
 }

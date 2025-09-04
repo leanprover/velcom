@@ -8,11 +8,8 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
  */
 public class GetResult implements ClientBound {
 
-	@Override
-	public ClientBoundPacket asPacket(Serializer serializer) {
-		return new ClientBoundPacket(
-			ClientBoundPacketType.GET_RESULT,
-			serializer.serializeTree(this)
-		);
-	}
+  @Override
+  public ClientBoundPacket asPacket(Serializer serializer) {
+    return new ClientBoundPacket(ClientBoundPacketType.GET_RESULT, serializer.serializeTree(this));
+  }
 }

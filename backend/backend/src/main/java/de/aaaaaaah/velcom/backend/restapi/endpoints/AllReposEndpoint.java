@@ -25,73 +25,76 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/**
- * Endpoint for retrieving a list of all current repos.
- */
+/** Endpoint for retrieving a list of all current repos. */
 @Path("/all-repos")
 @Produces(MediaType.APPLICATION_JSON)
 public class AllReposEndpoint {
 
-	private final DimensionReadAccess dimensionAccess;
-	private final RepoReadAccess repoAccess;
-	private final AvailableDimensionsCache availableDimensionsCache;
+  private final DimensionReadAccess dimensionAccess;
+  private final RepoReadAccess repoAccess;
+  private final AvailableDimensionsCache availableDimensionsCache;
 
-	public AllReposEndpoint(DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess,
-		AvailableDimensionsCache availableDimensionsCache) {
+  public AllReposEndpoint(
+      DimensionReadAccess dimensionAccess,
+      RepoReadAccess repoAccess,
+      AvailableDimensionsCache availableDimensionsCache) {
 
-		this.dimensionAccess = dimensionAccess;
-		this.repoAccess = repoAccess;
-		this.availableDimensionsCache = availableDimensionsCache;
-	}
+    this.dimensionAccess = dimensionAccess;
+    this.repoAccess = repoAccess;
+    this.availableDimensionsCache = availableDimensionsCache;
+  }
 
-	@GET
-	@Timed(histogram = true)
-	public GetReply get() {
-		Collection<Repo> repos = repoAccess.getAllRepos();
-		List<RepoId> repoIds = repos.stream().map(Repo::getId).collect(toList());
-		Map<RepoId, Set<Dimension>> allDimensions = availableDimensionsCache
-			.getAvailableDimensions(dimensionAccess, repoIds);
-		Map<Dimension, DimensionInfo> dimensionInfos = dimensionAccess.getDimensionInfoMap(
-			allDimensions.values().stream()
-				.flatMap(Set::stream)
-				.collect(Collectors.toSet())
-		);
+  @GET
+  @Timed(histogram = true)
+  public GetReply get() {
+    Collection<Repo> repos = repoAccess.getAllRepos();
+    List<RepoId> repoIds = repos.stream().map(Repo::getId).collect(toList());
+    Map<RepoId, Set<Dimension>> allDimensions =
+        availableDimensionsCache.getAvailableDimensions(dimensionAccess, repoIds);
+    Map<Dimension, DimensionInfo> dimensionInfos =
+        dimensionAccess.getDimensionInfoMap(
+            allDimensions.values().stream().flatMap(Set::stream).collect(Collectors.toSet()));
 
-		List<JsonRepo> jsonRepos = repos.stream()
-			.map(repo -> {
-				RepoId repoId = repo.getId();
+    List<JsonRepo> jsonRepos =
+        repos.stream()
+            .map(
+                repo -> {
+                  RepoId repoId = repo.getId();
 
-				List<JsonBranch> branches = repoAccess.getAllBranches(repoId).stream()
-					.map(JsonBranch::fromBranch)
-					.collect(toList());
+                  List<JsonBranch> branches =
+                      repoAccess.getAllBranches(repoId).stream()
+                          .map(JsonBranch::fromBranch)
+                          .collect(toList());
 
-				List<JsonDimension> dimensions = allDimensions.get(repoId).stream()
-					.map(dimension -> JsonDimension.fromDimensionInfo(dimensionInfos.get(dimension)))
-					.collect(toList());
+                  List<JsonDimension> dimensions =
+                      allDimensions.get(repoId).stream()
+                          .map(
+                              dimension ->
+                                  JsonDimension.fromDimensionInfo(dimensionInfos.get(dimension)))
+                          .collect(toList());
 
-				return new JsonRepo(
-					repoId.getId(),
-					repo.getName(),
-					repo.getRemoteUrl().getUrl(),
-					branches,
-					dimensions,
-					repo.getGithubInfo()
-						.map(GithubInfo::getCommentCutoff)
-						.map(Instant::getEpochSecond)
-						.orElse(null)
-				);
-			})
-			.collect(toList());
+                  return new JsonRepo(
+                      repoId.getId(),
+                      repo.getName(),
+                      repo.getRemoteUrl().getUrl(),
+                      branches,
+                      dimensions,
+                      repo.getGithubInfo()
+                          .map(GithubInfo::getCommentCutoff)
+                          .map(Instant::getEpochSecond)
+                          .orElse(null));
+                })
+            .collect(toList());
 
-		return new GetReply(jsonRepos);
-	}
+    return new GetReply(jsonRepos);
+  }
 
-	private static class GetReply {
+  private static class GetReply {
 
-		public final List<JsonRepo> repos;
+    public final List<JsonRepo> repos;
 
-		public GetReply(List<JsonRepo> repos) {
-			this.repos = repos;
-		}
-	}
+    public GetReply(List<JsonRepo> repos) {
+      this.repos = repos;
+    }
+  }
 }

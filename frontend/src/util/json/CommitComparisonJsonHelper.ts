@@ -13,13 +13,10 @@ import {
   RunResultSuccess,
   RunResultVelcomError,
   RunWithDifferences,
-  TrackedCommitDescription
-} from '@/store/types'
-import {
-  commitDescriptionFromJson,
-  sourceFromJson
-} from '@/util/json/QueueJsonHelper'
-import { dimensionFromJson } from '@/util/json/RepoJsonHelper'
+  TrackedCommitDescription,
+} from "@/store/types";
+import { commitDescriptionFromJson, sourceFromJson } from "@/util/json/QueueJsonHelper";
+import { dimensionFromJson } from "@/util/json/RepoJsonHelper";
 
 export function runFromJson(json: any): Run {
   return new Run(
@@ -30,31 +27,31 @@ export function runFromJson(json: any): Run {
     new Date(json.start_time * 1000),
     new Date(json.stop_time * 1000),
     sourceFromJson(json.source),
-    resultFromJson(json.result)
-  )
+    resultFromJson(json.result),
+  );
 }
 
 function resultFromJson(json: any): RunResult {
   if (json.bench_error !== undefined) {
-    return new RunResultScriptError(json.bench_error)
+    return new RunResultScriptError(json.bench_error);
   }
   if (json.velcom_error !== undefined) {
-    return new RunResultVelcomError(json.velcom_error)
+    return new RunResultVelcomError(json.velcom_error);
   }
-  return new RunResultSuccess(json.measurements.map(measurementFromJson))
+  return new RunResultSuccess(json.measurements.map(measurementFromJson));
 }
 
 function measurementFromJson(json: any): Measurement {
   if (json.error !== undefined) {
-    return new MeasurementError(dimensionFromJson(json.dimension), json.error)
+    return new MeasurementError(dimensionFromJson(json.dimension), json.error);
   }
   return new MeasurementSuccess(
     dimensionFromJson(json.dimension),
     json.value,
     json.values,
     json.stddev,
-    json.stddev_percent
-  )
+    json.stddev_percent,
+  );
 }
 
 export function runDescriptionFromJson(json: any): RunDescription {
@@ -62,24 +59,19 @@ export function runDescriptionFromJson(json: any): RunDescription {
     json.id,
     new Date(json.start_time * 1000),
     json.success,
-    sourceFromJson(json.source)
-  )
+    sourceFromJson(json.source),
+  );
 }
 
 export function commitFromJson(json: any): Commit {
   const toCommitDescription = (tracked: boolean) => {
-    return (it: any) =>
-      new TrackedCommitDescription(tracked, commitDescriptionFromJson(it))
-  }
+    return (it: any) => new TrackedCommitDescription(tracked, commitDescriptionFromJson(it));
+  };
 
-  const trackedChildren = json.tracked_children.map(toCommitDescription(true))
-  const untrackedChildren = json.untracked_children.map(
-    toCommitDescription(false)
-  )
-  const trackedParents = json.tracked_parents.map(toCommitDescription(true))
-  const untrackedParents = json.untracked_parents.map(
-    toCommitDescription(false)
-  )
+  const trackedChildren = json.tracked_children.map(toCommitDescription(true));
+  const untrackedChildren = json.untracked_children.map(toCommitDescription(false));
+  const trackedParents = json.tracked_parents.map(toCommitDescription(true));
+  const untrackedParents = json.untracked_parents.map(toCommitDescription(false));
 
   return new Commit(
     json.repo_id,
@@ -88,13 +80,13 @@ export function commitFromJson(json: any): Commit {
     new Date(json.author_date * 1000),
     json.committer,
     new Date(json.committer_date * 1000),
-    json.message || '',
+    json.message || "",
     json.summary,
     json.tracked,
     json.runs.map(runDescriptionFromJson),
     trackedParents.concat(untrackedParents),
-    trackedChildren.concat(untrackedChildren)
-  )
+    trackedChildren.concat(untrackedChildren),
+  );
 }
 
 export function differenceFromJson(json: any): DimensionDifference {
@@ -104,9 +96,9 @@ export function differenceFromJson(json: any): DimensionDifference {
       json.old_run_id,
       json.diff,
       json.reldiff,
-      json.stddev_diff
-    )
-  )
+      json.stddev_diff,
+    ),
+  );
 }
 
 export function comparisonFromJson(json: any): RunComparison {
@@ -115,23 +107,21 @@ export function comparisonFromJson(json: any): RunComparison {
     runFromJson(json.run2),
     json.differences.map(differenceFromJson),
     json.significant_differences.map(differenceFromJson),
-    json.significant_failed_dimensions.map(dimensionFromJson)
-  )
+    json.significant_failed_dimensions.map(dimensionFromJson),
+  );
 }
 
 export function runWithDifferencesFromJson(json: any): RunWithDifferences {
-  const differences = (json.differences || []).map(differenceFromJson)
-  const significantDifferences = (json.significant_differences || []).map(
-    differenceFromJson
-  )
-  const significantFailedDimensions = (
-    json.significant_failed_dimensions || []
-  ).map(dimensionFromJson)
+  const differences = (json.differences || []).map(differenceFromJson);
+  const significantDifferences = (json.significant_differences || []).map(differenceFromJson);
+  const significantFailedDimensions = (json.significant_failed_dimensions || []).map(
+    dimensionFromJson,
+  );
 
   return new RunWithDifferences(
     runFromJson(json.run),
     differences,
     significantDifferences,
-    significantFailedDimensions
-  )
+    significantFailedDimensions,
+  );
 }

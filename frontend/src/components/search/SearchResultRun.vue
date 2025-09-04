@@ -7,10 +7,7 @@
           <v-row no-gutters align="center" justify="space-between">
             <v-col cols="auto" class="flex-shrink-too mr-3">
               <v-list-item-title>
-                <repo-display
-                  v-if="item.repoId"
-                  :repoId="item.repoId"
-                ></repo-display>
+                <repo-display v-if="item.repoId" :repoId="item.repoId"></repo-display>
                 <span v-if="item.repoId" class="mx-2">—</span>
                 <router-link class="concealed-link" :to="linkLocation">{{
                   description
@@ -41,51 +38,51 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { RawLocation } from 'vue-router'
-import TextChip from '@/components/misc/TextChip.vue'
-import InlineMinimalRepoDisplay from '@/components/misc/InlineMinimalRepoDisplay.vue'
-import { mdiFolderZipOutline, mdiRunFast } from '@mdi/js'
-import { SearchItemRun } from '@/store/types'
-import { formatDate, formatDurationHuman } from '@/util/Times'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { RawLocation } from "vue-router";
+import TextChip from "@/components/misc/TextChip.vue";
+import InlineMinimalRepoDisplay from "@/components/misc/InlineMinimalRepoDisplay.vue";
+import { mdiFolderZipOutline, mdiRunFast } from "@mdi/js";
+import { SearchItemRun } from "@/store/types";
+import { formatDate, formatDurationHuman } from "@/util/Times";
 
 @Component({
   components: {
-    'repo-display': InlineMinimalRepoDisplay,
-    TextChip
-  }
+    "repo-display": InlineMinimalRepoDisplay,
+    TextChip,
+  },
 })
 export default class SearchResultRun extends Vue {
   @Prop()
-  private readonly item!: SearchItemRun
+  private readonly item!: SearchItemRun;
 
   private get linkLocation(): RawLocation {
     return {
-      name: 'run-detail',
-      params: { first: this.item.id }
-    }
+      name: "run-detail",
+      params: { first: this.item.id },
+    };
   }
 
   private get startTimeString() {
-    return formatDate(this.item.startTime)
+    return formatDate(this.item.startTime);
   }
 
   private get durationString() {
-    return formatDurationHuman(this.item.startTime, this.item.stopTime)
+    return formatDurationHuman(this.item.startTime, this.item.stopTime);
   }
 
   private get description() {
-    return this.item.tarDescription || this.item.commitSummary
+    return this.item.tarDescription || this.item.commitSummary;
   }
 
   private get icon() {
-    return this.item.tarDescription ? this.tarIcon : this.runIcon
+    return this.item.tarDescription ? this.tarIcon : this.runIcon;
   }
 
-  private readonly runIcon = mdiRunFast
-  private readonly tarIcon = mdiFolderZipOutline
+  private readonly runIcon = mdiRunFast;
+  private readonly tarIcon = mdiFolderZipOutline;
 }
 </script>
 

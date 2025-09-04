@@ -7,7 +7,7 @@ export declare interface ISnackbar {
    * @param {number} priority the priority of the message. Higher priorities overwrite lower ones.
    * @memberof ISnackbar
    */
-  setError(tag: string, error: string, priority?: number): void
+  setError(tag: string, error: string, priority?: number): void;
 
   /**
    * Displays a success message in the snackbar
@@ -17,7 +17,7 @@ export declare interface ISnackbar {
    * @param {number} priority the priority of the message. Higher priorities overwrite lower ones.
    * @memberof ISnackbar
    */
-  setSuccess(tag: string, message: string, priority?: number): void
+  setSuccess(tag: string, message: string, priority?: number): void;
 
   /**
    * Displays a loading indicator in the snack bar.
@@ -26,7 +26,7 @@ export declare interface ISnackbar {
    * @param {number} priority the priority of the message. Higher priorities overwrite lower ones.
    * @memberof ISnackbar
    */
-  setLoading(tag: string, priority?: number): void
+  setLoading(tag: string, priority?: number): void;
 
   /**
    * Marks loading as completed, hiding it again and flashing a success text.
@@ -35,5 +35,5 @@ export declare interface ISnackbar {
    * @param {number} priority the priority of the message. Higher priorities overwrite lower ones.
    * @memberof ISnackbar
    */
-  finishedLoading(tag: string, priority?: number): void
+  finishedLoading(tag: string, priority?: number): void;
 }

@@ -2,11 +2,7 @@
   <v-container fluid class="ma-0 pa-0 wrapper fill-height">
     <v-row no-gutters align="center" justify="start">
       <v-col>
-        <v-text-field
-          hide-details
-          label="Search"
-          v-model="search"
-        ></v-text-field>
+        <v-text-field hide-details label="Search" v-model="search"></v-text-field>
       </v-col>
     </v-row>
     <v-row no-gutters>
@@ -41,130 +37,130 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { vxm } from '@/store'
-import { Prop, Watch } from 'vue-property-decorator'
-import { Dimension } from '@/store/types'
-import { distinct, locallySorted } from '@/util/Arrays'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { vxm } from "@/store";
+import { Prop, Watch } from "vue-property-decorator";
+import { Dimension } from "@/store/types";
+import { distinct, locallySorted } from "@/util/Arrays";
 
 class BenchmarkItem {
-  id: string
-  name: string
-  children: DimensionItem[]
+  id: string;
+  name: string;
+  children: DimensionItem[];
 
   constructor(name: string, children: DimensionItem[]) {
-    this.id = name
-    this.name = name
-    this.children = children.sort((a, b) => a.name.localeCompare(b.name))
+    this.id = name;
+    this.name = name;
+    this.children = children.sort((a, b) => a.name.localeCompare(b.name));
   }
 }
 
 class DimensionItem {
-  id: string
-  dimension: Dimension
-  name: string
+  id: string;
+  dimension: Dimension;
+  name: string;
 
   constructor(dimension: Dimension) {
-    this.dimension = dimension
-    this.id = dimension.toString()
-    this.name = dimension.metric
+    this.dimension = dimension;
+    this.id = dimension.toString();
+    this.name = dimension.metric;
   }
 }
 
 @Component
 export default class TreeDimensionSelection extends Vue {
-  private search: string = ''
+  private search: string = "";
 
   @Prop()
-  private allDimensions!: Dimension[]
+  private allDimensions!: Dimension[];
 
   @Prop()
-  private selectedDimensions!: Dimension[]
+  private selectedDimensions!: Dimension[];
 
-  private selectedBenchmarkItems: string[] = []
+  private selectedBenchmarkItems: string[] = [];
 
-  private openItems: string[] = []
+  private openItems: string[] = [];
 
-  @Watch('search')
+  @Watch("search")
   private newSearch(search: string) {
     if (!search) {
-      this.openItems = []
-      return
+      this.openItems = [];
+      return;
     }
 
     const containsIgnoreCase = (id: string, value: string) =>
-      id.toLocaleLowerCase().includes(value.toLocaleLowerCase())
+      id.toLocaleLowerCase().includes(value.toLocaleLowerCase());
 
     this.openItems = this.benchmarkItems
       .filter(
-        it =>
+        (it) =>
           containsIgnoreCase(it.id, search) ||
-          it.children.some(child => containsIgnoreCase(child.id, search))
+          it.children.some((child) => containsIgnoreCase(child.id, search)),
       )
-      .map(it => it.id)
+      .map((it) => it.id);
   }
 
   private get benchmarkItems(): BenchmarkItem[] {
     return this.allBenchmarks.map(
-      benchmark =>
+      (benchmark) =>
         new BenchmarkItem(
           benchmark,
           this.allDimensions
-            .filter(dimension => dimension.benchmark === benchmark)
-            .map(dimension => new DimensionItem(dimension))
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-    )
+            .filter((dimension) => dimension.benchmark === benchmark)
+            .map((dimension) => new DimensionItem(dimension))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        ),
+    );
   }
 
   private get dimensionItemMap(): Map<string, DimensionItem> {
-    const map = new Map()
+    const map = new Map();
     this.benchmarkItems
-      .flatMap(it => it.children)
-      .forEach(it => map.set(it.dimension.toString(), it))
-    return map
+      .flatMap((it) => it.children)
+      .forEach((it) => map.set(it.dimension.toString(), it));
+    return map;
   }
 
   private get selectedItems(): string[] {
     const leaves = this.selectedDimensions
-      .map(id => this.dimensionItemMap.get(id.toString()))
-      .filter(it => it)
-      .map(it => it!.id)
+      .map((id) => this.dimensionItemMap.get(id.toString()))
+      .filter((it) => it)
+      .map((it) => it!.id);
 
-    return [...this.selectedBenchmarkItems, ...leaves]
+    return [...this.selectedBenchmarkItems, ...leaves];
   }
 
   private metricColor(item: DimensionItem | BenchmarkItem): string {
     if (!this.selectedDimensions) {
-      return 'accent'
+      return "accent";
     }
     if (item instanceof DimensionItem) {
-      return vxm.colorModule.colorForDetailDimension(item.dimension)
+      return vxm.colorModule.colorForDetailDimension(item.dimension);
     } else if (item.children) {
-      return this.metricColor(item.children[0])
+      return this.metricColor(item.children[0]);
     } else {
-      return 'accent'
+      return "accent";
     }
   }
 
   private changed(dimensions: string[]) {
-    this.selectedBenchmarkItems = dimensions.filter(it =>
-      this.benchmarkItems.find(a => a.id === it)
-    )
+    this.selectedBenchmarkItems = dimensions.filter((it) =>
+      this.benchmarkItems.find((a) => a.id === it),
+    );
 
     this.$emit(
-      'update:selectedDimensions',
+      "update:selectedDimensions",
       dimensions
-        .map(it => this.dimensionItemMap.get(it.toString()))
-        .filter(it => it)
-        .map(it => it!.dimension)
-    )
+        .map((it) => this.dimensionItemMap.get(it.toString()))
+        .filter((it) => it)
+        .map((it) => it!.dimension),
+    );
   }
 
   private get allBenchmarks(): string[] {
-    const benchmarks = this.allDimensions.map(it => it.benchmark)
-    return locallySorted(distinct(benchmarks))
+    const benchmarks = this.allDimensions.map((it) => it.benchmark);
+    return locallySorted(distinct(benchmarks));
   }
 }
 </script>

@@ -1,4 +1,4 @@
-import { ISnackbar } from '@/util/Snackbar'
+import { ISnackbar } from "@/util/Snackbar";
 
 /**
  * Copies the given text to the clipboard.
@@ -9,31 +9,29 @@ export function copyToClipboard(text: string, snackbar: ISnackbar): void {
   if (navigator.clipboard) {
     navigator.clipboard
       .writeText(text)
-      .then(() => snackbar.setSuccess('', 'Copied!'))
-      .catch(error =>
-        snackbar.setError('', 'Could not copy to clipboard :( ' + error)
-      )
+      .then(() => snackbar.setSuccess("", "Copied!"))
+      .catch((error) => snackbar.setError("", "Could not copy to clipboard :( " + error));
 
-    return
+    return;
   }
 
   // Compatibility for sites without a secure context
   // (or users that disable navigator.clipboard)
 
   // setup new node
-  const node = document.createElement('span')
-  node.innerText = text
-  node.contentEditable = 'true'
-  document.body.appendChild(node)
+  const node = document.createElement("span");
+  node.innerText = text;
+  node.contentEditable = "true";
+  document.body.appendChild(node);
 
-  node.focus({ preventScroll: true })
+  node.focus({ preventScroll: true });
 
   // Copy its text
-  document.execCommand('SelectAll')
-  document.execCommand('copy')
+  document.execCommand("SelectAll");
+  document.execCommand("copy");
 
   // delete it
-  document.body.removeChild(node)
+  document.body.removeChild(node);
 
-  snackbar.setSuccess('', 'Copied (using compatibility mode)!')
+  snackbar.setSuccess("", "Copied (using compatibility mode)!");
 }

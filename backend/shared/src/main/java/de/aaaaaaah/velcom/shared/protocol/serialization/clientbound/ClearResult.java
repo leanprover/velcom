@@ -7,11 +7,9 @@ import de.aaaaaaah.velcom.shared.protocol.serialization.Serializer;
  */
 public class ClearResult implements ClientBound {
 
-	@Override
-	public ClientBoundPacket asPacket(Serializer serializer) {
-		return new ClientBoundPacket(
-			ClientBoundPacketType.CLEAR_RESULT,
-			serializer.serializeTree(this)
-		);
-	}
+  @Override
+  public ClientBoundPacket asPacket(Serializer serializer) {
+    return new ClientBoundPacket(
+        ClientBoundPacketType.CLEAR_RESULT, serializer.serializeTree(this));
+  }
 }

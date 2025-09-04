@@ -10,13 +10,13 @@ import java.util.concurrent.Future;
  */
 public interface StreamsProcessOutput<T> extends Future<T> {
 
-	/**
-	 * @return a snapshot of the current standard output of the process
-	 */
-	String getCurrentStdOut();
+  /**
+   * @return a snapshot of the current standard output of the process
+   */
+  String getCurrentStdOut();
 
-	/**
-	 * @return a snapshot of the current standard error
-	 */
-	String getCurrentStdErr();
+  /**
+   * @return a snapshot of the current standard error
+   */
+  String getCurrentStdErr();
 }

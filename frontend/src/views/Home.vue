@@ -5,27 +5,18 @@
         <v-col>
           <v-card>
             <v-card-title>
-              <v-toolbar color="toolbarColor" dark>
-                Recent Significant Runs
-              </v-toolbar>
+              <v-toolbar color="toolbarColor" dark> Recent Significant Runs </v-toolbar>
             </v-card-title>
             <v-card-text>
               <v-container fluid class="mt-0 pt-0">
                 <v-row align="baseline" justify="center">
                   <v-col class="mx-0 px-0">
-                    <multiple-run-overview
-                      :runs="recentSignificant"
-                    ></multiple-run-overview>
+                    <multiple-run-overview :runs="recentSignificant"></multiple-run-overview>
                   </v-col>
                 </v-row>
                 <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
-                    <v-btn
-                      outlined
-                      text
-                      color="primary"
-                      @click="recentSignificantAmount += 5"
-                    >
+                    <v-btn outlined text color="primary" @click="recentSignificantAmount += 5">
                       load more
                     </v-btn>
                   </v-col>
@@ -45,19 +36,12 @@
               <v-container fluid class="mt-0 pt-0">
                 <v-row align="baseline" justify="center">
                   <v-col class="mx-0 px-0">
-                    <multiple-run-overview
-                      :runs="recent"
-                    ></multiple-run-overview>
+                    <multiple-run-overview :runs="recent"></multiple-run-overview>
                   </v-col>
                 </v-row>
                 <v-row align="baseline" justify="center" class="mt-2">
                   <v-col cols="auto">
-                    <v-btn
-                      outlined
-                      text
-                      color="primary"
-                      @click="recentAmount += 10"
-                    >
+                    <v-btn outlined text color="primary" @click="recentAmount += 10">
                       load more
                     </v-btn>
                   </v-col>
@@ -72,43 +56,43 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
-import { RunDescriptionWithDifferences, RunDescription } from '@/store/types'
-import MultipleRunOverview from '@/components/overviews/MultipleRunOverview.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
+import { RunDescriptionWithDifferences, RunDescription } from "@/store/types";
+import MultipleRunOverview from "@/components/overviews/MultipleRunOverview.vue";
 
 @Component({
   components: {
-    'multiple-run-overview': MultipleRunOverview
-  }
+    "multiple-run-overview": MultipleRunOverview,
+  },
 })
 export default class Home extends Vue {
-  private recentAmount: number = 10
-  private recentSignificantAmount: number = 10
+  private recentAmount: number = 10;
+  private recentSignificantAmount: number = 10;
 
   get recent(): RunDescription[] {
-    return vxm.newsModule.recentRuns
+    return vxm.newsModule.recentRuns;
   }
 
   get recentSignificant(): RunDescriptionWithDifferences[] {
-    return vxm.newsModule.recentSignificantRuns
+    return vxm.newsModule.recentSignificantRuns;
   }
 
-  @Watch('recentAmount')
+  @Watch("recentAmount")
   private fetchRecent() {
-    vxm.newsModule.fetchRecentRuns(this.recentAmount)
+    vxm.newsModule.fetchRecentRuns(this.recentAmount);
   }
 
-  @Watch('recentSignificantAmount')
+  @Watch("recentSignificantAmount")
   private fetchRecentSignificant() {
-    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount)
+    vxm.newsModule.fetchRecentSignificantRuns(this.recentSignificantAmount);
   }
 
   created(): void {
-    this.fetchRecent()
-    this.fetchRecentSignificant()
+    this.fetchRecent();
+    this.fetchRecentSignificant();
   }
 }
 </script>

@@ -4,11 +4,10 @@ import java.security.Principal;
 
 public class Admin implements Principal {
 
-	public Admin() {
-	}
+  public Admin() {}
 
-	@Override
-	public String getName() {
-		return "admin";
-	}
+  @Override
+  public String getName() {
+    return "admin";
+  }
 }

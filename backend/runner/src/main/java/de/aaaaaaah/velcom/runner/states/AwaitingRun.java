@@ -18,70 +18,73 @@ import org.slf4j.LoggerFactory;
  */
 public class AwaitingRun extends RunnerState {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingRun.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AwaitingRun.class);
 
-	private final CompletableFuture<RequestRunReply> replyFuture;
-	private final RequestRunReply reply;
+  private final CompletableFuture<RequestRunReply> replyFuture;
+  private final RequestRunReply reply;
 
-	private OutputStream tmpFile;
+  private OutputStream tmpFile;
 
-	public AwaitingRun(TeleBackend teleBackend, Connection connection,
-		RequestRunReply reply, CompletableFuture<RequestRunReply> replyFuture) {
+  public AwaitingRun(
+      TeleBackend teleBackend,
+      Connection connection,
+      RequestRunReply reply,
+      CompletableFuture<RequestRunReply> replyFuture) {
 
-		super(teleBackend, connection);
+    super(teleBackend, connection);
 
-		this.replyFuture = replyFuture;
-		this.reply = reply;
-	}
+    this.replyFuture = replyFuture;
+    this.reply = reply;
+  }
 
-	@Override
-	public void onEnter() {
-		LOGGER.info("{} - Receiving task repo for task {}", teleBackend.getAddress(),
-			reply.getRunId().get());
+  @Override
+  public void onEnter() {
+    LOGGER.info(
+        "{} - Receiving task repo for task {}", teleBackend.getAddress(), reply.getRunId().get());
 
-		try {
-			Path taskRepoTmpPath = teleBackend.getTaskRepoTmpPath();
-			Files.createDirectories(taskRepoTmpPath.getParent());
-			tmpFile = Files.newOutputStream(taskRepoTmpPath);
-		} catch (IOException e) {
-			LOGGER.warn("{} - Could not open stream to task repo tmp file", teleBackend.getAddress(), e);
-		}
-	}
+    try {
+      Path taskRepoTmpPath = teleBackend.getTaskRepoTmpPath();
+      Files.createDirectories(taskRepoTmpPath.getParent());
+      tmpFile = Files.newOutputStream(taskRepoTmpPath);
+    } catch (IOException e) {
+      LOGGER.warn("{} - Could not open stream to task repo tmp file", teleBackend.getAddress(), e);
+    }
+  }
 
-	@Override
-	public RunnerState onBinary(ByteBuffer data, boolean last) {
-		if (tmpFile != null) {
-			byte[] bytes = new byte[data.remaining()];
-			data.get(bytes);
-			try {
-				tmpFile.write(bytes);
-			} catch (IOException e) {
-				LOGGER.warn("{} - Could not stream to task repo tmp file", teleBackend.getAddress(), e);
-				tmpFile = null;
-			}
-		}
+  @Override
+  public RunnerState onBinary(ByteBuffer data, boolean last) {
+    if (tmpFile != null) {
+      byte[] bytes = new byte[data.remaining()];
+      data.get(bytes);
+      try {
+        tmpFile.write(bytes);
+      } catch (IOException e) {
+        LOGGER.warn("{} - Could not stream to task repo tmp file", teleBackend.getAddress(), e);
+        tmpFile = null;
+      }
+    }
 
-		if (!last) {
-			return this;
-		} else if (tmpFile == null) {
-			return new Idle(teleBackend, connection);
-		} else {
-			replyFuture.complete(reply);
-			return new Idle(teleBackend, connection);
-		}
-	}
+    if (!last) {
+      return this;
+    } else if (tmpFile == null) {
+      return new Idle(teleBackend, connection);
+    } else {
+      replyFuture.complete(reply);
+      return new Idle(teleBackend, connection);
+    }
+  }
 
-	@Override
-	public void onExit() {
-		if (tmpFile != null) {
-			try {
-				tmpFile.close();
-			} catch (IOException e) {
-				LOGGER
-					.warn("{} - Could not close stream to task repo tmp file", teleBackend.getAddress(), e);
-			}
-		}
+  @Override
+  public void onExit() {
+    if (tmpFile != null) {
+      try {
+        tmpFile.close();
+      } catch (IOException e) {
+        LOGGER.warn(
+            "{} - Could not close stream to task repo tmp file", teleBackend.getAddress(), e);
+      }
+    }
 
-		replyFuture.cancel(true);
-	}
+    replyFuture.cancel(true);
+  }
 }

@@ -6,20 +6,11 @@
           <v-toolbar-title>Full error message</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
-          <div
-            class="ma-4 error-message"
-            v-html="safeDetailErrorDialogMessage"
-          ></div>
+          <div class="ma-4 error-message" v-html="safeDetailErrorDialogMessage"></div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="error"
-            text
-            outlined
-            @click="showDetailErrorDialog = false"
-            >Close</v-btn
-          >
+          <v-btn color="error" text outlined @click="showDetailErrorDialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -56,9 +47,7 @@
         <span :key="slotName">
           <measurement-value
             :value="item[displayField]"
-            :tooltip-message="
-              typeof tooltip === 'string' ? tooltip : tooltip(item)
-            "
+            :tooltip-message="typeof tooltip === 'string' ? tooltip : tooltip(item)"
             :color="colored ? item.changeColor : undefined"
           ></measurement-value>
         </span>
@@ -68,37 +57,37 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop, Watch } from "vue-property-decorator";
 import {
   Dimension,
   DimensionDifference,
   DimensionInterpretation,
   Measurement,
   MeasurementError,
-  MeasurementSuccess
-} from '@/store/types'
-import MeasurementValueDisplay from '@/components/rundetail/MeasurementValueDisplay.vue'
-import { safeConvertAnsi } from '@/util/Texts'
-import { vxm } from '@/store'
+  MeasurementSuccess,
+} from "@/store/types";
+import MeasurementValueDisplay from "@/components/rundetail/MeasurementValueDisplay.vue";
+import { safeConvertAnsi } from "@/util/Texts";
+import { vxm } from "@/store";
 
 const numberFormat: Intl.NumberFormat = new Intl.NumberFormat(
   new Intl.NumberFormat().resolvedOptions().locale,
-  { maximumFractionDigits: 3, notation: 'compact' }
-)
+  { maximumFractionDigits: 3, notation: "compact" },
+);
 
 class Item {
-  readonly benchmark: string
-  readonly metric: string
-  readonly unit: string
-  readonly value?: number
-  readonly standardDeviation?: number
-  readonly standardDeviationPercent?: number
-  readonly change?: number
-  readonly changePercent?: number
-  readonly changeColor: string
-  readonly error?: string
+  readonly benchmark: string;
+  readonly metric: string;
+  readonly unit: string;
+  readonly value?: number;
+  readonly standardDeviation?: number;
+  readonly standardDeviationPercent?: number;
+  readonly change?: number;
+  readonly changePercent?: number;
+  readonly changeColor: string;
+  readonly error?: string;
 
   constructor(
     benchmark: string,
@@ -110,165 +99,158 @@ class Item {
     standardDeviationPercent?: number,
     change?: number,
     changePercent?: number,
-    error?: string
+    error?: string,
   ) {
-    this.benchmark = benchmark
-    this.metric = metric
-    this.unit = unit
-    this.value = value
-    this.standardDeviation = standardDeviation
-    this.standardDeviationPercent = standardDeviationPercent
-    this.change = change
-    this.changePercent = changePercent
-    this.error = error
-    this.changeColor = this.computeChangeColor(interpretation, change)
+    this.benchmark = benchmark;
+    this.metric = metric;
+    this.unit = unit;
+    this.value = value;
+    this.standardDeviation = standardDeviation;
+    this.standardDeviationPercent = standardDeviationPercent;
+    this.change = change;
+    this.changePercent = changePercent;
+    this.error = error;
+    this.changeColor = this.computeChangeColor(interpretation, change);
   }
 
   get valueFormatted() {
-    return this.formatNumber(this.value)
+    return this.formatNumber(this.value);
   }
 
   get standardDeviationFormatted() {
-    return this.formatNumber(this.standardDeviation)
+    return this.formatNumber(this.standardDeviation);
   }
 
   get standardDeviationPercentFormatted() {
-    return this.formatPercent(this.standardDeviationPercent)
+    return this.formatPercent(this.standardDeviationPercent);
   }
 
   get changeFormatted() {
-    return this.formatNumber(this.change)
+    return this.formatNumber(this.change);
   }
 
   get changePercentFormatted() {
-    return this.formatPercent(this.changePercent)
+    return this.formatPercent(this.changePercent);
   }
 
   private formatNumber(number?: number): string | undefined {
     if (number === undefined) {
-      return undefined
+      return undefined;
     }
     if (Math.abs(number) === 0) {
-      return '0'
+      return "0";
     }
-    return numberFormat.format(number)
+    return numberFormat.format(number);
   }
 
   private formatPercent(number?: number): string | undefined {
     if (number === undefined) {
-      return this.formatNumber(number)
+      return this.formatNumber(number);
     }
-    return this.formatNumber(number * 100) + '%'
+    return this.formatNumber(number * 100) + "%";
   }
 
-  private computeChangeColor(
-    interpretation: DimensionInterpretation,
-    change?: number
-  ): string {
+  private computeChangeColor(interpretation: DimensionInterpretation, change?: number): string {
     if (change === undefined || Math.abs(change) === 0 || isNaN(change)) {
-      return ''
+      return "";
     }
 
-    if (interpretation === 'NEUTRAL') {
-      return ''
+    if (interpretation === "NEUTRAL") {
+      return "";
     }
 
-    let bad = false
-    if (interpretation === 'LESS_IS_BETTER') {
-      bad = change > 0
-    } else if (interpretation === 'MORE_IS_BETTER') {
-      bad = change < 0
+    let bad = false;
+    if (interpretation === "LESS_IS_BETTER") {
+      bad = change > 0;
+    } else if (interpretation === "MORE_IS_BETTER") {
+      bad = change < 0;
     }
 
     if (bad) {
-      return 'var(--v-warning-base)'
+      return "var(--v-warning-base)";
     }
-    return 'var(--v-success-base)'
+    return "var(--v-success-base)";
   }
 }
 
 @Component({
   components: {
-    'measurement-value': MeasurementValueDisplay
-  }
+    "measurement-value": MeasurementValueDisplay,
+  },
 })
 export default class MeasurementsDisplay extends Vue {
   @Prop()
-  private readonly measurements!: Measurement[]
+  private readonly measurements!: Measurement[];
 
   @Prop()
-  private readonly differences?: DimensionDifference[]
+  private readonly differences?: DimensionDifference[];
 
-  private showDetailErrorDialog: boolean = false
-  private safeDetailErrorDialogMessage: string = ''
+  private showDetailErrorDialog: boolean = false;
+  private safeDetailErrorDialogMessage: string = "";
 
   private get headerFormats() {
     return [
       {
-        slotName: 'item.change',
-        displayField: 'changeFormatted',
-        tooltip: 'No unambiguous parent commit found',
-        colored: true
+        slotName: "item.change",
+        displayField: "changeFormatted",
+        tooltip: "No unambiguous parent commit found",
+        colored: true,
       },
       {
-        slotName: 'item.changePercent',
-        displayField: 'changePercentFormatted',
+        slotName: "item.changePercent",
+        displayField: "changePercentFormatted",
         tooltip: (item: Item) => {
           if (!item.change) {
-            return 'No unambiguous parent commit found'
+            return "No unambiguous parent commit found";
           }
-          return "The old value was zero. I can't divide by it :/"
+          return "The old value was zero. I can't divide by it :/";
         },
-        colored: true
+        colored: true,
       },
       {
-        slotName: 'item.standardDeviation',
-        displayField: 'standardDeviationFormatted',
-        tooltip:
-          'Not applicable as the benchmark script did not report enough values',
-        colored: false
+        slotName: "item.standardDeviation",
+        displayField: "standardDeviationFormatted",
+        tooltip: "Not applicable as the benchmark script did not report enough values",
+        colored: false,
       },
       {
-        slotName: 'item.standardDeviationPercent',
-        displayField: 'standardDeviationPercentFormatted',
-        tooltip:
-          'Not applicable as the benchmark script did not report enough values',
-        colored: false
-      }
-    ]
+        slotName: "item.standardDeviationPercent",
+        displayField: "standardDeviationPercentFormatted",
+        tooltip: "Not applicable as the benchmark script did not report enough values",
+        colored: false,
+      },
+    ];
   }
 
   private get headers() {
     return [
-      { text: 'Benchmark', value: 'benchmark', align: 'left' },
-      { text: 'Metric', value: 'metric', align: 'left' },
-      { text: 'Unit', value: 'unit', align: 'left' },
-      { text: 'Value', value: 'value', align: 'right' },
+      { text: "Benchmark", value: "benchmark", align: "left" },
+      { text: "Metric", value: "metric", align: "left" },
+      { text: "Unit", value: "unit", align: "left" },
+      { text: "Value", value: "value", align: "right" },
       {
-        text: 'Stddev',
-        value: 'standardDeviation',
-        align: 'right'
+        text: "Stddev",
+        value: "standardDeviation",
+        align: "right",
       },
       {
-        text: 'Stddev %',
-        value: 'standardDeviationPercent',
-        align: 'right'
+        text: "Stddev %",
+        value: "standardDeviationPercent",
+        align: "right",
       },
-      { text: 'Change', value: 'change', align: 'right' },
-      { text: 'Change %', value: 'changePercent', align: 'right' }
-    ]
+      { text: "Change", value: "change", align: "right" },
+      { text: "Change %", value: "changePercent", align: "right" },
+    ];
   }
 
   private get items(): Item[] {
-    return this.measurements.map(it =>
-      it instanceof MeasurementSuccess
-        ? this.successToItem(it)
-        : this.errorToItem(it)
-    )
+    return this.measurements.map((it) =>
+      it instanceof MeasurementSuccess ? this.successToItem(it) : this.errorToItem(it),
+    );
   }
 
   private successToItem(measurement: MeasurementSuccess): Item {
-    const difference = this.differenceForDimension(measurement.dimension)
+    const difference = this.differenceForDimension(measurement.dimension);
     return new Item(
       measurement.dimension.benchmark,
       measurement.dimension.metric,
@@ -278,29 +260,27 @@ export default class MeasurementsDisplay extends Vue {
       measurement.stddev,
       measurement.stddevPercent,
       difference ? difference.absDiff : undefined,
-      difference ? difference.relDiff : undefined
-    )
+      difference ? difference.relDiff : undefined,
+    );
   }
 
-  private differenceForDimension(
-    dimension: Dimension
-  ): DimensionDifference | undefined {
-    return this.differencesByDimension[dimension.toString()]
+  private differenceForDimension(dimension: Dimension): DimensionDifference | undefined {
+    return this.differencesByDimension[dimension.toString()];
   }
 
   private get differencesByDimension(): {
-    [asString: string]: DimensionDifference
+    [asString: string]: DimensionDifference;
   } {
     if (!this.differences) {
-      return {}
+      return {};
     }
     const differencesByDimension: {
-      [asString: string]: DimensionDifference
-    } = {}
-    this.differences.forEach(it => {
-      differencesByDimension[it.dimension.toString()] = it
-    })
-    return differencesByDimension
+      [asString: string]: DimensionDifference;
+    } = {};
+    this.differences.forEach((it) => {
+      differencesByDimension[it.dimension.toString()] = it;
+    });
+    return differencesByDimension;
   }
 
   private errorToItem(measurementError: MeasurementError): Item {
@@ -314,49 +294,47 @@ export default class MeasurementsDisplay extends Vue {
       undefined,
       undefined,
       undefined,
-      measurementError.error
-    )
+      measurementError.error,
+    );
   }
 
   private formatErrorShorthand(error: string) {
-    const MAX_ERROR_LENGTH = 30
+    const MAX_ERROR_LENGTH = 30;
     if (error.length < MAX_ERROR_LENGTH) {
-      return error
+      return error;
     }
-    return error.substring(0, MAX_ERROR_LENGTH) + '…'
+    return error.substring(0, MAX_ERROR_LENGTH) + "…";
   }
 
   private displayErrorDetail(item: Item) {
     if (!item.error) {
-      return ''
+      return "";
     }
-    this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error)
-    this.showDetailErrorDialog = true
+    this.safeDetailErrorDialogMessage = safeConvertAnsi(item.error);
+    this.showDetailErrorDialog = true;
   }
 
   // noinspection JSUnusedLocalSymbols (Used by the watcher below)
   private get darkThemeSelected() {
-    return vxm.userModule.darkThemeSelected
+    return vxm.userModule.darkThemeSelected;
   }
 
-  @Watch('darkThemeSelected')
+  @Watch("darkThemeSelected")
   private onDarkThemeSelectionChanged() {
     // The ANSI conversion needs to be redone
-    this.$forceUpdate()
+    this.$forceUpdate();
   }
 
   private rowClicked(item: Item) {
-    const currentSelection = document.getSelection()
+    const currentSelection = document.getSelection();
     if (currentSelection && currentSelection.toString()) {
-      return
+      return;
     }
     const measurement = this.measurements.find(
-      it =>
-        it.dimension.benchmark === item.benchmark &&
-        it.dimension.metric === item.metric
-    )!
+      (it) => it.dimension.benchmark === item.benchmark && it.dimension.metric === item.metric,
+    )!;
 
-    this.$emit('dimension-clicked', measurement.dimension)
+    this.$emit("dimension-clicked", measurement.dimension);
   }
 }
 </script>

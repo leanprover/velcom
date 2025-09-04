@@ -28,97 +28,105 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-/**
- * Endpoint for getting the repo status comparison graph.
- */
+/** Endpoint for getting the repo status comparison graph. */
 @Path("/graph/status-comparison")
 @Produces(MediaType.APPLICATION_JSON)
 public class GraphStatusComparisonEndpoint {
 
-	private final BenchmarkReadAccess benchmarkAccess;
-	private final CommitReadAccess commitAccess;
-	private final DimensionReadAccess dimensionAccess;
-	private final RepoReadAccess repoAccess;
-	private final SignificanceFactors significanceFactors;
+  private final BenchmarkReadAccess benchmarkAccess;
+  private final CommitReadAccess commitAccess;
+  private final DimensionReadAccess dimensionAccess;
+  private final RepoReadAccess repoAccess;
+  private final SignificanceFactors significanceFactors;
 
-	public GraphStatusComparisonEndpoint(BenchmarkReadAccess benchmarkAccess,
-		CommitReadAccess commitAccess, DimensionReadAccess dimensionAccess, RepoReadAccess repoAccess,
-		SignificanceFactors significanceFactors) {
+  public GraphStatusComparisonEndpoint(
+      BenchmarkReadAccess benchmarkAccess,
+      CommitReadAccess commitAccess,
+      DimensionReadAccess dimensionAccess,
+      RepoReadAccess repoAccess,
+      SignificanceFactors significanceFactors) {
 
-		this.benchmarkAccess = benchmarkAccess;
-		this.commitAccess = commitAccess;
-		this.dimensionAccess = dimensionAccess;
-		this.repoAccess = repoAccess;
-		this.significanceFactors = significanceFactors;
-	}
+    this.benchmarkAccess = benchmarkAccess;
+    this.commitAccess = commitAccess;
+    this.dimensionAccess = dimensionAccess;
+    this.repoAccess = repoAccess;
+    this.significanceFactors = significanceFactors;
+  }
 
-	@GET
-	@Timed(histogram = true)
-	public GetReply get(@QueryParam("repos") @NotNull String reposStr) {
-		List<JsonRepoEntry> runs = EndpointUtils.parseRepos(reposStr)
-			.entrySet()
-			.stream()
-			.flatMap(entry -> {
-				RepoId repoId = entry.getKey();
-				List<Branch> branches = repoAccess.getAllBranches(repoId)
-					.stream()
-					.filter(branch -> entry.getValue().contains(branch.getName()))
-					.collect(toList());
+  @GET
+  @Timed(histogram = true)
+  public GetReply get(@QueryParam("repos") @NotNull String reposStr) {
+    List<JsonRepoEntry> runs =
+        EndpointUtils.parseRepos(reposStr).entrySet().stream()
+            .flatMap(
+                entry -> {
+                  RepoId repoId = entry.getKey();
+                  List<Branch> branches =
+                      repoAccess.getAllBranches(repoId).stream()
+                          .filter(branch -> entry.getValue().contains(branch.getName()))
+                          .collect(toList());
 
-				if (branches.isEmpty()) {
-					return Stream.of();
-				}
+                  if (branches.isEmpty()) {
+                    return Stream.of();
+                  }
 
-				List<CommitHash> commitHashes = branches.stream()
-					.map(Branch::getLatestCommitHash)
-					.collect(toList());
-				return commitAccess.getCommits(repoId, commitHashes)
-					.stream()
-					.max(Comparator.comparing(Commit::getCommitterDate))
-					.stream();
-			})
-			.map(commit -> {
-				Optional<Run> run = benchmarkAccess.getLatestRunId(commit.getRepoId(), commit.getHash())
-					.map(benchmarkAccess::getRun);
-				return new Pair<>(commit, run);
-			})
-			.map(pair -> {
-				Commit commit = pair.getFirst();
-				Optional<JsonRun> jsonRun = pair.getSecond()
-					.map(run -> EndpointUtils
-						.fromRun(dimensionAccess, commitAccess, run, significanceFactors, false));
+                  List<CommitHash> commitHashes =
+                      branches.stream().map(Branch::getLatestCommitHash).collect(toList());
+                  return commitAccess.getCommits(repoId, commitHashes).stream()
+                      .max(Comparator.comparing(Commit::getCommitterDate))
+                      .stream();
+                })
+            .map(
+                commit -> {
+                  Optional<Run> run =
+                      benchmarkAccess
+                          .getLatestRunId(commit.getRepoId(), commit.getHash())
+                          .map(benchmarkAccess::getRun);
+                  return new Pair<>(commit, run);
+                })
+            .map(
+                pair -> {
+                  Commit commit = pair.getFirst();
+                  Optional<JsonRun> jsonRun =
+                      pair.getSecond()
+                          .map(
+                              run ->
+                                  EndpointUtils.fromRun(
+                                      dimensionAccess,
+                                      commitAccess,
+                                      run,
+                                      significanceFactors,
+                                      false));
 
-				return new JsonRepoEntry(
-					commit.getRepoId().getIdAsString(),
-					commit.getHashAsString(),
-					jsonRun.orElse(null)
-				);
-			})
-			.collect(toList());
+                  return new JsonRepoEntry(
+                      commit.getRepoId().getIdAsString(),
+                      commit.getHashAsString(),
+                      jsonRun.orElse(null));
+                })
+            .collect(toList());
 
-		return new GetReply(runs);
-	}
+    return new GetReply(runs);
+  }
 
-	private static class GetReply {
+  private static class GetReply {
 
-		public final List<JsonRepoEntry> runs;
+    public final List<JsonRepoEntry> runs;
 
-		public GetReply(List<JsonRepoEntry> runs) {
-			this.runs = runs;
-		}
-	}
+    public GetReply(List<JsonRepoEntry> runs) {
+      this.runs = runs;
+    }
+  }
 
-	private static class JsonRepoEntry {
+  private static class JsonRepoEntry {
 
-		public final String repoId;
-		public final String commitHash;
-		@Nullable
-		public final JsonRun run;
+    public final String repoId;
+    public final String commitHash;
+    @Nullable public final JsonRun run;
 
-		public JsonRepoEntry(String repoId, String commitHash, @Nullable JsonRun run) {
-			this.repoId = repoId;
-			this.commitHash = commitHash;
-			this.run = run;
-		}
-	}
+    public JsonRepoEntry(String repoId, String commitHash, @Nullable JsonRun run) {
+      this.repoId = repoId;
+      this.commitHash = commitHash;
+      this.run = run;
+    }
+  }
 }

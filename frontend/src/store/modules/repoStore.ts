@@ -1,58 +1,55 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import { Repo, RepoId, Dimension, GithubBotCommand } from '@/store/types'
-import Vue from 'vue'
-import axios from 'axios'
-import { vxm } from '..'
-import { githubCommandFromJson, repoFromJson } from '@/util/json/RepoJsonHelper'
+import { createModule, mutation, action } from "vuex-class-component";
+import { Repo, RepoId, Dimension, GithubBotCommand } from "@/store/types";
+import Vue from "vue";
+import axios from "axios";
+import { vxm } from "..";
+import { githubCommandFromJson, repoFromJson } from "@/util/json/RepoJsonHelper";
 
 const VxModule = createModule({
-  namespaced: 'repoModule',
-  strict: false
-})
+  namespaced: "repoModule",
+  strict: false,
+});
 
 export class RepoStore extends VxModule {
-  private repos: { [repoId: string]: Repo } = {}
-  private currentRepoIndex: number = 0
-  private repoIndices: { [repoID: string]: number } = {}
+  private repos: { [repoId: string]: Repo } = {};
+  private currentRepoIndex: number = 0;
+  private repoIndices: { [repoID: string]: number } = {};
 
   @action
   async fetchRepos(): Promise<Repo[]> {
-    const response = await axios.get('/all-repos', {
-      snackbarTag: 'all repos',
-      hideLoadingSnackbar: true
+    const response = await axios.get("/all-repos", {
+      snackbarTag: "all repos",
+      hideLoadingSnackbar: true,
       // still show errors
-    })
+    });
 
-    const repos: Repo[] = response.data.repos.map(repoFromJson)
+    const repos: Repo[] = response.data.repos.map(repoFromJson);
 
-    this.setRepos(repos)
-    return repos
+    this.setRepos(repos);
+    return repos;
   }
 
   @action
   async fetchRepoById(repoId: string): Promise<Repo> {
     const response = await axios.get(`/repo/${repoId}`, {
-      snackbarTag: 'repo-detail'
-    })
+      snackbarTag: "repo-detail",
+    });
 
-    const repo: Repo = repoFromJson(response.data.repo)
-    this.setRepo(repo)
-    return this.repoById(repo.id)!
+    const repo: Repo = repoFromJson(response.data.repo);
+    this.setRepo(repo);
+    return this.repoById(repo.id)!;
   }
 
   @action
-  async addRepo(payload: {
-    repoName: string
-    remoteUrl: string
-  }): Promise<Repo> {
-    const response = await axios.post('/repo', {
+  async addRepo(payload: { repoName: string; remoteUrl: string }): Promise<Repo> {
+    const response = await axios.post("/repo", {
       name: payload.repoName,
-      remote_url: payload.remoteUrl
-    })
+      remote_url: payload.remoteUrl,
+    });
 
-    const repo: Repo = repoFromJson(response.data.repo)
-    this.setRepo(repo)
-    return this.repoById(repo.id)!
+    const repo: Repo = repoFromJson(response.data.repo);
+    this.setRepo(repo);
+    return this.repoById(repo.id)!;
   }
 
   /**
@@ -64,8 +61,8 @@ export class RepoStore extends VxModule {
    */
   @action
   async deleteRepo(repoId: RepoId): Promise<void> {
-    await axios.delete(`/repo/${repoId}`)
-    this.removeRepo(repoId)
+    await axios.delete(`/repo/${repoId}`);
+    this.removeRepo(repoId);
   }
 
   /**
@@ -76,92 +73,88 @@ export class RepoStore extends VxModule {
    */
   @action
   async updateRepo(payload: {
-    id: RepoId
-    name: string | undefined
-    remoteUrl: string | undefined
-    trackedBranches: string[] | undefined
-    githubToken: string | undefined
+    id: RepoId;
+    name: string | undefined;
+    remoteUrl: string | undefined;
+    trackedBranches: string[] | undefined;
+    githubToken: string | undefined;
   }): Promise<void> {
     await axios.patch(`/repo/${payload.id}`, {
       name: payload.name,
       remote_url: payload.remoteUrl,
       tracked_branches: payload.trackedBranches,
-      github_token: payload.githubToken
-    })
-    await this.fetchRepoById(payload.id)
+      github_token: payload.githubToken,
+    });
+    await this.fetchRepoById(payload.id);
   }
 
   @action
   async triggerListenerFetch(): Promise<void> {
     await axios.post(`/listener/fetch-all`, undefined, {
-      snackbarPriority: 2
-    })
+      snackbarPriority: 2,
+    });
   }
 
   @action
   async fetchGithubCommands(repoId: string): Promise<GithubBotCommand[]> {
-    const response = await axios.get(`/repo/${repoId}`)
-    return response.data.github_commands.map(githubCommandFromJson)
+    const response = await axios.get(`/repo/${repoId}`);
+    return response.data.github_commands.map(githubCommandFromJson);
   }
 
   @mutation
   setIndexForRepo(repoId: RepoId): void {
     if (!this.repoIndices[repoId]) {
-      this.repoIndices[repoId] = this.currentRepoIndex++
+      this.repoIndices[repoId] = this.currentRepoIndex++;
     }
   }
 
   @mutation
   setRepo(payload: Repo): void {
     if (this.repos[payload.id]) {
-      const existing = this.repos[payload.id]
-      existing.branches = payload.branches.slice()
-      existing.name = payload.name
-      existing.remoteURL = payload.remoteURL
-      existing.dimensions = payload.dimensions.slice()
+      const existing = this.repos[payload.id];
+      existing.branches = payload.branches.slice();
+      existing.name = payload.name;
+      existing.remoteURL = payload.remoteURL;
+      existing.dimensions = payload.dimensions.slice();
     } else {
-      Vue.set(this.repos, payload.id, payload)
-      vxm.repoModule.setIndexForRepo(payload.id)
+      Vue.set(this.repos, payload.id, payload);
+      vxm.repoModule.setIndexForRepo(payload.id);
     }
   }
 
   @mutation
   setRepos(repos: Repo[]): void {
-    Array.from(Object.keys(this.repos)).forEach(it =>
-      Vue.delete(this.repos, it)
-    )
-    repos.forEach(repo => vxm.repoModule.setRepo(repo))
+    Array.from(Object.keys(this.repos)).forEach((it) => Vue.delete(this.repos, it));
+    repos.forEach((repo) => vxm.repoModule.setRepo(repo));
   }
 
   @mutation
   removeRepo(payload: RepoId): void {
-    Vue.delete(this.repos, payload)
+    Vue.delete(this.repos, payload);
   }
 
   get allRepos(): Repo[] {
-    return Array.from(Object.values(this.repos))
+    return Array.from(Object.values(this.repos));
   }
 
   get allReposSortedById(): Repo[] {
-    return Array.from(Object.values(this.repos)).sort((a, b) =>
-      a.id.localeCompare(b.id)
-    )
+    return Array.from(Object.values(this.repos)).sort((a, b) => a.id.localeCompare(b.id));
   }
 
   get repoById(): (payload: RepoId) => Repo | undefined {
-    return (payload: RepoId) => this.repos[payload]
+    return (payload: RepoId) => this.repos[payload];
   }
 
   get occuringDimensions(): (selectedRepos: RepoId[]) => Dimension[] {
     return (selectedRepos: RepoId[]) => {
       return Object.values(this.repos)
-        .filter(repo => selectedRepos.includes(repo.id))
-        .flatMap(repo => repo.dimensions)
+        .filter((repo) => selectedRepos.includes(repo.id))
+        .flatMap((repo) => repo.dimensions)
         .filter(
           (dimension, index, dimensionArray) =>
-            index === dimensionArray.findIndex(dim => dim.equals(dimension))
-        )
-    }
+            index === dimensionArray.findIndex((dim) => dim.equals(dimension)),
+        );
+    };
   }
 
   /**
@@ -173,7 +166,7 @@ export class RepoStore extends VxModule {
     return {
       repos: store.repos,
       repoIndex: store.currentRepoIndex,
-      repoIndices: store.repoIndices
-    }
+      repoIndices: store.repoIndices,
+    };
   }
 }

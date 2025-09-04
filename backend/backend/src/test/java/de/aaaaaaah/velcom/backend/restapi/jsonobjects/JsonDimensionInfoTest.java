@@ -6,20 +6,17 @@ import org.junit.jupiter.api.Test;
 
 class JsonDimensionInfoTest extends SerializingTest {
 
-	@Test
-	void serialize() throws JsonProcessingException {
-		Object object = new JsonDimension(
-			"benchmarkName",
-			"metricName",
-			"someUnit",
-			Interpretation.LESS_IS_BETTER
-		);
-		String json = "{"
-			+ "\"benchmark\": \"benchmarkName\","
-			+ "\"metric\": \"metricName\","
-			+ "\"unit\": \"someUnit\","
-			+ "\"interpretation\": \"LESS_IS_BETTER\""
-			+ "}";
-		serializedEquals(object, json);
-	}
+  @Test
+  void serialize() throws JsonProcessingException {
+    Object object =
+        new JsonDimension("benchmarkName", "metricName", "someUnit", Interpretation.LESS_IS_BETTER);
+    String json =
+        "{"
+            + "\"benchmark\": \"benchmarkName\","
+            + "\"metric\": \"metricName\","
+            + "\"unit\": \"someUnit\","
+            + "\"interpretation\": \"LESS_IS_BETTER\""
+            + "}";
+    serializedEquals(object, json);
+  }
 }

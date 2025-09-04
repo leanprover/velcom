@@ -13,16 +13,16 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class ListenerEndpoint {
 
-	private final Listener listener;
+  private final Listener listener;
 
-	public ListenerEndpoint(Listener listener) {
-		this.listener = listener;
-	}
+  public ListenerEndpoint(Listener listener) {
+    this.listener = listener;
+  }
 
-	@POST
-	@Path("/fetch-all")
-	@Timed(histogram = true)
-	public void post(@Auth Admin admin) {
-		listener.updateAllRepos();
-	}
+  @POST
+  @Path("/fetch-all")
+  @Timed(histogram = true)
+  public void post(@Auth Admin admin) {
+    listener.updateAllRepos();
+  }
 }

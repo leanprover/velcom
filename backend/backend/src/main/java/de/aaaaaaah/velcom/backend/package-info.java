@@ -1,6 +1,4 @@
-/**
- * The root backend package.
- */
+/** The root backend package. */
 @ParametersAreNonnullByDefault
 package de.aaaaaaah.velcom.backend;
 

@@ -13,30 +13,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/**
- * Endpoint for deleting dimensions.
- */
+/** Endpoint for deleting dimensions. */
 @Path("/dimensions/")
 @Produces(MediaType.APPLICATION_JSON)
 public class DimensionsEndpoint {
 
-	private final DimensionWriteAccess dimensionAccess;
+  private final DimensionWriteAccess dimensionAccess;
 
-	public DimensionsEndpoint(DimensionWriteAccess dimensionAccess) {
-		this.dimensionAccess = dimensionAccess;
-	}
+  public DimensionsEndpoint(DimensionWriteAccess dimensionAccess) {
+    this.dimensionAccess = dimensionAccess;
+  }
 
-	@DELETE
-	@Timed(histogram = true)
-	public void delete(
-		@Auth Admin admin,
-		@NotNull List<JsonDimensionId> request
-	) {
-		dimensionAccess.deleteDimensions(
-			request
-				.stream()
-				.map(JsonDimensionId::toDimension)
-				.collect(Collectors.toList())
-		);
-	}
+  @DELETE
+  @Timed(histogram = true)
+  public void delete(@Auth Admin admin, @NotNull List<JsonDimensionId> request) {
+    dimensionAccess.deleteDimensions(
+        request.stream().map(JsonDimensionId::toDimension).collect(Collectors.toList()));
+  }
 }

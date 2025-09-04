@@ -6,8 +6,8 @@ import {
   CommitTaskSource,
   CommitDescription,
   Worker,
-  StreamedRunnerOutput
-} from '@/store/types'
+  StreamedRunnerOutput,
+} from "@/store/types";
 
 export function workerFromJson(json: any): Worker {
   return new Worker(
@@ -15,26 +15,21 @@ export function workerFromJson(json: any): Worker {
     json.info,
     json.working_on,
     json.working_since ? new Date(json.working_since * 1000) : null,
-    json.lost_connection
-  )
+    json.lost_connection,
+  );
 }
 
 export function taskFromJson(json: any): Task {
-  return new Task(
-    json.id,
-    json.author,
-    new Date(json.since * 1000),
-    sourceFromJson(json.source)
-  )
+  return new Task(json.id, json.author, new Date(json.since * 1000), sourceFromJson(json.source));
 }
 
 export function sourceFromJson(json: any): TaskSource {
-  if (json.type === 'COMMIT') {
-    return new CommitTaskSource(commitDescriptionFromJson(json.source))
-  } else if (json.type === 'UPLOADED_TAR') {
-    return new TarTaskSource(json.source.description, json.source.repo_id)
+  if (json.type === "COMMIT") {
+    return new CommitTaskSource(commitDescriptionFromJson(json.source));
+  } else if (json.type === "UPLOADED_TAR") {
+    return new TarTaskSource(json.source.description, json.source.repo_id);
   }
-  throw new Error('Unknown task type')
+  throw new Error("Unknown task type");
 }
 
 export function commitDescriptionFromJson(json: any): CommitDescription {
@@ -43,10 +38,10 @@ export function commitDescriptionFromJson(json: any): CommitDescription {
     json.hash,
     json.author,
     new Date(json.author_date * 1000),
-    json.summary
-  )
+    json.summary,
+  );
 }
 
 export function streamedRunnerOutputFromJson(json: any): StreamedRunnerOutput {
-  return new StreamedRunnerOutput(json.output, json.index_of_first_line)
+  return new StreamedRunnerOutput(json.output, json.index_of_first_line);
 }

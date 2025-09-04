@@ -1,4 +1,4 @@
-import { action, createModule, mutation } from 'vuex-class-component'
+import { action, createModule, mutation } from "vuex-class-component";
 import {
   CommitDescription,
   CommitHash,
@@ -6,29 +6,29 @@ import {
   StreamedRunnerOutput,
   Task,
   TaskId,
-  Worker
-} from '@/store/types'
-import axios from 'axios'
+  Worker,
+} from "@/store/types";
+import axios from "axios";
 import {
   streamedRunnerOutputFromJson,
   taskFromJson,
-  workerFromJson
-} from '@/util/json/QueueJsonHelper'
+  workerFromJson,
+} from "@/util/json/QueueJsonHelper";
 
 const VxModule = createModule({
-  namespaced: 'queueModule',
-  strict: false
-})
+  namespaced: "queueModule",
+  strict: false,
+});
 
 export type TaskInfo = {
-  task: Task
-  position: number
-  runningSince: Date | null
-}
+  task: Task;
+  position: number;
+  runningSince: Date | null;
+};
 
 export class QueueStore extends VxModule {
-  private _openTasks: Task[] = []
-  private _workers: Worker[] = []
+  private _openTasks: Task[] = [];
+  private _workers: Worker[] = [];
 
   /**
    * Fetches the whole queue.
@@ -38,33 +38,30 @@ export class QueueStore extends VxModule {
    */
   @action
   async fetchQueue(): Promise<Task[]> {
-    const response = await axios.get('/queue', {
-      snackbarTag: 'queue'
-    })
+    const response = await axios.get("/queue", {
+      snackbarTag: "queue",
+    });
 
-    const jsonTasks: any[] = response.data.tasks
-    const tasks: Task[] = jsonTasks.map(taskFromJson)
+    const jsonTasks: any[] = response.data.tasks;
+    const tasks: Task[] = jsonTasks.map(taskFromJson);
 
-    const workers: Worker[] = response.data.runners.map(workerFromJson)
+    const workers: Worker[] = response.data.runners.map(workerFromJson);
 
-    this.setOpenTasks(tasks)
-    this.setWorkers(workers)
+    this.setOpenTasks(tasks);
+    this.setWorkers(workers);
 
-    return tasks
+    return tasks;
   }
 
   @action
-  async startManualTask(payload: {
-    hash: CommitHash
-    repoId: RepoId
-  }): Promise<void> {
+  async startManualTask(payload: { hash: CommitHash; repoId: RepoId }): Promise<void> {
     await axios.post(
       `/queue/commit/${payload.repoId}/${payload.hash}`,
       {},
       {
-        showSuccessSnackbar: true
-      }
-    )
+        showSuccessSnackbar: true,
+      },
+    );
     // We do not insert the task locally as we don't know where!
     // Fetching the queue is not needed, as this option is only called from
     // other pages
@@ -79,9 +76,9 @@ export class QueueStore extends VxModule {
    */
   @action
   async dispatchPrioritizeOpenTask(id: TaskId): Promise<void> {
-    await axios.patch(`/queue/${id}`, {}, { showSuccessSnackbar: true })
+    await axios.patch(`/queue/${id}`, {}, { showSuccessSnackbar: true });
     // Re-fetch, as it might be at a quite different position now
-    await this.fetchQueue()
+    await this.fetchQueue();
   }
 
   /**
@@ -92,13 +89,11 @@ export class QueueStore extends VxModule {
    */
   @action
   async dispatchQueueUpwardsOf(commit: CommitDescription): Promise<number> {
-    const response = await axios.post(
-      `/queue/commit/${commit.repoId}/${commit.hash}/one-up`
-    )
+    const response = await axios.post(`/queue/commit/${commit.repoId}/${commit.hash}/one-up`);
 
     // Fetching the queue is not needed, as this option is only called from
     // other pages
-    return response.data.tasks.length
+    return response.data.tasks.length;
   }
 
   /**
@@ -113,13 +108,10 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   @action
-  async dispatchDeleteOpenTask(payload: {
-    id: string
-    suppressRefetch?: boolean
-  }): Promise<void> {
-    await axios.delete(`/queue/${payload.id}`)
+  async dispatchDeleteOpenTask(payload: { id: string; suppressRefetch?: boolean }): Promise<void> {
+    await axios.delete(`/queue/${payload.id}`);
     if (!payload.suppressRefetch) {
-      await this.fetchQueue()
+      await this.fetchQueue();
     }
   }
 
@@ -130,8 +122,8 @@ export class QueueStore extends VxModule {
    */
   @action
   async dispatchDeleteAllOpenTasks(): Promise<void> {
-    await axios.delete(`/queue/`)
-    await this.fetchQueue()
+    await axios.delete(`/queue/`);
+    await this.fetchQueue();
   }
 
   /**
@@ -141,22 +133,22 @@ export class QueueStore extends VxModule {
    */
   @action
   async fetchTaskInfo(taskId: TaskId): Promise<TaskInfo | null> {
-    let response
+    let response;
     try {
-      response = await axios.get(`/queue/task/${taskId}`)
+      response = await axios.get(`/queue/task/${taskId}`);
 
       return {
         task: taskFromJson(response.data.task),
         position: response.data.position,
         runningSince: response.data.running_since
           ? new Date(response.data.running_since * 1000)
-          : null
-      }
+          : null,
+      };
     } catch (e: any) {
       if (e.response && e.response.status === 404) {
-        return null
+        return null;
       }
-      throw e
+      throw e;
     }
   }
 
@@ -167,23 +159,21 @@ export class QueueStore extends VxModule {
    * @param taskId the id of the task
    */
   @action
-  async fetchRunnerOutput(
-    taskId: string
-  ): Promise<StreamedRunnerOutput | null> {
-    let response
+  async fetchRunnerOutput(taskId: string): Promise<StreamedRunnerOutput | null> {
+    let response;
     try {
       response = await axios.get(`/queue/task/${taskId}/progress`, {
-        hideFromSnackbar: true
-      })
+        hideFromSnackbar: true,
+      });
     } catch (e) {
-      return null
+      return null;
     }
 
     if (response.status === 404) {
-      return null
+      return null;
     }
 
-    return streamedRunnerOutputFromJson(response.data)
+    return streamedRunnerOutputFromJson(response.data);
   }
 
   /**
@@ -191,22 +181,22 @@ export class QueueStore extends VxModule {
    */
   @action
   async uploadTar(payload: {
-    file: File
-    description: string
-    repoId: string | null
+    file: File;
+    description: string;
+    repoId: string | null;
   }): Promise<Task> {
-    const bodyFormData = new FormData()
-    bodyFormData.append('file', payload.file, payload.file.name)
-    bodyFormData.append('description', payload.description)
+    const bodyFormData = new FormData();
+    bodyFormData.append("file", payload.file, payload.file.name);
+    bodyFormData.append("description", payload.description);
     if (payload.repoId) {
-      bodyFormData.append('repo_id', payload.repoId)
+      bodyFormData.append("repo_id", payload.repoId);
     }
 
-    const response = await axios.post('/queue/upload/tar', bodyFormData, {
-      snackbarTag: 'upload-tar',
-      showSuccessSnackbar: true
-    })
-    return taskFromJson(response.data.task)
+    const response = await axios.post("/queue/upload/tar", bodyFormData, {
+      snackbarTag: "upload-tar",
+      showSuccessSnackbar: true,
+    });
+    return taskFromJson(response.data.task);
   }
 
   /**
@@ -217,7 +207,7 @@ export class QueueStore extends VxModule {
    */
   @mutation
   setOpenTasks(payload: Task[]): void {
-    this._openTasks = payload.slice()
+    this._openTasks = payload.slice();
   }
 
   /**
@@ -228,9 +218,9 @@ export class QueueStore extends VxModule {
    */
   @mutation
   deleteOpenTask(id: TaskId): void {
-    const target = this._openTasks.findIndex(task => task.id === id)
+    const target = this._openTasks.findIndex((task) => task.id === id);
     if (target !== -1) {
-      this._openTasks.splice(target, 1)
+      this._openTasks.splice(target, 1);
     }
   }
 
@@ -242,7 +232,7 @@ export class QueueStore extends VxModule {
    */
   @mutation
   setWorkers(payload: Worker[]): void {
-    this._workers = payload.slice()
+    this._workers = payload.slice();
   }
 
   /**
@@ -253,7 +243,7 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   get openTasks(): Task[] {
-    return this._openTasks
+    return this._openTasks;
   }
 
   /**
@@ -264,6 +254,6 @@ export class QueueStore extends VxModule {
    * @memberof QueueModuleStore
    */
   get workers(): Worker[] {
-    return this._workers
+    return this._workers;
   }
 }

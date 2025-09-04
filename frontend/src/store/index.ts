@@ -1,40 +1,40 @@
-import Vuex from 'vuex'
-import { extractVuexModule, createProxy } from 'vuex-class-component'
-import Vue from 'vue'
-import { RepoStore } from './modules/repoStore'
-import { UserStore } from './modules/userStore'
-import { ColorStore } from './modules/colorStore'
-import { CommitDetailComparisonStore } from './modules/commitDetailComparisonStore'
-import { NewsStore } from './modules/newsStore'
-import { QueueStore } from './modules/queueStore'
-import { ComparisonGraphStore } from './modules/comparisonGraphStore'
-import { DetailGraphStore } from './modules/detailGraphStore'
-import { StatusComparisonStore } from './modules/statusComparisonStore'
+import Vuex from "vuex";
+import { extractVuexModule, createProxy } from "vuex-class-component";
+import Vue from "vue";
+import { RepoStore } from "./modules/repoStore";
+import { UserStore } from "./modules/userStore";
+import { ColorStore } from "./modules/colorStore";
+import { CommitDetailComparisonStore } from "./modules/commitDetailComparisonStore";
+import { NewsStore } from "./modules/newsStore";
+import { QueueStore } from "./modules/queueStore";
+import { ComparisonGraphStore } from "./modules/comparisonGraphStore";
+import { DetailGraphStore } from "./modules/detailGraphStore";
+import { StatusComparisonStore } from "./modules/statusComparisonStore";
 import {
   deletedOutdatedLocalData,
   persistenceLocalStorage,
-  persistenceSessionStorage
-} from './persistence'
-import { RunSearchStore } from '@/store/modules/runSearchStore'
-import { CleanupStore } from '@/store/modules/cleanupStore'
+  persistenceSessionStorage,
+} from "./persistence";
+import { RunSearchStore } from "@/store/modules/runSearchStore";
+import { CleanupStore } from "@/store/modules/cleanupStore";
 
 export interface RootState {
-  cleanupModule: CleanupStore
-  colorModule: ColorStore
-  commitDetailComparisonModule: CommitDetailComparisonStore
-  newsModule: NewsStore
-  queueModule: QueueStore
-  comparisonGraphModule: ComparisonGraphStore
-  repoModule: RepoStore
-  detailGraphModule: DetailGraphStore
-  userModule: UserStore
-  runSearchModule: RunSearchStore
-  statusComparisonModule: StatusComparisonStore
+  cleanupModule: CleanupStore;
+  colorModule: ColorStore;
+  commitDetailComparisonModule: CommitDetailComparisonStore;
+  newsModule: NewsStore;
+  queueModule: QueueStore;
+  comparisonGraphModule: ComparisonGraphStore;
+  repoModule: RepoStore;
+  detailGraphModule: DetailGraphStore;
+  userModule: UserStore;
+  runSearchModule: RunSearchStore;
+  statusComparisonModule: StatusComparisonStore;
 }
 
-deletedOutdatedLocalData()
+deletedOutdatedLocalData();
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
 export const store = new Vuex.Store({
   state: {} as RootState,
@@ -49,10 +49,10 @@ export const store = new Vuex.Store({
     ...extractVuexModule(RepoStore),
     ...extractVuexModule(UserStore),
     ...extractVuexModule(RunSearchStore),
-    ...extractVuexModule(StatusComparisonStore)
+    ...extractVuexModule(StatusComparisonStore),
   },
-  plugins: [persistenceLocalStorage.plugin, persistenceSessionStorage.plugin]
-})
+  plugins: [persistenceLocalStorage.plugin, persistenceSessionStorage.plugin],
+});
 
 export const vxm = {
   cleanupModule: createProxy(store, CleanupStore),
@@ -65,5 +65,5 @@ export const vxm = {
   userModule: createProxy(store, UserStore),
   detailGraphModule: createProxy(store, DetailGraphStore),
   runSearchModule: createProxy(store, RunSearchStore),
-  statusComparisonModule: createProxy(store, StatusComparisonStore)
-}
+  statusComparisonModule: createProxy(store, StatusComparisonStore),
+};

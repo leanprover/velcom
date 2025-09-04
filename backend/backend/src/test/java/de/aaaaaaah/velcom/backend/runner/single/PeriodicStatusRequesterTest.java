@@ -34,196 +34,197 @@ import org.mockito.ArgumentCaptor;
 
 class PeriodicStatusRequesterTest {
 
-	private static final UUID RUN_ID = UUID.randomUUID();
+  private static final UUID RUN_ID = UUID.randomUUID();
 
-	private PeriodicStatusRequester statusRequester;
-	private StateMachine<TeleRunnerState> stateMachine;
-	private TeleRunner teleRunner;
-	private RunnerConnection runnerConnection;
+  private PeriodicStatusRequester statusRequester;
+  private StateMachine<TeleRunnerState> stateMachine;
+  private TeleRunner teleRunner;
+  private RunnerConnection runnerConnection;
 
-	@BeforeEach
-	void setUp() {
-		//noinspection unchecked
-		stateMachine = mock(StateMachine.class);
-		teleRunner = mock(TeleRunner.class);
-		runnerConnection = mock(RunnerConnection.class);
-		when(runnerConnection.getSerializer()).thenReturn(new Serializer());
+  @BeforeEach
+  void setUp() {
+    //noinspection unchecked
+    stateMachine = mock(StateMachine.class);
+    teleRunner = mock(TeleRunner.class);
+    runnerConnection = mock(RunnerConnection.class);
+    when(runnerConnection.getSerializer()).thenReturn(new Serializer());
 
-		this.statusRequester = new PeriodicStatusRequester(
-			teleRunner,
-			runnerConnection,
-			stateMachine
-		);
-	}
+    this.statusRequester = new PeriodicStatusRequester(teleRunner, runnerConnection, stateMachine);
+  }
 
-	@AfterEach
-	void tearDown() {
-		this.statusRequester.cancel();
-	}
+  @AfterEach
+  void tearDown() {
+    this.statusRequester.cancel();
+  }
 
-	@Test
-	void requestsStatus() throws InterruptedException {
-		statusRequester.start();
+  @Test
+  void requestsStatus() throws InterruptedException {
+    statusRequester.start();
 
-		verify(stateMachine, timeout(1000)).switchFromRestingState(any(AwaitGetStatusReply.class));
-		verify(runnerConnection, timeout(1000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
-	}
+    verify(stateMachine, timeout(1000)).switchFromRestingState(any(AwaitGetStatusReply.class));
+    verify(runnerConnection, timeout(1000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
+  }
 
-	@Test
-	void doesNotRequestStatusTooOften() throws InterruptedException {
-		statusRequester.start();
+  @Test
+  void doesNotRequestStatusTooOften() throws InterruptedException {
+    statusRequester.start();
 
-		ArgumentCaptor<AwaitGetStatusReply> captor = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
-		verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
-		verify(runnerConnection, timeout(1000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
+    ArgumentCaptor<AwaitGetStatusReply> captor = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
+    verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
+    verify(runnerConnection, timeout(1000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
 
-		captor.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", false, Status.IDLE, null, null
-		));
+    captor
+        .getValue()
+        .getReplyFuture()
+        .complete(new GetStatusReply("info", "version", "version", false, Status.IDLE, null, null));
 
-		verify(runnerConnection, after(2000).atMostOnce())
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
-	}
+    verify(runnerConnection, after(2000).atMostOnce())
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_STATUS));
+  }
 
-	@Test
-	void doesNotRequestResultsIfNone() {
-		statusRequester.start();
+  @Test
+  void doesNotRequestResultsIfNone() {
+    statusRequester.start();
 
-		verify(runnerConnection, after(1000).never())
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
-	}
+    verify(runnerConnection, after(1000).never())
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
+  }
 
-	@Test
-	void requestResultsIfPresent() throws InterruptedException {
-		statusRequester.start();
+  @Test
+  void requestResultsIfPresent() throws InterruptedException {
+    statusRequester.start();
 
-		var captor = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
-		verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
+    var captor = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
+    verify(stateMachine, timeout(1000)).switchFromRestingState(captor.capture());
 
-		captor.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null, null
-		));
+    captor
+        .getValue()
+        .getReplyFuture()
+        .complete(new GetStatusReply("info", "version", "version", true, Status.IDLE, null, null));
 
-		verify(runnerConnection, timeout(5000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
-	}
+    verify(runnerConnection, timeout(5000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
+  }
 
-	@Test
-	void clearResultsIfRunnerHasNoTask() throws InterruptedException {
-		when(teleRunner.getCurrentTask()).thenReturn(Optional.empty());
-		getResult();
+  @Test
+  void clearResultsIfRunnerHasNoTask() throws InterruptedException {
+    when(teleRunner.getCurrentTask()).thenReturn(Optional.empty());
+    getResult();
 
-		expectClearResultsAndConsumeIt();
-	}
+    expectClearResultsAndConsumeIt();
+  }
 
-	@Test
-	void clearResultsIfRunnerHasDifferentTask() throws InterruptedException {
-		Task task = mock(Task.class);
-		when(task.getId()).thenReturn(new TaskId(UUID.randomUUID()));
-		when(teleRunner.getCurrentTask()).thenReturn(Optional.of(task));
-		getResult();
+  @Test
+  void clearResultsIfRunnerHasDifferentTask() throws InterruptedException {
+    Task task = mock(Task.class);
+    when(task.getId()).thenReturn(new TaskId(UUID.randomUUID()));
+    when(teleRunner.getCurrentTask()).thenReturn(Optional.of(task));
+    getResult();
 
-		expectClearResultsAndConsumeIt();
-		verify(runnerConnection, timeout(5000)).close(StatusCode.ILLEGAL_BEHAVIOUR);
-	}
+    expectClearResultsAndConsumeIt();
+    verify(runnerConnection, timeout(5000)).close(StatusCode.ILLEGAL_BEHAVIOUR);
+  }
 
-	@Test
-	void savesResultIfRunnerHasSameTask() throws InterruptedException {
-		Task task = mock(Task.class);
-		when(task.getId()).thenReturn(new TaskId(RUN_ID));
-		when(teleRunner.getCurrentTask()).thenReturn(Optional.of(task));
-		GetResultReply result = getResult();
+  @Test
+  void savesResultIfRunnerHasSameTask() throws InterruptedException {
+    Task task = mock(Task.class);
+    when(task.getId()).thenReturn(new TaskId(RUN_ID));
+    when(teleRunner.getCurrentTask()).thenReturn(Optional.of(task));
+    GetResultReply result = getResult();
 
-		expectClearResultsAndConsumeIt();
+    expectClearResultsAndConsumeIt();
 
-		verify(teleRunner, timeout(1000)).handleResults(result);
-	}
+    verify(teleRunner, timeout(1000)).handleResults(result);
+  }
 
-	@Test
-	void clearResultIfConnectionHasError() throws InterruptedException {
-		getStatusReplyFuture().completeExceptionally(new RuntimeException("A!"));
+  @Test
+  void clearResultIfConnectionHasError() throws InterruptedException {
+    getStatusReplyFuture().completeExceptionally(new RuntimeException("A!"));
 
-		expectClearResultsAndConsumeIt();
-	}
+    expectClearResultsAndConsumeIt();
+  }
 
-	@Test
-	void clearResultIfSavingResultsHasError() throws InterruptedException {
-		doThrow(new RuntimeException("A!")).when(teleRunner).handleResults(any());
-		getResult();
+  @Test
+  void clearResultIfSavingResultsHasError() throws InterruptedException {
+    doThrow(new RuntimeException("A!")).when(teleRunner).handleResults(any());
+    getResult();
 
-		expectClearResultsAndConsumeIt();
-	}
+    expectClearResultsAndConsumeIt();
+  }
 
-	@Test
-	void disconnectIfClearAfterErrorFails() throws InterruptedException {
-		doThrow(new RuntimeException("A!")).when(teleRunner).handleResults(any());
-		doThrow(new RuntimeException("NOPE!")).when(runnerConnection)
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.CLEAR_RESULT));
+  @Test
+  void disconnectIfClearAfterErrorFails() throws InterruptedException {
+    doThrow(new RuntimeException("A!")).when(teleRunner).handleResults(any());
+    doThrow(new RuntimeException("NOPE!"))
+        .when(runnerConnection)
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.CLEAR_RESULT));
 
-		getResult();
+    getResult();
 
-		verify(runnerConnection, timeout(5000)).close(StatusCode.INTERNAL_ERROR);
-	}
+    verify(runnerConnection, timeout(5000)).close(StatusCode.INTERNAL_ERROR);
+  }
 
-	private void expectClearResultsAndConsumeIt() throws InterruptedException {
-		ArgumentCaptor<AwaitClearResultReply> captor;
-		// This is wrong, the captor accepts other classes as well
-		//noinspection ConstantConditions
-		do {
-			captor = ArgumentCaptor.forClass(AwaitClearResultReply.class);
-			verify(stateMachine, timeout(5000).atLeastOnce()).switchFromRestingState(captor.capture());
-		} while (!(captor.getValue() instanceof AwaitClearResultReply));
+  private void expectClearResultsAndConsumeIt() throws InterruptedException {
+    ArgumentCaptor<AwaitClearResultReply> captor;
+    // This is wrong, the captor accepts other classes as well
+    //noinspection ConstantConditions
+    do {
+      captor = ArgumentCaptor.forClass(AwaitClearResultReply.class);
+      verify(stateMachine, timeout(5000).atLeastOnce()).switchFromRestingState(captor.capture());
+    } while (!(captor.getValue() instanceof AwaitClearResultReply));
 
-		verify(runnerConnection, timeout(5000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.CLEAR_RESULT));
+    verify(runnerConnection, timeout(5000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.CLEAR_RESULT));
 
-		captor.getValue().getReplyFuture().complete(null);
-	}
+    captor.getValue().getReplyFuture().complete(null);
+  }
 
-	private CompletableFuture<GetResultReply> getStatusReplyFuture() throws InterruptedException {
-		statusRequester.start();
+  private CompletableFuture<GetResultReply> getStatusReplyFuture() throws InterruptedException {
+    statusRequester.start();
 
-		var captorStatus = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
-		verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
+    var captorStatus = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
+    verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
 
-		captorStatus.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null, null
-		));
+    captorStatus
+        .getValue()
+        .getReplyFuture()
+        .complete(new GetStatusReply("info", "version", "version", true, Status.IDLE, null, null));
 
-		verify(runnerConnection, timeout(5000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
+    verify(runnerConnection, timeout(5000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
 
-		var captorResult = ArgumentCaptor.forClass(AwaitGetResultReply.class);
-		verify(stateMachine, timeout(1000).atLeastOnce())
-			.switchFromRestingState(captorResult.capture());
+    var captorResult = ArgumentCaptor.forClass(AwaitGetResultReply.class);
+    verify(stateMachine, timeout(1000).atLeastOnce())
+        .switchFromRestingState(captorResult.capture());
 
-		return captorResult.getValue().getReplyFuture();
-	}
+    return captorResult.getValue().getReplyFuture();
+  }
 
-	private GetResultReply getResult() throws InterruptedException {
-		statusRequester.start();
+  private GetResultReply getResult() throws InterruptedException {
+    statusRequester.start();
 
-		var captorStatus = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
-		verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
+    var captorStatus = ArgumentCaptor.forClass(AwaitGetStatusReply.class);
+    verify(stateMachine, timeout(1000)).switchFromRestingState(captorStatus.capture());
 
-		captorStatus.getValue().getReplyFuture().complete(new GetStatusReply(
-			"info", "version", "version", true, Status.IDLE, null, null
-		));
+    captorStatus
+        .getValue()
+        .getReplyFuture()
+        .complete(new GetStatusReply("info", "version", "version", true, Status.IDLE, null, null));
 
-		verify(runnerConnection, timeout(5000))
-			.send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
+    verify(runnerConnection, timeout(5000))
+        .send(argThat(argument -> argument.getType() == ClientBoundPacketType.GET_RESULT));
 
-		var captorResult = ArgumentCaptor.forClass(AwaitGetResultReply.class);
-		verify(stateMachine, timeout(1000).atLeastOnce())
-			.switchFromRestingState(captorResult.capture());
+    var captorResult = ArgumentCaptor.forClass(AwaitGetResultReply.class);
+    verify(stateMachine, timeout(1000).atLeastOnce())
+        .switchFromRestingState(captorResult.capture());
 
-		GetResultReply reply = new GetResultReply(
-			RUN_ID, true, mock(Result.class), null, Instant.now(), Instant.now().minusSeconds(20)
-		);
-		captorResult.getValue().getReplyFuture().complete(reply);
+    GetResultReply reply =
+        new GetResultReply(
+            RUN_ID, true, mock(Result.class), null, Instant.now(), Instant.now().minusSeconds(20));
+    captorResult.getValue().getReplyFuture().complete(reply);
 
-		return reply;
-	}
+    return reply;
+  }
 }

@@ -30,9 +30,7 @@
               :no-links="true"
               :differences="comparison.significantDifferences"
               :run-id="comparison.run2.id"
-              :failed-significant-dimensions="
-                comparison.significantFailedDimensions
-              "
+              :failed-significant-dimensions="comparison.significantFailedDimensions"
             ></run-significance-chips>
             <comparison-table
               :first="comparison.run1"
@@ -55,9 +53,7 @@
       <v-col>
         <comparison-run-info
           :run="comparison.run2"
-          :title="
-            'Second Run Information' + (run2Successful ? '' : ' (Failed)')
-          "
+          :title="'Second Run Information' + (run2Successful ? '' : ' (Failed)')"
         />
       </v-col>
     </v-row>
@@ -65,65 +61,61 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { vxm } from '@/store'
-import { Watch } from 'vue-property-decorator'
-import { RunComparison, RunResultSuccess } from '@/store/types'
-import RunComparisonTable from '@/components/comparison/RunComparisonTable.vue'
-import CommitOverviewBase from '@/components/overviews/CommitOverviewBase.vue'
-import RunInfo from '@/components/rundetail/RunInfo.vue'
-import TarOverview from '@/components/overviews/TarOverview.vue'
-import ComparisonRunInfo from '@/components/comparison/ComparisonRunInfo.vue'
-import RunSignificanceChips from '@/components/runs/RunSignificanceChips.vue'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { vxm } from "@/store";
+import { Watch } from "vue-property-decorator";
+import { RunComparison, RunResultSuccess } from "@/store/types";
+import RunComparisonTable from "@/components/comparison/RunComparisonTable.vue";
+import CommitOverviewBase from "@/components/overviews/CommitOverviewBase.vue";
+import RunInfo from "@/components/rundetail/RunInfo.vue";
+import TarOverview from "@/components/overviews/TarOverview.vue";
+import ComparisonRunInfo from "@/components/comparison/ComparisonRunInfo.vue";
+import RunSignificanceChips from "@/components/runs/RunSignificanceChips.vue";
 
 @Component({
   components: {
     RunSignificanceChips,
     ComparisonRunInfo,
-    'tar-overview': TarOverview,
-    'commit-overview-base': CommitOverviewBase,
-    'run-info': RunInfo,
-    'comparison-table': RunComparisonTable
-  }
+    "tar-overview": TarOverview,
+    "commit-overview-base": CommitOverviewBase,
+    "run-info": RunInfo,
+    "comparison-table": RunComparisonTable,
+  },
 })
 export default class RunComparisonView extends Vue {
-  private comparison: RunComparison | null = null
+  private comparison: RunComparison | null = null;
 
   private get first(): string {
-    return this.$route.params['first']
+    return this.$route.params["first"];
   }
 
   private get second(): string {
-    return this.$route.params['second']
+    return this.$route.params["second"];
   }
 
   private get hash1(): string | undefined {
-    return this.$route.query['hash1'] as string | undefined
+    return this.$route.query["hash1"] as string | undefined;
   }
 
   private get hash2(): string | undefined {
-    return this.$route.query['hash2'] as string | undefined
+    return this.$route.query["hash2"] as string | undefined;
   }
 
   private get run1Successful() {
-    return (
-      this.comparison && this.comparison.run1.result instanceof RunResultSuccess
-    )
+    return this.comparison && this.comparison.run1.result instanceof RunResultSuccess;
   }
 
   private get run2Successful() {
-    return (
-      this.comparison && this.comparison.run2.result instanceof RunResultSuccess
-    )
+    return this.comparison && this.comparison.run2.result instanceof RunResultSuccess;
   }
 
-  @Watch('first')
-  @Watch('second')
-  @Watch('hash1')
-  @Watch('hash2')
+  @Watch("first")
+  @Watch("second")
+  @Watch("hash1")
+  @Watch("hash2")
   private async fetchData() {
-    this.comparison = null
+    this.comparison = null;
 
     // We don't need reactivity on this object, we only swap it wholesale.
     this.comparison = Object.freeze(
@@ -131,13 +123,13 @@ export default class RunComparisonView extends Vue {
         first: this.first,
         second: this.second,
         hash1: this.hash1,
-        hash2: this.hash2
-      })
-    )
+        hash2: this.hash2,
+      }),
+    );
   }
 
   mounted(): void {
-    this.fetchData()
+    this.fetchData();
   }
 }
 </script>

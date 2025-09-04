@@ -1,66 +1,66 @@
-import { createModule, mutation, action } from 'vuex-class-component'
-import axios from 'axios'
+import { createModule, mutation, action } from "vuex-class-component";
+import axios from "axios";
 
 const VxModule = createModule({
-  namespaced: 'userModule',
-  strict: false
-})
+  namespaced: "userModule",
+  strict: false,
+});
 
 export class UserStore extends VxModule {
-  private _token: string | null = null
+  private _token: string | null = null;
 
-  private _darkThemeSelected: boolean | undefined = undefined
+  private _darkThemeSelected: boolean | undefined = undefined;
 
   @action
   async logIn(token: string): Promise<void> {
-    const response = await axios.get('/test-token', {
+    const response = await axios.get("/test-token", {
       auth: {
-        username: 'admin',
-        password: token
+        username: "admin",
+        password: token,
       },
-      snackbarTag: 'login'
-    })
+      snackbarTag: "login",
+    });
 
     if (response.status === 200 || response.status === 204) {
-      this.setToken(token)
+      this.setToken(token);
     }
   }
 
   @action
   async logOut(): Promise<void> {
-    this.setToken(null)
+    this.setToken(null);
   }
 
   @mutation
   setToken(payload: string | null): void {
-    this._token = payload
+    this._token = payload;
   }
 
   get token(): string | null {
-    return this._token
+    return this._token;
   }
 
   get isAdmin(): boolean {
-    return this.token !== null && this.token.length > 0
+    return this.token !== null && this.token.length > 0;
   }
 
   get darkThemeSelected(): boolean {
     if (this._darkThemeSelected !== undefined) {
-      return this._darkThemeSelected
+      return this._darkThemeSelected;
     }
-    return this.browserPrefersDarkTheme
+    return this.browserPrefersDarkTheme;
   }
 
   set darkThemeSelected(selected: boolean) {
-    this._darkThemeSelected = selected
+    this._darkThemeSelected = selected;
   }
 
   get browserPrefersDarkTheme(): boolean {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
   get usesBrowsersThemePreferences(): boolean {
-    return this._darkThemeSelected === undefined
+    return this._darkThemeSelected === undefined;
   }
 
   /**
@@ -71,7 +71,7 @@ export class UserStore extends VxModule {
   static toPlainObject(store: UserStore): unknown {
     return {
       _token: store._token,
-      _darkThemeSelected: store._darkThemeSelected
-    }
+      _darkThemeSelected: store._darkThemeSelected,
+    };
   }
 }

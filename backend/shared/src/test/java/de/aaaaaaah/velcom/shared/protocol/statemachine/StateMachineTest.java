@@ -8,101 +8,105 @@ import org.junit.jupiter.api.Test;
 
 class StateMachineTest {
 
-	static class Resting implements State {
+  static class Resting implements State {
 
-		@Override
-		public boolean isResting() {
-			return true;
-		}
-	}
+    @Override
+    public boolean isResting() {
+      return true;
+    }
+  }
 
-	static class Unrest implements State {
+  static class Unrest implements State {}
 
-	}
+  static class RandomUnrest implements State {}
 
-	static class RandomUnrest implements State {
+  private StateMachine<State> stateMachine;
 
-	}
+  @BeforeEach
+  void setUp() {
+    stateMachine = new StateMachine<>(new Resting());
+  }
 
-	private StateMachine<State> stateMachine;
+  @Test
+  void canChangeFromResting() throws InterruptedException {
+    assertThat(stateMachine.switchFromRestingState(new Unrest())).isTrue();
+  }
 
-	@BeforeEach
-	void setUp() {
-		stateMachine = new StateMachine<>(new Resting());
-	}
+  @Test
+  void canNotChangeOutOfUnrest() throws InterruptedException {
+    stateMachine.switchFromRestingState(new Unrest());
 
-	@Test
-	void canChangeFromResting() throws InterruptedException {
-		assertThat(stateMachine.switchFromRestingState(new Unrest())).isTrue();
-	}
+    new Thread(
+            () -> {
+              try {
+                Thread.sleep(1000);
+                stateMachine.changeCurrentState(
+                    state -> {
+                      assertThat(state).isInstanceOf(Unrest.class);
+                      return new Resting();
+                    });
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            })
+        .start();
 
-	@Test
-	void canNotChangeOutOfUnrest() throws InterruptedException {
-		stateMachine.switchFromRestingState(new Unrest());
+    assertThat(stateMachine.switchFromRestingState(new Unrest())).isTrue();
+  }
 
-		new Thread(() -> {
-			try {
-				Thread.sleep(1000);
-				stateMachine.changeCurrentState(state -> {
-					assertThat(state).isInstanceOf(Unrest.class);
-					return new Resting();
-				});
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
+  @Test
+  void changingFromStopFails() throws InterruptedException {
+    stateMachine.stop();
+    assertThat(stateMachine.switchFromRestingState(new Unrest())).isFalse();
+  }
 
-		assertThat(stateMachine.switchFromRestingState(new Unrest())).isTrue();
-	}
+  @Test
+  void changesState() throws InterruptedException {
+    Unrest unrest = new Unrest();
+    RandomUnrest randomUnrest = new RandomUnrest();
+    Resting resting = new Resting();
 
-	@Test
-	void changingFromStopFails() throws InterruptedException {
-		stateMachine.stop();
-		assertThat(stateMachine.switchFromRestingState(new Unrest())).isFalse();
-	}
+    assertThat(stateMachine.switchFromRestingState(unrest)).isTrue();
 
-	@Test
-	void changesState() throws InterruptedException {
-		Unrest unrest = new Unrest();
-		RandomUnrest randomUnrest = new RandomUnrest();
-		Resting resting = new Resting();
+    stateMachine.changeCurrentState(
+        old -> {
+          assertThat(old).isSameAs(unrest);
+          return randomUnrest;
+        });
 
-		assertThat(stateMachine.switchFromRestingState(unrest)).isTrue();
+    stateMachine.changeCurrentState(
+        old -> {
+          assertThat(old).isSameAs(randomUnrest);
+          return resting;
+        });
 
-		stateMachine.changeCurrentState(old -> {
-			assertThat(old).isSameAs(unrest);
-			return randomUnrest;
-		});
+    stateMachine.changeCurrentState(
+        old -> {
+          assertThat(old).isSameAs(resting);
+          return resting;
+        });
+  }
 
-		stateMachine.changeCurrentState(old -> {
-			assertThat(old).isSameAs(randomUnrest);
-			return resting;
-		});
+  @Test
+  void stopCancelsWait() throws InterruptedException {
+    stateMachine.switchFromRestingState(new Unrest());
 
-		stateMachine.changeCurrentState(old -> {
-			assertThat(old).isSameAs(resting);
-			return resting;
-		});
-	}
+    Semaphore waiting = new Semaphore(0);
 
-	@Test
-	void stopCancelsWait() throws InterruptedException {
-		stateMachine.switchFromRestingState(new Unrest());
+    new Thread(
+            () -> {
+              try {
+                waiting.acquire();
+                Thread.sleep(500);
+                stateMachine.stop();
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            })
+        .start();
 
-		Semaphore waiting = new Semaphore(0);
-
-		new Thread(() -> {
-			try {
-				waiting.acquire();
-				Thread.sleep(500);
-				stateMachine.stop();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
-
-		waiting.release();
-		// The switch will release then the thread stops the state machine
-		assertThat(stateMachine.switchFromRestingState(new RandomUnrest())).isFalse();
-	}
+    waiting.release();
+    // The switch will release then the thread stops the state machine
+    assertThat(stateMachine.switchFromRestingState(new RandomUnrest())).isFalse();
+  }
 }

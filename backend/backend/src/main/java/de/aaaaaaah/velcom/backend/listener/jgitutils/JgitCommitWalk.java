@@ -1,6 +1,5 @@
 package de.aaaaaaah.velcom.backend.listener.jgitutils;
 
-
 import static java.util.stream.Collectors.toSet;
 
 import de.aaaaaaah.velcom.backend.access.committaccess.entities.CommitHash;
@@ -25,66 +24,65 @@ import org.eclipse.jgit.revwalk.RevWalk;
  */
 public class JgitCommitWalk implements AutoCloseable {
 
-	private final Repository repo;
-	private final RevWalk walk;
+  private final Repository repo;
+  private final RevWalk walk;
 
-	public JgitCommitWalk(Repository repo) {
-		this.repo = repo;
-		this.walk = new RevWalk(repo);
-	}
+  public JgitCommitWalk(Repository repo) {
+    this.repo = repo;
+    this.walk = new RevWalk(repo);
+  }
 
-	private static String formatPersonIdent(PersonIdent ident) {
-		final String name = ident.getName();
+  private static String formatPersonIdent(PersonIdent ident) {
+    final String name = ident.getName();
 
-		if (name.isEmpty()) {
-			return "<" + ident.getEmailAddress() + ">";
-		} else {
-			return name + " <" + ident.getEmailAddress() + ">";
-		}
-	}
+    if (name.isEmpty()) {
+      return "<" + ident.getEmailAddress() + ">";
+    } else {
+      return name + " <" + ident.getEmailAddress() + ">";
+    }
+  }
 
-	private static JgitCommit revCommitToJgitCommit(RevCommit revCommit) {
-		CommitHash hash = new CommitHash(revCommit.getId().getName());
+  private static JgitCommit revCommitToJgitCommit(RevCommit revCommit) {
+    CommitHash hash = new CommitHash(revCommit.getId().getName());
 
-		Set<CommitHash> parentHashes = List.of(revCommit.getParents()).stream()
-			.map(RevCommit::getId)
-			.map(AnyObjectId::getName)
-			.map(CommitHash::new)
-			.collect(toSet());
+    Set<CommitHash> parentHashes =
+        List.of(revCommit.getParents()).stream()
+            .map(RevCommit::getId)
+            .map(AnyObjectId::getName)
+            .map(CommitHash::new)
+            .collect(toSet());
 
-		PersonIdent authorIdent = revCommit.getAuthorIdent();
-		PersonIdent committerIdent = revCommit.getCommitterIdent();
+    PersonIdent authorIdent = revCommit.getAuthorIdent();
+    PersonIdent committerIdent = revCommit.getCommitterIdent();
 
-		return new JgitCommit(
-			hash,
-			parentHashes,
-			formatPersonIdent(authorIdent),
-			authorIdent.getWhen().toInstant(),
-			formatPersonIdent(committerIdent),
-			committerIdent.getWhen().toInstant(),
-			revCommit.getFullMessage()
-		);
-	}
+    return new JgitCommit(
+        hash,
+        parentHashes,
+        formatPersonIdent(authorIdent),
+        authorIdent.getWhen().toInstant(),
+        formatPersonIdent(committerIdent),
+        committerIdent.getWhen().toInstant(),
+        revCommit.getFullMessage());
+  }
 
-	public Optional<JgitCommit> getCommit(CommitHash hash) {
-		try {
-			ObjectId commitPtr = repo.resolve(hash.getHash());
-			RevCommit revCommit = walk.parseCommit(commitPtr);
-			return Optional.of(revCommitToJgitCommit(revCommit));
-		} catch (IOException e) {
-			return Optional.empty();
-		}
-	}
+  public Optional<JgitCommit> getCommit(CommitHash hash) {
+    try {
+      ObjectId commitPtr = repo.resolve(hash.getHash());
+      RevCommit revCommit = walk.parseCommit(commitPtr);
+      return Optional.of(revCommitToJgitCommit(revCommit));
+    } catch (IOException e) {
+      return Optional.empty();
+    }
+  }
 
-	public Stream<JgitCommit> getAllCommits() throws IOException, GitAPIException {
-		Iterable<RevCommit> logIterable = new Git(repo).log().all().call();
-		return StreamSupport.stream(logIterable.spliterator(), false)
-			.map(JgitCommitWalk::revCommitToJgitCommit);
-	}
+  public Stream<JgitCommit> getAllCommits() throws IOException, GitAPIException {
+    Iterable<RevCommit> logIterable = new Git(repo).log().all().call();
+    return StreamSupport.stream(logIterable.spliterator(), false)
+        .map(JgitCommitWalk::revCommitToJgitCommit);
+  }
 
-	@Override
-	public void close() {
-		walk.close();
-	}
-
+  @Override
+  public void close() {
+    walk.close();
+  }
 }

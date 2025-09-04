@@ -21,130 +21,122 @@ import org.junit.jupiter.api.Test;
 
 class DispatcherTest {
 
-	private Dispatcher dispatcher;
+  private Dispatcher dispatcher;
 
-	private Queue queue;
-	private Duration runnerGracePeriod;
-	private KnownRunner knownRunner;
+  private Queue queue;
+  private Duration runnerGracePeriod;
+  private KnownRunner knownRunner;
 
-	@BeforeEach
-	void setUp() {
-		queue = mock(Queue.class);
-		when(queue.startNextTask()).thenReturn(Optional.of(mock(Task.class)));
+  @BeforeEach
+  void setUp() {
+    queue = mock(Queue.class);
+    when(queue.startNextTask()).thenReturn(Optional.of(mock(Task.class)));
 
-		runnerGracePeriod = Duration.ofSeconds(1);
-		dispatcher = new Dispatcher(queue, runnerGracePeriod);
-		knownRunner = new KnownRunner(
-			"runner",
-			"info",
-			"hash",
-			Status.IDLE,
-			null,
-			false,
-			null,
-			null,
-			List.of()
-		);
-	}
+    runnerGracePeriod = Duration.ofSeconds(1);
+    dispatcher = new Dispatcher(queue, runnerGracePeriod);
+    knownRunner =
+        new KnownRunner("runner", "info", "hash", Status.IDLE, null, false, null, null, List.of());
+  }
 
-	@Test
-	void addedRunnerVisibleInAllRunners() {
-		TeleRunner runner = getRunner();
-		dispatcher.addRunner(runner);
+  @Test
+  void addedRunnerVisibleInAllRunners() {
+    TeleRunner runner = getRunner();
+    dispatcher.addRunner(runner);
 
-		assertThat(dispatcher.getKnownRunners()).containsExactly(knownRunner);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
-	}
+    assertThat(dispatcher.getKnownRunners()).containsExactly(knownRunner);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+  }
 
-	@Test
-	void cantAddRunnerWithSameName() {
-		dispatcher.addRunner(getRunner());
-		assertThatThrownBy(() -> dispatcher.addRunner(getRunner()))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessageContaining("name");
-	}
+  @Test
+  void cantAddRunnerWithSameName() {
+    dispatcher.addRunner(getRunner());
+    assertThatThrownBy(() -> dispatcher.addRunner(getRunner()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("name");
+  }
 
-	@Test
-	void doesNotReturnWorkForUnregisteredRunner() {
-		assertThat(queue.startNextTask()).isPresent();
-		assertThat(dispatcher.getWork(getRunner())).isEmpty();
-	}
+  @Test
+  void doesNotReturnWorkForUnregisteredRunner() {
+    assertThat(queue.startNextTask()).isPresent();
+    assertThat(dispatcher.getWork(getRunner())).isEmpty();
+  }
 
-	@Test
-	void returnsWorkForRegisteredRunner() {
-		TeleRunner runner = getRunner();
-		dispatcher.addRunner(runner);
+  @Test
+  void returnsWorkForRegisteredRunner() {
+    TeleRunner runner = getRunner();
+    dispatcher.addRunner(runner);
 
-		assertThat(queue.startNextTask()).isPresent();
-		assertThat(dispatcher.getWork(runner)).isPresent();
-	}
+    assertThat(queue.startNextTask()).isPresent();
+    assertThat(dispatcher.getWork(runner)).isPresent();
+  }
 
-	@Test
-	void cleansUpDisconnectedRunner() throws InterruptedException {
-		AtomicBoolean returnInvalidPingTime = new AtomicBoolean(false);
-		TeleRunner runner = getRunner();
-		when(runner.hasConnection()).thenReturn(false);
-		when(runner.getLastPing()).then(invocation -> returnInvalidPingTime.get()
-			? Instant.now().minus(runnerGracePeriod).minusMillis(1)
-			: Instant.now()
-		);
+  @Test
+  void cleansUpDisconnectedRunner() throws InterruptedException {
+    AtomicBoolean returnInvalidPingTime = new AtomicBoolean(false);
+    TeleRunner runner = getRunner();
+    when(runner.hasConnection()).thenReturn(false);
+    when(runner.getLastPing())
+        .then(
+            invocation ->
+                returnInvalidPingTime.get()
+                    ? Instant.now().minus(runnerGracePeriod).minusMillis(1)
+                    : Instant.now());
 
-		dispatcher.addRunner(runner);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+    dispatcher.addRunner(runner);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
 
-		returnInvalidPingTime.set(true);
+    returnInvalidPingTime.set(true);
 
-		Thread.sleep(2000);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).isEmpty();
-	}
+    Thread.sleep(2000);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).isEmpty();
+  }
 
-	@Test
-	void doesNotCleanUpUnresponsiveConnectedRunner() throws InterruptedException {
-		TeleRunner runner = getRunner();
-		when(runner.hasConnection()).thenReturn(true);
-		// Out of the grace period but it still has a connection. We keep it, as the websocket listener
-		// probably just reset the connection. We have a dedicated ping timeout.
-		when(runner.getLastPing()).then(
-			invocation -> Instant.now().minus(runnerGracePeriod).minusMillis(1)
-		);
+  @Test
+  void doesNotCleanUpUnresponsiveConnectedRunner() throws InterruptedException {
+    TeleRunner runner = getRunner();
+    when(runner.hasConnection()).thenReturn(true);
+    // Out of the grace period but it still has a connection. We keep it, as the websocket listener
+    // probably just reset the connection. We have a dedicated ping timeout.
+    when(runner.getLastPing())
+        .then(invocation -> Instant.now().minus(runnerGracePeriod).minusMillis(1));
 
-		dispatcher.addRunner(runner);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+    dispatcher.addRunner(runner);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
 
-		Thread.sleep(2000);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
-	}
+    Thread.sleep(2000);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+  }
 
-	@Test
-	void doesNotCleanUpConnectedRunner() throws InterruptedException {
-		TeleRunner runner = getRunner();
-		when(runner.hasConnection()).thenReturn(true);
-		when(runner.getLastPing()).then(
-			// Juuust inside
-			invocation -> Instant.now().minus(runnerGracePeriod)
-		);
+  @Test
+  void doesNotCleanUpConnectedRunner() throws InterruptedException {
+    TeleRunner runner = getRunner();
+    when(runner.hasConnection()).thenReturn(true);
+    when(runner.getLastPing())
+        .then(
+            // Juuust inside
+            invocation -> Instant.now().minus(runnerGracePeriod));
 
-		dispatcher.addRunner(runner);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+    dispatcher.addRunner(runner);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
 
-		Thread.sleep(2000);
-		assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
-	}
+    Thread.sleep(2000);
+    assertThat(dispatcher.getTeleRunner(runner.getRunnerName())).get().isSameAs(runner);
+  }
 
-	@Test
-	void completeWorkWritesThroughToQueue() {
-		NewRun newRun = mock(NewRun.class);
-		dispatcher.completeTask(newRun);
+  @Test
+  void completeWorkWritesThroughToQueue() {
+    NewRun newRun = mock(NewRun.class);
+    dispatcher.completeTask(newRun);
 
-		verify(queue).completeTask(newRun);
-	}
+    verify(queue).completeTask(newRun);
+  }
 
-	private TeleRunner getRunner() {
-		TeleRunner runner = mock(TeleRunner.class);
-		when(runner.getRunnerInformation()).thenReturn(knownRunner);
-		when(runner.hasConnection()).thenReturn(true);
-		when(runner.getRunnerName()).thenReturn(knownRunner.getName());
-		when(runner.isDisposed()).thenReturn(false);
-		return runner;
-	}
+  private TeleRunner getRunner() {
+    TeleRunner runner = mock(TeleRunner.class);
+    when(runner.getRunnerInformation()).thenReturn(knownRunner);
+    when(runner.hasConnection()).thenReturn(true);
+    when(runner.getRunnerName()).thenReturn(knownRunner.getName());
+    when(runner.isDisposed()).thenReturn(false);
+    return runner;
+  }
 }

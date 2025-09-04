@@ -1,1 +1,1 @@
-declare module 'ansi-to-html'
+declare module "ansi-to-html";

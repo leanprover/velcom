@@ -25,199 +25,191 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A repo storage can clone and store git repositories and allows inspecting them via jgit.
- */
+/** A repo storage can clone and store git repositories and allows inspecting them via jgit. */
 public class RepoStorage {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RepoStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RepoStorage.class);
 
-	private final Path rootDir;
-	private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final Path rootDir;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-	/**
-	 * Initialize a new repo storage.
-	 *
-	 * @param rootDir the directory where all repositories will be stored in
-	 * @throws IOException if the directory could not be created
-	 */
-	public RepoStorage(Path rootDir) throws IOException {
-		this.rootDir = rootDir;
-		Files.createDirectories(rootDir);
+  /**
+   * Initialize a new repo storage.
+   *
+   * @param rootDir the directory where all repositories will be stored in
+   * @throws IOException if the directory could not be created
+   */
+  public RepoStorage(Path rootDir) throws IOException {
+    this.rootDir = rootDir;
+    Files.createDirectories(rootDir);
 
-		SshdSessionFactory factory = new KnownHostsIgnoringSshdFactory(
-			new JGitKeyCache(),
-			new DefaultProxyDataFactory()
-		);
+    SshdSessionFactory factory =
+        new KnownHostsIgnoringSshdFactory(new JGitKeyCache(), new DefaultProxyDataFactory());
 
-		SshSessionFactory.setInstance(factory);
-	}
+    SshSessionFactory.setInstance(factory);
+  }
 
-	/**
-	 * Checks whether or not this storage contains a repository located under the given directory
-	 * name.
-	 *
-	 * @param dirName the directory name
-	 * @return true, if there is a repository currently stored under the given directory name
-	 */
-	public boolean containsRepository(String dirName) {
-		Path path = rootDir.resolve(dirName);
-		return Files.exists(path) && Files.isDirectory(path);
-	}
+  /**
+   * Checks whether or not this storage contains a repository located under the given directory
+   * name.
+   *
+   * @param dirName the directory name
+   * @return true, if there is a repository currently stored under the given directory name
+   */
+  public boolean containsRepository(String dirName) {
+    Path path = rootDir.resolve(dirName);
+    return Files.exists(path) && Files.isDirectory(path);
+  }
 
-	/**
-	 * Find all locally stored repositories.
-	 *
-	 * @return a collection of paths pointing to all locally stored repositories
-	 * @throws IOException if an I/O error occurs when trying to read the directories
-	 */
-	public List<Path> getRepoDirectories() throws IOException {
-		this.lock.readLock().lock();
+  /**
+   * Find all locally stored repositories.
+   *
+   * @return a collection of paths pointing to all locally stored repositories
+   * @throws IOException if an I/O error occurs when trying to read the directories
+   */
+  public List<Path> getRepoDirectories() throws IOException {
+    this.lock.readLock().lock();
 
-		try (Stream<Path> fileStream = Files.list(rootDir)) {
-			return fileStream
-				.filter(Files::isDirectory)
-				.collect(Collectors.toUnmodifiableList());
-		} finally {
-			this.lock.readLock().unlock();
-		}
-	}
+    try (Stream<Path> fileStream = Files.list(rootDir)) {
+      return fileStream.filter(Files::isDirectory).collect(Collectors.toUnmodifiableList());
+    } finally {
+      this.lock.readLock().unlock();
+    }
+  }
 
-	/**
-	 * Adds a new repository to this storage by cloning it from the specified remote url and storing
-	 * it to the directory with the specified name relative to the default root directory of this
-	 * storage.
-	 *
-	 * @param dirName A unique directory name for this repository
-	 * @param remoteUrl The remote url to clone the repository from
-	 * @return the path of the directory containing the new repository
-	 * @throws AddRepositoryException if an exception occurs while trying to add the repository
-	 */
-	public Path addRepository(String dirName, String remoteUrl) throws AddRepositoryException {
-		Path repoDir = rootDir.resolve(dirName);
+  /**
+   * Adds a new repository to this storage by cloning it from the specified remote url and storing
+   * it to the directory with the specified name relative to the default root directory of this
+   * storage.
+   *
+   * @param dirName A unique directory name for this repository
+   * @param remoteUrl The remote url to clone the repository from
+   * @return the path of the directory containing the new repository
+   * @throws AddRepositoryException if an exception occurs while trying to add the repository
+   */
+  public Path addRepository(String dirName, String remoteUrl) throws AddRepositoryException {
+    Path repoDir = rootDir.resolve(dirName);
 
-		this.lock.writeLock().lock();
-		try {
-			if (Files.exists(repoDir)) {
-				throw new DirectoryAlreadyExistsException(repoDir);
-			}
+    this.lock.writeLock().lock();
+    try {
+      if (Files.exists(repoDir)) {
+        throw new DirectoryAlreadyExistsException(repoDir);
+      }
 
-			Files.createDirectory(repoDir);
+      Files.createDirectory(repoDir);
 
-			long start = System.currentTimeMillis();
-			LOGGER.info("Cloning repo from {} into {}", remoteUrl, dirName);
+      long start = System.currentTimeMillis();
+      LOGGER.info("Cloning repo from {} into {}", remoteUrl, dirName);
 
-			GuickCloning.getInstance().cloneMirror(remoteUrl, repoDir);
+      GuickCloning.getInstance().cloneMirror(remoteUrl, repoDir);
 
-			LOGGER.info("Cloning took {} ms", System.currentTimeMillis() - start);
+      LOGGER.info("Cloning took {} ms", System.currentTimeMillis() - start);
 
-			return repoDir;
-		} catch (DirectoryAlreadyExistsException e) {
-			throw new AddRepositoryException(dirName, remoteUrl, e);
-		} catch (Exception e) {
-			// try to clean up directory
-			try {
-				FileHelper.deleteDirectoryOrFile(repoDir);
-			} catch (Exception ignore) {
-			}
+      return repoDir;
+    } catch (DirectoryAlreadyExistsException e) {
+      throw new AddRepositoryException(dirName, remoteUrl, e);
+    } catch (Exception e) {
+      // try to clean up directory
+      try {
+        FileHelper.deleteDirectoryOrFile(repoDir);
+      } catch (Exception ignore) {
+      }
 
-			throw new AddRepositoryException(dirName, remoteUrl, e);
-		} finally {
-			this.lock.writeLock().unlock();
-		}
-	}
+      throw new AddRepositoryException(dirName, remoteUrl, e);
+    } finally {
+      this.lock.writeLock().unlock();
+    }
+  }
 
-	/**
-	 * Removes a repository from this storage by deleting its directory.
-	 *
-	 * @param dirName the name of the repository
-	 * @throws IOException if an I/O exception occurs trying to delete the directory of the
-	 * 	repository
-	 */
-	public void deleteRepository(String dirName) throws IOException {
-		this.lock.writeLock().lock();
+  /**
+   * Removes a repository from this storage by deleting its directory.
+   *
+   * @param dirName the name of the repository
+   * @throws IOException if an I/O exception occurs trying to delete the directory of the repository
+   */
+  public void deleteRepository(String dirName) throws IOException {
+    this.lock.writeLock().lock();
 
-		try {
-			FileHelper.deleteDirectoryOrFile(rootDir.resolve(dirName));
-		} finally {
-			this.lock.writeLock().unlock();
-		}
-	}
+    try {
+      FileHelper.deleteDirectoryOrFile(rootDir.resolve(dirName));
+    } finally {
+      this.lock.writeLock().unlock();
+    }
+  }
 
-	/**
-	 * Acquires the repository located under the specified directory by acquiring the repo storage
-	 * lock and executing the given handler.
-	 *
-	 * @param dirName the name of the directory
-	 * @param handler the handler to execute
-	 * @throws NoSuchRepositoryException if no repository is found under the specified directory
-	 * @throws RepositoryAcquisitionException if the handler throws any exception
-	 */
-	public void acquireRepository(String dirName, CheckedConsumer<Repository, Exception> handler)
-		throws NoSuchRepositoryException, RepositoryAcquisitionException {
+  /**
+   * Acquires the repository located under the specified directory by acquiring the repo storage
+   * lock and executing the given handler.
+   *
+   * @param dirName the name of the directory
+   * @param handler the handler to execute
+   * @throws NoSuchRepositoryException if no repository is found under the specified directory
+   * @throws RepositoryAcquisitionException if the handler throws any exception
+   */
+  public void acquireRepository(String dirName, CheckedConsumer<Repository, Exception> handler)
+      throws NoSuchRepositoryException, RepositoryAcquisitionException {
 
-		this.lock.readLock().lock();
+    this.lock.readLock().lock();
 
-		try {
-			Path repoDir = getRepoDir(dirName);
+    try {
+      Path repoDir = getRepoDir(dirName);
 
-			try (Git git = Git.open(repoDir.toFile())) {
-				// Since the Git object was created via a static factory method and had to create its own
-				// Repository, it will also close that Repository itself, meaning we don't have to close it
-				// explicitly.
-				Repository repository = git.getRepository();
-				handler.accept(repository);
-			} catch (Exception e) {
-				throw new RepositoryAcquisitionException(this, dirName, e);
-			}
-		} finally {
-			this.lock.readLock().unlock();
-		}
-	}
+      try (Git git = Git.open(repoDir.toFile())) {
+        // Since the Git object was created via a static factory method and had to create its own
+        // Repository, it will also close that Repository itself, meaning we don't have to close it
+        // explicitly.
+        Repository repository = git.getRepository();
+        handler.accept(repository);
+      } catch (Exception e) {
+        throw new RepositoryAcquisitionException(this, dirName, e);
+      }
+    } finally {
+      this.lock.readLock().unlock();
+    }
+  }
 
-	/**
-	 * Acquires the repository located under the specified directory by acquiring the repo storage
-	 * lock and returning the repository.
-	 *
-	 * <p>Note that, in order to release the repo storage lock, the returned repository instance
-	 * <em>must be closed.</em></p>
-	 *
-	 * @param dirName the name of the directory
-	 * @return Returns the jgit repository instance for this repository
-	 * @throws RepositoryAcquisitionException if an exception occurs while trying to acquire the
-	 * 	repository
-	 * @throws NoSuchRepositoryException if no repository under the given directory exists
-	 */
-	public Repository acquireRepository(String dirName)
-		throws RepositoryAcquisitionException, NoSuchRepositoryException {
-		Path repoDir = getRepoDir(dirName);
+  /**
+   * Acquires the repository located under the specified directory by acquiring the repo storage
+   * lock and returning the repository.
+   *
+   * <p>Note that, in order to release the repo storage lock, the returned repository instance
+   * <em>must be closed.</em>
+   *
+   * @param dirName the name of the directory
+   * @return Returns the jgit repository instance for this repository
+   * @throws RepositoryAcquisitionException if an exception occurs while trying to acquire the
+   *     repository
+   * @throws NoSuchRepositoryException if no repository under the given directory exists
+   */
+  public Repository acquireRepository(String dirName)
+      throws RepositoryAcquisitionException, NoSuchRepositoryException {
+    Path repoDir = getRepoDir(dirName);
 
-		RepositoryBuilder b = new RepositoryBuilder();
-		b.setGitDir(repoDir.toFile());
+    RepositoryBuilder b = new RepositoryBuilder();
+    b.setGitDir(repoDir.toFile());
 
-		try {
-			// constructor acquires read lock for this storage
-			return new RepositoryLock(this.lock.readLock(), b);
-		} catch (IOException e) {
-			throw new RepositoryAcquisitionException(this, dirName, e);
-		}
-	}
+    try {
+      // constructor acquires read lock for this storage
+      return new RepositoryLock(this.lock.readLock(), b);
+    } catch (IOException e) {
+      throw new RepositoryAcquisitionException(this, dirName, e);
+    }
+  }
 
-	/**
-	 * Gets the path to the directory whose name is the one specified.
-	 *
-	 * @param dirName the name of the directory where the repository is located at
-	 * @return the path of a repository directory by the given directory name
-	 * @throws NoSuchRepositoryException if no repository can be found at the specified directory
-	 */
-	public Path getRepoDir(String dirName) throws NoSuchRepositoryException {
-		Path repoDir = rootDir.resolve(dirName);
+  /**
+   * Gets the path to the directory whose name is the one specified.
+   *
+   * @param dirName the name of the directory where the repository is located at
+   * @return the path of a repository directory by the given directory name
+   * @throws NoSuchRepositoryException if no repository can be found at the specified directory
+   */
+  public Path getRepoDir(String dirName) throws NoSuchRepositoryException {
+    Path repoDir = rootDir.resolve(dirName);
 
-		if (Files.exists(repoDir) && Files.isDirectory(repoDir)) {
-			return rootDir.resolve(dirName);
-		} else {
-			throw new NoSuchRepositoryException(dirName, this);
-		}
-	}
-
+    if (Files.exists(repoDir) && Files.isDirectory(repoDir)) {
+      return rootDir.resolve(dirName);
+    } else {
+      throw new NoSuchRepositoryException(dirName, this);
+    }
+  }
 }

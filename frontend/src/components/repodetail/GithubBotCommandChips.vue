@@ -1,10 +1,6 @@
 <template>
   <div>
-    <v-tooltip
-      top
-      v-for="(pr, index) in prs"
-      :key="pr.prNumber + '' + pr.sourceCommentId"
-    >
+    <v-tooltip top v-for="(pr, index) in prs" :key="pr.prNumber + '' + pr.sourceCommentId">
       <template v-slot:activator="{ on }">
         <a :href="commentLink(pr)" rel="noopener nofollow" target="_blank">
           <v-chip
@@ -28,73 +24,68 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import {
-  mdiAlertCircleOutline,
-  mdiCheck,
-  mdiCheckAll,
-  mdiCircleSlice6
-} from '@mdi/js'
-import { GithubBotCommand, GithubBotCommandState, Repo } from '@/store/types'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
+import { mdiAlertCircleOutline, mdiCheck, mdiCheckAll, mdiCircleSlice6 } from "@mdi/js";
+import { GithubBotCommand, GithubBotCommandState, Repo } from "@/store/types";
 
 type StateData = {
-  color?: string
-  icon: string
-  description: string
-}
+  color?: string;
+  icon: string;
+  description: string;
+};
 const stateDate: { [key in GithubBotCommandState]: StateData } = {
   NEW: {
     icon: mdiCheck,
-    description: 'Command was seen by the Github Bot'
+    description: "Command was seen by the Github Bot",
   },
   MARKED_SEEN: {
     icon: mdiCheckAll,
-    description: 'Command was acknowledged by the Github Bot'
+    description: "Command was acknowledged by the Github Bot",
   },
   QUEUED: {
-    color: 'success',
+    color: "success",
     icon: mdiCircleSlice6,
-    description: 'Command is currently in the queue'
+    description: "Command is currently in the queue",
   },
   ERROR: {
-    color: 'error',
+    color: "error",
     icon: mdiAlertCircleOutline,
-    description: 'Error processing command'
-  }
-}
+    description: "Error processing command",
+  },
+};
 
 @Component
 export default class GithubBotCommandChips extends Vue {
   @Prop()
-  private readonly prs!: GithubBotCommand[]
+  private readonly prs!: GithubBotCommand[];
 
   @Prop()
-  private readonly repo!: Repo
+  private readonly repo!: Repo;
 
   private description(state: GithubBotCommandState) {
-    return stateDate[state].description
+    return stateDate[state].description;
   }
 
   private icon(state: GithubBotCommandState) {
-    return stateDate[state].icon
+    return stateDate[state].icon;
   }
 
   private color(state: GithubBotCommandState) {
-    return stateDate[state].color
+    return stateDate[state].color;
   }
 
   private commentLink(command: GithubBotCommand) {
-    const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/
-    const match = regex.exec(this.repo.remoteURL)
+    const regex = /^(https:\/\/|git@)github.com[:/]([^/]+\/[^/.]+)(\.git)?$/;
+    const match = regex.exec(this.repo.remoteURL);
 
     if (match === null) {
-      return undefined
+      return undefined;
     }
 
-    const repoName = match[2]
-    return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`
+    const repoName = match[2];
+    return `https://github.com/${repoName}/pull/${command.prNumber}#issuecomment-${command.sourceCommentId}`;
   }
 }
 </script>

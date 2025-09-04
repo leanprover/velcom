@@ -48,9 +48,7 @@
                   dense
                   class="my-0 pt-0 font-italic"
                   label="Track all branches"
-                  :input-value="
-                    newTrackedBranches.length === repo.branches.length
-                  "
+                  :input-value="newTrackedBranches.length === repo.branches.length"
                   @change="toggleAll"
                 ></v-checkbox>
               </template>
@@ -78,16 +76,10 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            class="mr-3"
-            :disabled="!formValid"
-            @click="updateRepo"
+          <v-btn color="primary" class="mr-3" :disabled="!formValid" @click="updateRepo"
             >Update Repository</v-btn
           >
-          <v-btn color="error" text outlined @click="dialogOpen = false">
-            Close
-          </v-btn>
+          <v-btn color="error" text outlined @click="dialogOpen = false"> Close </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -95,73 +87,69 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Repo } from '@/store/types'
-import { Prop, Watch } from 'vue-property-decorator'
-import { vxm } from '@/store'
-import { mdiMagnify } from '@mdi/js'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Repo } from "@/store/types";
+import { Prop, Watch } from "vue-property-decorator";
+import { vxm } from "@/store";
+import { mdiMagnify } from "@mdi/js";
 import GithubTokenConfiguration, {
-  TokenState
-} from '@/components/repodetail/GithubTokenConfiguration.vue'
+  TokenState,
+} from "@/components/repodetail/GithubTokenConfiguration.vue";
 @Component({
-  components: { GithubTokenConfiguration }
+  components: { GithubTokenConfiguration },
 })
 export default class RepoUpdateDialog extends Vue {
-  private dialogOpen: boolean = false
+  private dialogOpen: boolean = false;
 
-  private remoteUrl: string = ''
-  private repoName: string = ''
+  private remoteUrl: string = "";
+  private repoName: string = "";
 
-  private itemsPerPage: number = 30
-  private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1]
+  private itemsPerPage: number = 30;
+  private itemsPerPageOptions: number[] = [1, 10, 20, 30, 50, 100, -1];
 
-  private formValid: boolean = false
-  private searchValue: string = ''
+  private formValid: boolean = false;
+  private searchValue: string = "";
 
-  private newTrackedBranches: string[] = []
+  private newTrackedBranches: string[] = [];
 
-  private newGithubToken: string = ''
-  private githubTokenState: TokenState = 'unchanged'
+  private newGithubToken: string = "";
+  private githubTokenState: TokenState = "unchanged";
 
   @Prop()
-  private readonly repoId!: string
+  private readonly repoId!: string;
 
   private get branchObjects(): { name: string; lowerCased: string }[] {
-    return this.repo.branches.map(it => ({
+    return this.repo.branches.map((it) => ({
       name: it.name,
-      lowerCased: it.name.toLowerCase()
-    }))
+      lowerCased: it.name.toLowerCase(),
+    }));
   }
 
   private get repo(): Repo {
-    return vxm.repoModule.repoById(this.repoId)!
+    return vxm.repoModule.repoById(this.repoId)!;
   }
 
   private get hasGithubToken() {
-    return this.repo.lastGithubUpdate !== undefined
+    return this.repo.lastGithubUpdate !== undefined;
   }
 
   private filterName(items: { lowerCased: string }[]) {
-    return items.filter(
-      input => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0
-    )
+    return items.filter((input) => input.lowerCased.indexOf(this.searchValue.toLowerCase()) >= 0);
   }
 
   private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : 'This field must not be empty!'
+    return input.trim().length > 0 ? true : "This field must not be empty!";
   }
 
-  @Watch('dialogOpen')
-  @Watch('repoId')
+  @Watch("dialogOpen")
+  @Watch("repoId")
   private watchIdUpdates() {
-    this.remoteUrl = this.repo.remoteURL
-    this.repoName = this.repo.name
-    this.searchValue = ''
+    this.remoteUrl = this.repo.remoteURL;
+    this.repoName = this.repo.name;
+    this.searchValue = "";
 
-    this.newTrackedBranches = this.repo.branches
-      .filter(it => it.tracked)
-      .map(it => it.name)
+    this.newTrackedBranches = this.repo.branches.filter((it) => it.tracked).map((it) => it.name);
   }
 
   private toggleAll() {
@@ -169,18 +157,18 @@ export default class RepoUpdateDialog extends Vue {
       this.newTrackedBranches.length === this.repo.branches.length &&
       this.newTrackedBranches.length > 0
     ) {
-      this.newTrackedBranches = []
+      this.newTrackedBranches = [];
     } else {
-      this.newTrackedBranches = this.repo.branches.map(branch => branch.name)
+      this.newTrackedBranches = this.repo.branches.map((branch) => branch.name);
     }
   }
 
   private async updateRepo() {
-    let newToken: string | undefined
-    if (this.githubTokenState === 'delete') {
-      newToken = ''
-    } else if (this.githubTokenState === 'modify') {
-      newToken = this.newGithubToken
+    let newToken: string | undefined;
+    if (this.githubTokenState === "delete") {
+      newToken = "";
+    } else if (this.githubTokenState === "modify") {
+      newToken = this.newGithubToken;
     }
 
     await vxm.repoModule.updateRepo({
@@ -188,18 +176,18 @@ export default class RepoUpdateDialog extends Vue {
       name: this.repoName,
       remoteUrl: this.remoteUrl,
       trackedBranches: this.newTrackedBranches,
-      githubToken: newToken
-    })
+      githubToken: newToken,
+    });
 
-    this.dialogOpen = false
+    this.dialogOpen = false;
   }
 
   mounted(): void {
-    Vue.nextTick(() => this.watchIdUpdates())
+    Vue.nextTick(() => this.watchIdUpdates());
   }
 
   // ============== ICONS ==============
-  private searchIcon = mdiMagnify
+  private searchIcon = mdiMagnify;
   // ==============       ==============
 }
 </script>

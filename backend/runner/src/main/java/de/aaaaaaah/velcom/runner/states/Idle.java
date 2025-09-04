@@ -9,12 +9,12 @@ import de.aaaaaaah.velcom.runner.TeleBackend;
  */
 public class Idle extends RunnerState {
 
-	public Idle(TeleBackend teleBackend, Connection connection) {
-		super(teleBackend, connection);
-	}
+  public Idle(TeleBackend teleBackend, Connection connection) {
+    super(teleBackend, connection);
+  }
 
-	@Override
-	public boolean isResting() {
-		return true;
-	}
+  @Override
+  public boolean isResting() {
+    return true;
+  }
 }

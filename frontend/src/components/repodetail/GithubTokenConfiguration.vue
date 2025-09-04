@@ -33,12 +33,8 @@
           outlined
           color="error"
         >
-          <span v-if="tokenState === 'modify' && hasToken">
-            KEEP OLD ACCESS TOKEN
-          </span>
-          <span v-if="tokenState === 'modify' && !hasToken">
-            DON'T SET TOKEN
-          </span>
+          <span v-if="tokenState === 'modify' && hasToken"> KEEP OLD ACCESS TOKEN </span>
+          <span v-if="tokenState === 'modify' && !hasToken"> DON'T SET TOKEN </span>
           <span v-else>UNDO</span>
         </v-btn>
       </span>
@@ -57,38 +53,38 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Prop } from "vue-property-decorator";
 
-export type TokenState = 'delete' | 'modify' | 'unchanged'
+export type TokenState = "delete" | "modify" | "unchanged";
 
 @Component
 export default class GithubTokenConfiguration extends Vue {
-  private tokenStateImpl: TokenState = 'unchanged'
+  private tokenStateImpl: TokenState = "unchanged";
 
   @Prop()
-  private readonly hasToken!: string
+  private readonly hasToken!: string;
 
   @Prop()
-  private readonly newToken!: string
+  private readonly newToken!: string;
 
   private get tokenState() {
-    return this.tokenStateImpl
+    return this.tokenStateImpl;
   }
 
   private set tokenState(state: TokenState) {
-    this.tokenStateImpl = state
+    this.tokenStateImpl = state;
 
-    this.$emit('update:tokenState', state)
+    this.$emit("update:tokenState", state);
   }
 
   private setNewToken(token: string) {
-    this.$emit('update:newToken', token)
+    this.$emit("update:newToken", token);
   }
 
   private notEmpty(input: string): boolean | string {
-    return input.trim().length > 0 ? true : 'This field must not be empty'
+    return input.trim().length > 0 ? true : "This field must not be empty";
   }
 }
 </script>

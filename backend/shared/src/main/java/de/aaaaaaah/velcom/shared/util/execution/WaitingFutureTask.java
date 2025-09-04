@@ -15,60 +15,60 @@ import java.util.concurrent.TimeoutException;
  */
 class WaitingFutureTask<T> implements Future<T>, StreamsProcessOutput<T> {
 
-	private final Thread worker;
-	private final FutureTask<T> underlying;
-	private final StringOutputStream stdErr;
-	private final StringOutputStream stdOut;
+  private final Thread worker;
+  private final FutureTask<T> underlying;
+  private final StringOutputStream stdErr;
+  private final StringOutputStream stdOut;
 
-	public WaitingFutureTask(FutureTask<T> task, StringOutputStream stdOut,
-		StringOutputStream stdErr) {
-		this.underlying = task;
-		this.stdOut = stdOut;
-		this.stdErr = stdErr;
-		this.worker = new Thread(underlying, "MyFutureTask worker");
-		this.worker.start();
-	}
+  public WaitingFutureTask(
+      FutureTask<T> task, StringOutputStream stdOut, StringOutputStream stdErr) {
+    this.underlying = task;
+    this.stdOut = stdOut;
+    this.stdErr = stdErr;
+    this.worker = new Thread(underlying, "MyFutureTask worker");
+    this.worker.start();
+  }
 
-	@Override
-	public boolean cancel(boolean mayInterruptIfRunning) {
-		return underlying.cancel(mayInterruptIfRunning);
-	}
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return underlying.cancel(mayInterruptIfRunning);
+  }
 
-	@Override
-	public boolean isCancelled() {
-		return underlying.isCancelled();
-	}
+  @Override
+  public boolean isCancelled() {
+    return underlying.isCancelled();
+  }
 
-	@Override
-	public boolean isDone() {
-		return underlying.isDone();
-	}
+  @Override
+  public boolean isDone() {
+    return underlying.isDone();
+  }
 
-	@Override
-	public T get() throws InterruptedException, ExecutionException {
-		if (isCancelled()) {
-			worker.join();
-		}
-		return underlying.get();
-	}
+  @Override
+  public T get() throws InterruptedException, ExecutionException {
+    if (isCancelled()) {
+      worker.join();
+    }
+    return underlying.get();
+  }
 
-	@Override
-	public T get(long timeout, TimeUnit unit)
-		throws InterruptedException, ExecutionException, TimeoutException {
-		if (isCancelled()) {
-			worker.join(unit.toMillis(timeout));
-			throw new CancellationException("Execution cancelled, thread died");
-		}
-		return underlying.get(timeout, unit);
-	}
+  @Override
+  public T get(long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    if (isCancelled()) {
+      worker.join(unit.toMillis(timeout));
+      throw new CancellationException("Execution cancelled, thread died");
+    }
+    return underlying.get(timeout, unit);
+  }
 
-	@Override
-	public String getCurrentStdOut() {
-		return stdOut.getString();
-	}
+  @Override
+  public String getCurrentStdOut() {
+    return stdOut.getString();
+  }
 
-	@Override
-	public String getCurrentStdErr() {
-		return stdErr.getString();
-	}
+  @Override
+  public String getCurrentStdErr() {
+    return stdErr.getString();
+  }
 }

@@ -9,21 +9,21 @@ import de.aaaaaaah.velcom.backend.access.repoaccess.entities.RepoId;
  */
 public class NoSuchCommitException extends RuntimeException {
 
-	private final RepoId repoId;
-	private final CommitHash commitHash;
+  private final RepoId repoId;
+  private final CommitHash commitHash;
 
-	public NoSuchCommitException(Throwable t, RepoId repoId, CommitHash commitHash) {
-		super("no commit in repo " + repoId + " with hash " + commitHash, t);
+  public NoSuchCommitException(Throwable t, RepoId repoId, CommitHash commitHash) {
+    super("no commit in repo " + repoId + " with hash " + commitHash, t);
 
-		this.repoId = repoId;
-		this.commitHash = commitHash;
-	}
+    this.repoId = repoId;
+    this.commitHash = commitHash;
+  }
 
-	public RepoId getRepoId() {
-		return repoId;
-	}
+  public RepoId getRepoId() {
+    return repoId;
+  }
 
-	public CommitHash getCommitHash() {
-		return commitHash;
-	}
+  public CommitHash getCommitHash() {
+    return commitHash;
+  }
 }

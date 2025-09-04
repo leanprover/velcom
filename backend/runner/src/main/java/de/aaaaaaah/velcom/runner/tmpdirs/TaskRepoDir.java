@@ -10,28 +10,28 @@ import java.nio.file.Path;
  */
 public class TaskRepoDir {
 
-	private final Path dirPath;
-	private final Path tmpFilePath;
+  private final Path dirPath;
+  private final Path tmpFilePath;
 
-	public TaskRepoDir(Path dirPath) {
-		this.dirPath = dirPath;
-		tmpFilePath = dirPath.getParent().resolve(dirPath.getFileName() + ".tmp");
-	}
+  public TaskRepoDir(Path dirPath) {
+    this.dirPath = dirPath;
+    tmpFilePath = dirPath.getParent().resolve(dirPath.getFileName() + ".tmp");
+  }
 
-	/**
-	 * Delete the directory.
-	 *
-	 * @throws IOException if something io-related goes wrong during the deletion
-	 */
-	public void clear() throws IOException {
-		FileHelper.deleteDirectoryOrFile(dirPath);
-	}
+  /**
+   * Delete the directory.
+   *
+   * @throws IOException if something io-related goes wrong during the deletion
+   */
+  public void clear() throws IOException {
+    FileHelper.deleteDirectoryOrFile(dirPath);
+  }
 
-	public Path getDirPath() {
-		return dirPath;
-	}
+  public Path getDirPath() {
+    return dirPath;
+  }
 
-	public Path getTmpFilePath() {
-		return tmpFilePath;
-	}
+  public Path getTmpFilePath() {
+    return tmpFilePath;
+  }
 }

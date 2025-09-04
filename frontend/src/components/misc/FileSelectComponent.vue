@@ -10,55 +10,50 @@
           {{ selectedText }}
           <span class="font-weight-bold pl-1">{{ selectedFileName }}</span>
         </label>
-        <input
-          accept=".tar,.tar.gz"
-          @change="fileSelected"
-          id="file-upload"
-          type="file"
-        />
+        <input accept=".tar,.tar.gz" @change="fileSelected" id="file-upload" type="file" />
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Model, Prop } from 'vue-property-decorator'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { Model, Prop } from "vue-property-decorator";
 
 @Component({})
 export default class FileSelectComponent extends Vue {
-  @Model('input', { type: File, default: () => null })
-  private readonly file!: File | null
+  @Model("input", { type: File, default: () => null })
+  private readonly file!: File | null;
 
   @Prop({ default: false })
-  private readonly errorStyle!: boolean
+  private readonly errorStyle!: boolean;
 
   private fileSelected(event: Event) {
     if (!event.target) {
-      return
+      return;
     }
-    const files = (event.target as HTMLInputElement).files
+    const files = (event.target as HTMLInputElement).files;
     if (!files) {
-      return
+      return;
     }
 
-    this.$emit('input', files[0])
+    this.$emit("input", files[0]);
   }
 
   private get selectedText(): string {
-    return this.file ? 'Selected' : 'Click me to select the tar to upload :)'
+    return this.file ? "Selected" : "Click me to select the tar to upload :)";
   }
 
   private get selectedFileName() {
-    return this.file ? this.file.name : ''
+    return this.file ? this.file.name : "";
   }
 }
 </script>
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style scoped>
-input[type='file'] {
+input[type="file"] {
   display: none;
 }
 

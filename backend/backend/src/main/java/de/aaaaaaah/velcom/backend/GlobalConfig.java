@@ -9,234 +9,231 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
-/**
- * The main configuration file for the server.
- */
+/** The main configuration file for the server. */
 public class GlobalConfig extends Configuration {
 
-	/////////////
-	// General //
-	/////////////
+  /////////////
+  // General //
+  /////////////
 
-	@NotEmpty
-	private String webAdminToken;
-	@NotEmpty
-	private String benchmarkRepoRemoteUrl;
-	@NotEmpty
-	private String frontendUrl;
-	private long pollInterval = 10 * 60;
-	private long vacuumInterval = 25 * 60 * 60;
+  @NotEmpty private String webAdminToken;
+  @NotEmpty private String benchmarkRepoRemoteUrl;
+  @NotEmpty private String frontendUrl;
+  private long pollInterval = 10 * 60;
+  private long vacuumInterval = 25 * 60 * 60;
 
-	/////////////////
-	// Directories //
-	/////////////////
+  /////////////////
+  // Directories //
+  /////////////////
 
-	private Path dataDir = Path.of("data");
-	private Path cacheDir = Path.of("cache");
-	private Path tmpDir = Path.of("tmp");
+  private Path dataDir = Path.of("data");
+  private Path cacheDir = Path.of("cache");
+  private Path tmpDir = Path.of("tmp");
 
-	////////////
-	// Runner //
-	////////////
+  ////////////
+  // Runner //
+  ////////////
 
-	@NotEmpty
-	private String runnerToken;
-	@Min(1)
-	@Max(65535)
-	private int runnerPort = 3546;
-	@Min(1)
-	private long disconnectedRunnerGracePeriodSeconds = 600;
+  @NotEmpty private String runnerToken;
 
-	/////////////////////////
-	// Significant commits //
-	/////////////////////////
+  @Min(1)
+  @Max(65535)
+  private int runnerPort = 3546;
 
-	private double significanceRelativeThreshold = 0.05;
-	private double significanceStddevThreshold = 2;
-	@Min(2)
-	private int significanceMinStddevAmount = 25;
+  @Min(1)
+  private long disconnectedRunnerGracePeriodSeconds = 600;
 
-	public GlobalConfig() {
-		RunnerAwareServerFactory.getInstance().setConfig(this);
-	}
+  /////////////////////////
+  // Significant commits //
+  /////////////////////////
 
-	@Override
-	public ServerFactory getServerFactory() {
-		if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
-			RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
-		}
-		return RunnerAwareServerFactory.getInstance();
-	}
+  private double significanceRelativeThreshold = 0.05;
+  private double significanceStddevThreshold = 2;
 
-	/////////////
-	// General //
-	/////////////
+  @Min(2)
+  private int significanceMinStddevAmount = 25;
 
-	/**
-	 * @return the token used to authorize as a web administrator
-	 */
-	public String getWebAdminToken() {
-		return webAdminToken;
-	}
+  public GlobalConfig() {
+    RunnerAwareServerFactory.getInstance().setConfig(this);
+  }
 
-	public void setWebAdminToken(String webAdminToken) {
-		this.webAdminToken = webAdminToken;
-	}
+  @Override
+  public ServerFactory getServerFactory() {
+    if (RunnerAwareServerFactory.getInstance().lacksFactory()) {
+      RunnerAwareServerFactory.getInstance().setServerFactory(super.getServerFactory());
+    }
+    return RunnerAwareServerFactory.getInstance();
+  }
 
-	/**
-	 * @return the remote url where the benchmark repo remote url can be cloned from
-	 */
-	public String getBenchmarkRepoRemoteUrl() {
-		return benchmarkRepoRemoteUrl;
-	}
+  /////////////
+  // General //
+  /////////////
 
-	public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
-		this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
-	}
+  /**
+   * @return the token used to authorize as a web administrator
+   */
+  public String getWebAdminToken() {
+    return webAdminToken;
+  }
 
-	/**
-	 * @return the base url the frontend can be reached under, including a trailing slash
-	 */
-	public String getFrontendUrl() {
-		if (frontendUrl.endsWith("/")) {
-			return frontendUrl;
-		} else {
-			return frontendUrl + "/";
-		}
-	}
+  public void setWebAdminToken(String webAdminToken) {
+    this.webAdminToken = webAdminToken;
+  }
 
-	public void setFrontendUrl(String frontendUrl) {
-		this.frontendUrl = frontendUrl;
-	}
+  /**
+   * @return the remote url where the benchmark repo remote url can be cloned from
+   */
+  public String getBenchmarkRepoRemoteUrl() {
+    return benchmarkRepoRemoteUrl;
+  }
 
-	/**
-	 * @return the interval between listener updates
-	 */
-	public Duration getPollInterval() {
-		return Duration.ofSeconds(pollInterval);
-	}
+  public void setBenchmarkRepoRemoteUrl(String benchmarkRepoRemoteUrl) {
+    this.benchmarkRepoRemoteUrl = benchmarkRepoRemoteUrl;
+  }
 
-	public void setPollInterval(long pollInterval) {
-		this.pollInterval = pollInterval;
-	}
+  /**
+   * @return the base url the frontend can be reached under, including a trailing slash
+   */
+  public String getFrontendUrl() {
+    if (frontendUrl.endsWith("/")) {
+      return frontendUrl;
+    } else {
+      return frontendUrl + "/";
+    }
+  }
 
-	public Duration getVacuumInterval() {
-		return Duration.ofSeconds(vacuumInterval);
-	}
+  public void setFrontendUrl(String frontendUrl) {
+    this.frontendUrl = frontendUrl;
+  }
 
-	public void setVacuumInterval(long vacuumInterval) {
-		this.vacuumInterval = vacuumInterval;
-	}
+  /**
+   * @return the interval between listener updates
+   */
+  public Duration getPollInterval() {
+    return Duration.ofSeconds(pollInterval);
+  }
 
-	/////////////////
-	// Directories //
-	/////////////////
+  public void setPollInterval(long pollInterval) {
+    this.pollInterval = pollInterval;
+  }
 
-	@Nullable
-	public Path getDataDir() {
-		return dataDir;
-	}
+  public Duration getVacuumInterval() {
+    return Duration.ofSeconds(vacuumInterval);
+  }
 
-	public void setDataDir(@Nullable Path dataDir) {
-		this.dataDir = dataDir;
-	}
+  public void setVacuumInterval(long vacuumInterval) {
+    this.vacuumInterval = vacuumInterval;
+  }
 
-	@Nullable
-	public Path getCacheDir() {
-		return cacheDir;
-	}
+  /////////////////
+  // Directories //
+  /////////////////
 
-	public void setCacheDir(@Nullable Path cacheDir) {
-		this.cacheDir = cacheDir;
-	}
+  @Nullable
+  public Path getDataDir() {
+    return dataDir;
+  }
 
-	@Nullable
-	public Path getTmpDir() {
-		return tmpDir;
-	}
+  public void setDataDir(@Nullable Path dataDir) {
+    this.dataDir = dataDir;
+  }
 
-	public void setTmpDir(@Nullable Path tmpDir) {
-		this.tmpDir = tmpDir;
-	}
+  @Nullable
+  public Path getCacheDir() {
+    return cacheDir;
+  }
 
-	////////////
-	// Runner //
-	////////////
+  public void setCacheDir(@Nullable Path cacheDir) {
+    this.cacheDir = cacheDir;
+  }
 
-	/**
-	 * @return the token runners need to provide as authentication
-	 */
-	public String getRunnerToken() {
-		return runnerToken;
-	}
+  @Nullable
+  public Path getTmpDir() {
+    return tmpDir;
+  }
 
-	public void setRunnerToken(String runnerToken) {
-		this.runnerToken = runnerToken;
-	}
+  public void setTmpDir(@Nullable Path tmpDir) {
+    this.tmpDir = tmpDir;
+  }
 
-	/**
-	 * @return the port that the dispatcher is listening on
-	 */
-	public int getRunnerPort() {
-		return runnerPort;
-	}
+  ////////////
+  // Runner //
+  ////////////
 
-	public void setRunnerPort(int runnerPort) {
-		this.runnerPort = runnerPort;
-	}
+  /**
+   * @return the token runners need to provide as authentication
+   */
+  public String getRunnerToken() {
+    return runnerToken;
+  }
 
-	/**
-	 * @return the duration after which disconnected runners are given up on (removed and commit
-	 * 	rescheduled)
-	 */
-	public Duration getDisconnectedRunnerGracePeriod() {
-		return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
-	}
+  public void setRunnerToken(String runnerToken) {
+    this.runnerToken = runnerToken;
+  }
 
-	public void setDisconnectedRunnerGracePeriodSeconds(long disconnectedRunnerGracePeriodSeconds) {
-		this.disconnectedRunnerGracePeriodSeconds = disconnectedRunnerGracePeriodSeconds;
-	}
+  /**
+   * @return the port that the dispatcher is listening on
+   */
+  public int getRunnerPort() {
+    return runnerPort;
+  }
 
-	/////////////////////////
-	// Significant commits //
-	/////////////////////////
+  public void setRunnerPort(int runnerPort) {
+    this.runnerPort = runnerPort;
+  }
 
-	/**
-	 * Explained in more detail in the example config.
-	 *
-	 * @return the relative threshold
-	 */
-	public double getSignificanceRelativeThreshold() {
-		return significanceRelativeThreshold;
-	}
+  /**
+   * @return the duration after which disconnected runners are given up on (removed and commit
+   *     rescheduled)
+   */
+  public Duration getDisconnectedRunnerGracePeriod() {
+    return Duration.ofSeconds(disconnectedRunnerGracePeriodSeconds);
+  }
 
-	public void setSignificanceRelativeThreshold(double significanceRelativeThreshold) {
-		this.significanceRelativeThreshold = significanceRelativeThreshold;
-	}
+  public void setDisconnectedRunnerGracePeriodSeconds(long disconnectedRunnerGracePeriodSeconds) {
+    this.disconnectedRunnerGracePeriodSeconds = disconnectedRunnerGracePeriodSeconds;
+  }
 
-	/**
-	 * Explained in more detail in the example config.
-	 *
-	 * @return the stddev threshold
-	 */
-	public double getSignificanceStddevThreshold() {
-		return significanceStddevThreshold;
-	}
+  /////////////////////////
+  // Significant commits //
+  /////////////////////////
 
-	public void setSignificanceStddevThreshold(double significanceStddevThreshold) {
-		this.significanceStddevThreshold = significanceStddevThreshold;
-	}
+  /**
+   * Explained in more detail in the example config.
+   *
+   * @return the relative threshold
+   */
+  public double getSignificanceRelativeThreshold() {
+    return significanceRelativeThreshold;
+  }
 
-	/**
-	 * Explained in more detail in the example config.
-	 *
-	 * @return the minimum amount of values for stddev calculations to apply
-	 */
-	public int getSignificanceMinStddevAmount() {
-		return significanceMinStddevAmount;
-	}
+  public void setSignificanceRelativeThreshold(double significanceRelativeThreshold) {
+    this.significanceRelativeThreshold = significanceRelativeThreshold;
+  }
 
-	public void setSignificanceMinStddevAmount(int significanceMinStddevAmount) {
-		this.significanceMinStddevAmount = significanceMinStddevAmount;
-	}
+  /**
+   * Explained in more detail in the example config.
+   *
+   * @return the stddev threshold
+   */
+  public double getSignificanceStddevThreshold() {
+    return significanceStddevThreshold;
+  }
+
+  public void setSignificanceStddevThreshold(double significanceStddevThreshold) {
+    this.significanceStddevThreshold = significanceStddevThreshold;
+  }
+
+  /**
+   * Explained in more detail in the example config.
+   *
+   * @return the minimum amount of values for stddev calculations to apply
+   */
+  public int getSignificanceMinStddevAmount() {
+    return significanceMinStddevAmount;
+  }
+
+  public void setSignificanceMinStddevAmount(int significanceMinStddevAmount) {
+    this.significanceMinStddevAmount = significanceMinStddevAmount;
+  }
 }

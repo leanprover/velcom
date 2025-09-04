@@ -10,85 +10,85 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import NavigationBar from './components/misc/NavigationBar.vue'
-import Snackbar from './components/misc/Snackbar.vue'
-import { vxm } from './store'
-import { Watch } from 'vue-property-decorator'
-import ThemeSelector from './components/misc/ThemeSelector.vue'
-import { storeToLocalStorage } from './store/persistence'
-import { Route } from 'vue-router'
-import '@/css/AnsiTheme.css'
+import Vue from "vue";
+import Component from "vue-class-component";
+import NavigationBar from "./components/misc/NavigationBar.vue";
+import Snackbar from "./components/misc/Snackbar.vue";
+import { vxm } from "./store";
+import { Watch } from "vue-property-decorator";
+import ThemeSelector from "./components/misc/ThemeSelector.vue";
+import { storeToLocalStorage } from "./store/persistence";
+import { Route } from "vue-router";
+import "@/css/AnsiTheme.css";
 
 @Component({
   components: {
-    'nav-bar': NavigationBar,
+    "nav-bar": NavigationBar,
     snackbar: Snackbar,
-    'theme-selector': ThemeSelector
-  }
+    "theme-selector": ThemeSelector,
+  },
 })
 export default class App extends Vue {
-  private clickHandler: any = this.checkClick
-  private routerViewKey: number = 0
+  private clickHandler: any = this.checkClick;
+  private routerViewKey: number = 0;
 
   private checkClick(event: Event) {
     if (!event.target) {
-      return
+      return;
     }
     if (!(event.target instanceof HTMLElement)) {
-      return
+      return;
     }
 
-    let tmpElement: HTMLElement | null = event.target
-    while (tmpElement && tmpElement.tagName.toLowerCase() !== 'a') {
-      tmpElement = tmpElement.parentElement
+    let tmpElement: HTMLElement | null = event.target;
+    while (tmpElement && tmpElement.tagName.toLowerCase() !== "a") {
+      tmpElement = tmpElement.parentElement;
     }
 
     if (!tmpElement) {
-      return
+      return;
     }
-    storeToLocalStorage()
+    storeToLocalStorage();
   }
 
   private setDarkTheme(darkTheme: boolean) {
-    vxm.userModule.darkThemeSelected = darkTheme
+    vxm.userModule.darkThemeSelected = darkTheme;
   }
 
-  @Watch('isDarkTheme')
+  @Watch("isDarkTheme")
   private onDarkThemeChanged() {
-    this.$vuetify.theme.dark = this.isDarkTheme
+    this.$vuetify.theme.dark = this.isDarkTheme;
   }
 
   private get isDarkTheme() {
-    return vxm.userModule.darkThemeSelected
+    return vxm.userModule.darkThemeSelected;
   }
 
   created(): void {
-    this.$vuetify.theme.dark = this.isDarkTheme
-    document.addEventListener('click', this.clickHandler)
-    document.addEventListener('mousedown', this.clickHandler)
+    this.$vuetify.theme.dark = this.isDarkTheme;
+    document.addEventListener("click", this.clickHandler);
+    document.addEventListener("mousedown", this.clickHandler);
 
-    vxm.repoModule.fetchRepos()
+    vxm.repoModule.fetchRepos();
     this.$router.afterEach((to: Route, from: Route) => {
       if (to.name !== from.name) {
-        vxm.repoModule.fetchRepos()
+        vxm.repoModule.fetchRepos();
       }
-    })
+    });
   }
 
   mounted(): void {
     if (vxm.userModule.usesBrowsersThemePreferences && this.isDarkTheme) {
       this.$globalSnackbar.setSuccess(
-        'theme',
-        'Selected dark mode based on your browser preferences.'
-      )
+        "theme",
+        "Selected dark mode based on your browser preferences.",
+      );
     }
   }
 
   beforeDestroy(): void {
-    document.removeEventListener('click', this.clickHandler)
-    document.removeEventListener('mousedown', this.clickHandler)
+    document.removeEventListener("click", this.clickHandler);
+    document.removeEventListener("mousedown", this.clickHandler);
   }
 }
 </script>

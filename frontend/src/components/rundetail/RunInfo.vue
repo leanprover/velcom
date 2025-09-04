@@ -33,77 +33,69 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {
-  mdiAlarmCheck,
-  mdiCameraTimer,
-  mdiClockFast,
-  mdiFlash,
-  mdiRobot
-} from '@mdi/js'
-import { formatDate, formatDurationHuman } from '@/util/Times'
-import { Prop } from 'vue-property-decorator'
-import { Run, RunResultSuccess } from '@/store/types'
+import Vue from "vue";
+import Component from "vue-class-component";
+import { mdiAlarmCheck, mdiCameraTimer, mdiClockFast, mdiFlash, mdiRobot } from "@mdi/js";
+import { formatDate, formatDurationHuman } from "@/util/Times";
+import { Prop } from "vue-property-decorator";
+import { Run, RunResultSuccess } from "@/store/types";
 
 @Component
 export default class RunInfo extends Vue {
   @Prop()
-  private run!: Run
+  private run!: Run;
 
   private formatDate(date: Date) {
-    return formatDate(date)
+    return formatDate(date);
   }
 
   private formatDuration(start: Date, end: Date) {
-    return formatDurationHuman(start, end)
+    return formatDurationHuman(start, end);
   }
 
   private get toolbarColor() {
-    const successful = this.run.result instanceof RunResultSuccess
-    return successful ? 'toolbarColor' : 'warning'
+    const successful = this.run.result instanceof RunResultSuccess;
+    return successful ? "toolbarColor" : "warning";
   }
 
   private get runInfoItems() {
     return [
       {
-        header: 'Trigger',
+        header: "Trigger",
         icon: this.iconTrigger,
-        body: `${this.run.source.type.toLocaleLowerCase()} by ${
-          this.run.author
-        }`
+        body: `${this.run.source.type.toLocaleLowerCase()} by ${this.run.author}`,
       },
       {
-        header: 'Started',
+        header: "Started",
         icon: this.iconStarted,
-        body: this.formatDate(this.run.startTime)
+        body: this.formatDate(this.run.startTime),
       },
       {
-        header: 'Finished',
+        header: "Finished",
         icon: this.iconFinished,
-        body: this.formatDate(this.run.stopTime)
+        body: this.formatDate(this.run.stopTime),
       },
       {
-        header: 'Duration',
+        header: "Duration",
         icon: this.iconDuration,
-        body: this.formatDuration(this.run.startTime, this.run.stopTime)
+        body: this.formatDuration(this.run.startTime, this.run.stopTime),
       },
       {
         header: this.run.runnerName,
         icon: this.iconRunner,
         body: this.run.runnerInfo,
-        bodyClass: 'worker-description',
-        alwaysAuto: true
-      }
-    ]
+        bodyClass: "worker-description",
+        alwaysAuto: true,
+      },
+    ];
   }
 
   // ICONS
-  private iconTrigger = mdiFlash
-  private iconStarted = mdiClockFast
-  private iconFinished = mdiAlarmCheck
-  private iconDuration = mdiCameraTimer
-  private iconRunner = mdiRobot
+  private iconTrigger = mdiFlash;
+  private iconStarted = mdiClockFast;
+  private iconFinished = mdiAlarmCheck;
+  private iconDuration = mdiCameraTimer;
+  private iconRunner = mdiRobot;
 }
 </script>
 
