@@ -27,10 +27,8 @@ export default defineComponent({
   },
   data() {
     const routerViewKey: number = 0;
-    const clickHandler: any = this.checkClick;
 
     return {
-      clickHandler,
       routerViewKey,
     };
   },
@@ -41,8 +39,8 @@ export default defineComponent({
   },
   created(): void {
     this.$vuetify.theme.dark = this.isDarkTheme;
-    document.addEventListener("click", this.clickHandler);
-    document.addEventListener("mousedown", this.clickHandler);
+    document.addEventListener("click", this.checkClick);
+    document.addEventListener("mousedown", this.checkClick);
 
     vxm.repoModule.fetchRepos();
     this.$router.afterEach((to: Route, from: Route) => {
@@ -60,8 +58,8 @@ export default defineComponent({
     }
   },
   beforeDestroy(): void {
-    document.removeEventListener("click", this.clickHandler);
-    document.removeEventListener("mousedown", this.clickHandler);
+    document.removeEventListener("click", this.checkClick);
+    document.removeEventListener("mousedown", this.checkClick);
   },
   methods: {
     checkClick(event: Event) {
